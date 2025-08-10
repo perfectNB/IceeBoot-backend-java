@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.dto.system;
+package com.zboot.framework.dto.system;
 
 import lombok.Data;
 

@@ -4,14 +4,15 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.controller.system;
+package com.zboot.framework.controller.system;
 
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.dto.system.SysUserDTO;
-import com.zboot.query.system.SysUserQuery;
-import com.zboot.service.system.ISysUserService;
-import com.zboot.vo.system.SysUserVO;
+import com.zboot.framework.dto.system.SysUserDTO;
+import com.zboot.framework.query.system.SysUserQuery;
+import com.zboot.framework.service.system.ISysUserService;
+import com.zboot.framework.vo.system.SysUserVO;
+import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +33,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysUserController {
 
-    
-    private final ISysUserService userService;
+    @Autowired
+    private ISysUserService userService;
 
     /**
      * 分页查询用户列表

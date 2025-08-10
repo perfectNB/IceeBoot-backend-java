@@ -4,8 +4,9 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.dto.system;
+package com.zboot.framework.dto.system;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import jakarta.validation.constraints.Email;
@@ -22,57 +23,37 @@ import java.util.List;
 @Data
 public class SysUserDTO {
 
-    /**
-     * 用户ID
-     */
+    @Schema(description = "用户ID")
     private Long id;
 
-    /**
-     * 用户名
-     */
+    @Schema(description = "用户名", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "用户名不能为空")
     private String username;
 
-    /**
-     * 密码
-     */
+    @Schema(description = "密码")
     private String password;
 
-    /**
-     * 昵称
-     */
+    @Schema(description = "昵称", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "昵称不能为空")
     private String nickname;
 
-    /**
-     * 头像
-     */
+    @Schema(description = "头像")
     private String avatar;
 
-    /**
-     * 邮箱
-     */
+    @Schema(description = "邮箱")
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    /**
-     * 手机号
-     */
+    @Schema(description = "手机号")
     @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
     private String phone;
 
-    /**
-     * 状态
-     */
+    @Schema(description = "状态")
     private String status;
 
-    /**
-     * 角色ID列表
-     */
+    @Schema(description = "角色ID列表")
     private List<Long> roleIds;
 
-    /**
-     * 角色列表
-     */
+    @Schema(description = "角色列表")
     private List<String> roles;
 }

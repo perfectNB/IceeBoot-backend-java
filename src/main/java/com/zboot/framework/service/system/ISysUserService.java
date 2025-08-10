@@ -4,14 +4,14 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.service.system;
+package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.entity.system.SysUserDO;
-import com.zboot.dto.system.SysUserDTO;
-import com.zboot.query.system.SysUserQuery;
-import com.zboot.vo.system.SysUserVO;
+import com.zboot.framework.entity.system.SysUserDO;
+import com.zboot.framework.dto.system.SysUserDTO;
+import com.zboot.framework.query.system.SysUserQuery;
+import com.zboot.framework.vo.system.SysUserVO;
 
 import java.util.List;
 
@@ -131,4 +131,20 @@ public interface ISysUserService extends IService<SysUserDO> {
      * @return 是否存在
      */
     boolean existsEmail(String email, Long excludeId);
+
+    /**
+     * 获取用户权限列表
+     *
+     * @param userId 用户ID
+     * @return 权限列表
+     */
+    List<String> getUserPermissions(Long userId);
+
+    /**
+     * 获取用户角色列表
+     *
+     * @param userId 用户ID
+     * @return 角色列表
+     */
+    List<String> getUserRoles(Long userId);
 }
