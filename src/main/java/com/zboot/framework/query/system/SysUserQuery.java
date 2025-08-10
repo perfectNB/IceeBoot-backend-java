@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.query.system;
+package com.zboot.framework.query.system;
 
 import com.zboot.common.core.domain.BaseQuery;
 import lombok.Data;

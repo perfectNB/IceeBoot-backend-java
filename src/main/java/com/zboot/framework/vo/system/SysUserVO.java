@@ -4,9 +4,10 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.vo.system;
+package com.zboot.framework.vo.system;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,71 +22,45 @@ import java.util.List;
 @Data
 public class SysUserVO {
 
-    /**
-     * 用户ID
-     */
+    @Schema(description = "用户ID")
     private Long id;
 
-    /**
-     * 用户名
-     */
+    @Schema(description = "用户名")
     private String username;
 
-    /**
-     * 昵称
-     */
+    @Schema(description = "昵称")
     private String nickname;
 
-    /**
-     * 头像
-     */
+    @Schema(description = "头像")
     private String avatar;
 
-    /**
-     * 邮箱
-     */
+    @Schema(description = "邮箱")
     private String email;
 
-    /**
-     * 手机号
-     */
+    @Schema(description = "手机号")
     private String phone;
 
-    /**
-     * 状态
-     */
+    @Schema(description = "状态")
     private String status;
 
-    /**
-     * 最后登录时间
-     */
+    @Schema(description = "最后登录时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastLoginTime;
 
-    /**
-     * 最后登录IP
-     */
+    @Schema(description = "最后登录IP")
     private String lastLoginIp;
 
-    /**
-     * 创建时间
-     */
+    @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    /**
-     * 更新时间
-     */
+    @Schema(description = "更新时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    /**
-     * 角色列表
-     */
+    @Schema(description = "角色列表")
     private List<String> roles;
 
-    /**
-     * 权限列表
-     */
+    @Schema(description = "权限列表")
     private List<String> permissions;
 }

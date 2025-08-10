@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.vo.system;
+package com.zboot.framework.vo.system;
 
 import lombok.Data;
 

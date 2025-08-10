@@ -6,6 +6,7 @@
 package com.zboot.common.core.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.zboot.common.enums.ResultCodeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -198,6 +199,27 @@ public class R<T> implements Serializable {
      */
     public static <T> R<T> fail(int code, String message, T result) {
         return new R<>(code, message, result);
+    }
+
+    /**
+     * 返回错误消息
+     *
+     * @param resultCodeEnum 结果枚举
+     * @return 错误消息
+     */
+    public static <T> R<T> fail(ResultCodeEnum resultCodeEnum) {
+        return new R<>(resultCodeEnum.getCode(), resultCodeEnum.getMessage());
+    }
+
+    /**
+     * 返回错误消息
+     *
+     * @param resultCodeEnum 结果枚举
+     * @param result 数据对象
+     * @return 错误消息
+     */
+    public static <T> R<T> fail(ResultCodeEnum resultCodeEnum, T result) {
+        return new R<>(resultCodeEnum.getCode(), resultCodeEnum.getMessage(), result);
     }
 
     /**

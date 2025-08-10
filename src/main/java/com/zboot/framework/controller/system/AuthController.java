@@ -4,14 +4,15 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.controller.system;
+package com.zboot.framework.controller.system;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.zboot.common.core.domain.R;
-import com.zboot.dto.system.LoginDTO;
-import com.zboot.service.system.IAuthService;
-import com.zboot.vo.system.LoginVO;
-import com.zboot.vo.system.SysUserVO;
+import com.zboot.framework.dto.system.LoginDTO;
+import com.zboot.framework.service.system.IAuthService;
+import com.zboot.framework.vo.system.LoginVO;
+import com.zboot.framework.vo.system.SysUserVO;
+import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-
-    private final IAuthService authService;
+    @Autowired
+    private IAuthService authService;
 
     /**
      * 用户登录

@@ -4,11 +4,11 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.service.system;
+package com.zboot.framework.service.system;
 
-import com.zboot.dto.system.LoginDTO;
-import com.zboot.vo.system.LoginVO;
-import com.zboot.vo.system.SysUserVO;
+import com.zboot.framework.dto.system.LoginDTO;
+import com.zboot.framework.vo.system.LoginVO;
+import com.zboot.framework.vo.system.SysUserVO;
 
 /**
  * 认证服务接口

@@ -4,14 +4,14 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.service.system;
+package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.entity.system.SysRoleDO;
-import com.zboot.dto.system.SysRoleDTO;
-import com.zboot.query.system.SysRoleQuery;
-import com.zboot.vo.system.SysRoleVO;
+import com.zboot.framework.entity.system.SysRoleDO;
+import com.zboot.framework.dto.system.SysRoleDTO;
+import com.zboot.framework.query.system.SysRoleQuery;
+import com.zboot.framework.vo.system.SysRoleVO;
 
 import java.util.List;
 

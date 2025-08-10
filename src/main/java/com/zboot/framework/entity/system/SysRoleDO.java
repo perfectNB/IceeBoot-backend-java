@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.entity.system;
+package com.zboot.framework.entity.system;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.zboot.common.core.domain.ZbootDO;
