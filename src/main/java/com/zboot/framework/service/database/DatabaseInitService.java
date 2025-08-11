@@ -43,7 +43,18 @@ public class DatabaseInitService implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         log.info("数据库初始化服务已启动");
-        log.info("注意：自动建表功能已简化，请手动创建数据库表或使用 MyBatis Plus 的自动建表功能");
+        log.info("开始检查并创建数据库表...");
+        
+        try {
+            // 扫描并创建实体类对应的表
+            Set<Class<?>> entityClasses = scanEntityClasses();
+            for (Class<?> entityClass : entityClasses) {
+                createTableIfNotExists(entityClass);
+            }
+            log.info("数据库表检查完成，共处理 {} 个实体类", entityClasses.size());
+        } catch (Exception e) {
+            log.error("数据库初始化失败", e);
+        }
     }
 
     /**
