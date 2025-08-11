@@ -4,11 +4,12 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.entity.ai;
+package com.zboot.framework.entity.ai;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.zboot.common.core.domain.ZbootDO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,37 +23,27 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_chat_message")
+@TableName("t_ai_chat_message")
 public class AiChatMessageDO extends ZbootDO {
 
-    /**
-     * 会话ID
-     */
+    @Schema(description = "会话ID")
     @TableField("session_id")
     private Long sessionId;
 
-    /**
-     * 角色（user-用户，assistant-助手，system-系统）
-     */
+    @Schema(description = "角色（user-用户，assistant-助手，system-系统）")
     @TableField("role")
     private String role;
 
-    /**
-     * 消息内容
-     */
+    @Schema(description = "消息内容")
     @TableField("content")
     private String content;
 
-    /**
-     * 时间戳
-     */
+    @Schema(description = "时间戳")
     @TableField("timestamp")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
 
-    /**
-     * 用户ID
-     */
+    @Schema(description = "用户ID")
     @TableField("user_id")
     private Long userId;
 }

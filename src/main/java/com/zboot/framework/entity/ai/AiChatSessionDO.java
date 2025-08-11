@@ -4,14 +4,13 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.entity.ai;
+package com.zboot.framework.entity.ai;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.zboot.common.core.domain.ZbootDO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 /**
  * AI对话会话实体类
@@ -21,36 +20,22 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_chat_session")
+@TableName("t_ai_chat_session")
 public class AiChatSessionDO extends ZbootDO {
 
-    /**
-     * 会话标题
-     */
+    @Schema(description = "会话标题")
     @TableField("title")
     private String title;
 
-    /**
-     * 模型ID
-     */
+    @Schema(description = "模型ID")
     @TableField("model_id")
     private Long modelId;
 
-    /**
-     * 模型名称
-     */
+    @Schema(description = "模型名称")
     @TableField("model_name")
     private String modelName;
 
-    /**
-     * 用户ID
-     */
+    @Schema(description = "用户ID")
     @TableField("user_id")
     private Long userId;
-
-    /**
-     * 消息列表（非数据库字段）
-     */
-    @TableField(exist = false)
-    private List<AiChatMessageDO> messages;
 }

@@ -4,10 +4,11 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.entity.ai;
+package com.zboot.framework.entity.ai;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.zboot.common.core.domain.ZbootDO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,42 +20,30 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_llm_key")
+@TableName("t_ai_llm_key")
 public class AiLLMKeyDO extends ZbootDO {
 
-    /**
-     * 大模型ID
-     */
+    @Schema(description = "大模型ID")
     @TableField("llm_id")
     private Long llmId;
 
-    /**
-     * 密钥
-     */
+    @Schema(description = "密钥")
     @TableField("key")
     private String key;
 
-    /**
-     * 备注
-     */
+    @Schema(description = "备注")
     @TableField("remark")
     private String remark;
 
-    /**
-     * 秘密密钥
-     */
+    @Schema(description = "秘密密钥")
     @TableField("secret_key")
     private String secretKey;
 
-    /**
-     * API密钥
-     */
+    @Schema(description = "API密钥")
     @TableField("api_key")
     private String apiKey;
 
-    /**
-     * 状态（active-激活，inactive-禁用）
-     */
+    @Schema(description = "状态（active-激活，inactive-禁用）")
     @TableField("status")
     private String status;
 }
