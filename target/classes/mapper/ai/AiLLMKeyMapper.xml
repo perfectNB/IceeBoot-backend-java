@@ -24,32 +24,6 @@
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 
-    <!-- 根据大模型ID查询密钥列表 -->
-    <select id="selectByLlmId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_llm_key
-        WHERE llm_id = #{llmId}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
-    <!-- 根据状态查询密钥列表 -->
-    <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_llm_key
-        WHERE status = #{status}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据大模型ID和状态查询密钥列表 -->
-    <select id="selectByLlmIdAndStatus" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_llm_key
-        WHERE llm_id = #{llmId}
-        AND status = #{status}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
 </mapper>

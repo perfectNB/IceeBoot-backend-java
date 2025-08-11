@@ -20,22 +20,6 @@
         id, name, remark, status, create_by, create_time, update_by, update_time, del_flag
     </sql>
 
-    <!-- 根据状态查询模型列表 -->
-    <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_llm
-        WHERE status = #{status}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
-    <!-- 根据名称模糊查询模型列表 -->
-    <select id="selectByNameLike" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_llm
-        WHERE name LIKE CONCAT('%', #{name}, '%')
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
 </mapper>

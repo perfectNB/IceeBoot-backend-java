@@ -1,47 +1,20 @@
-# 生产环境配置
-server:
-  port: 8080
-  servlet:
-    context-path: /api
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
-  tomcat:
-    threads:
-      max: 800
-      min-spare: 100
-    max-connections: 20000
-    accept-count: 1000
-    connection-timeout: 20000
-
-# 数据源配置
 spring:
+  # 数据源配置
   datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/zboot_prod?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-    username: ${DB_USERNAME:root}
+    url: ${DB_URL:jdbc:mysql://8.146.211.177:3306/zboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
+    username: ${DB_USERNAME:zboot}
     password: ${DB_PASSWORD:123456}
-    druid:
-      initial-size: 10
-      min-idle: 10
-      max-active: 100
-      max-wait: 60000
-      time-between-eviction-runs-millis: 60000
-      min-evictable-idle-time-millis: 300000
-      validation-query: SELECT 1 FROM DUAL
-      test-while-idle: true
-      test-on-borrow: false
-      test-on-return: false
-      pool-prepared-statements: true
-      max-pool-prepared-statement-per-connection-size: 20
-      filters: stat,wall,slf4j
-      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
-      web-stat-filter:
-        enabled: false
-      stat-view-servlet:
-        enabled: false
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 30
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: ZbootHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
 
   # Redis配置
   data:
@@ -49,53 +22,101 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-      database: 0
-      timeout: 10000ms
+      database: ${REDIS_DATABASE:1}
+      timeout: 10000
       lettuce:
         pool:
-          max-active: 20
+          min-idle: 0
+          max-idle: 16
+          max-active: 16
           max-wait: -1ms
-          max-idle: 10
-          min-idle: 5
+
+  # Elasticsearch配置（默认关闭）
+  elasticsearch:
+    enabled: ${ELASTICSEARCH_ENABLED:false}
+    uris: ${ES_URIS:http://localhost:9200}
+    username: ${ES_USERNAME:1111111111}
+    password: ${ES_PASSWORD:1111111111}
+    repositories:
+      enabled: ${ELASTICSEARCH_REPOSITORIES_ENABLED:false}
+
+
+  # RabbitMQ配置（默认关闭）
+  rabbitmq:
+    enabled: ${RABBITMQ_ENABLED:false}
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 # 日志配置
 logging:
   level:
     com.zboot: info
     org.springframework: warn
-    org.mybatis: warn
-    root: info
+    org.mybatis: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   file:
-    name: logs/zboot-prod.log
-    max-size: 500MB
-    max-history: 90
+    name: logs/zboot-test.log
+    max-size: 50MB
+    max-history: 30
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
 # Sa-Token配置
 sa-token:
   token-name: Authorization
-  token-prefix: Bearer
-  timeout: 2592000
+  timeout: 7200
   activity-timeout: 1800
   is-concurrent: true
   is-share: true
   token-style: uuid
   is-log: false
 
-# ZBoot配置
-zboot:
-  name: ZBoot生产环境
-  version: 1.0.0
-  copyrightYear: 2025
-  demoEnabled: false
-  profile: /data/zboot/uploadPath
-  addressEnabled: true
-  captcha:
-    enabled: true
-    type: math
-  xss:
-    enabled: true
-    excludes: /system/notice
-    urlPatterns: /system/*,/monitor/*,/tool/*
+# Knife4j配置
+knife4j:
+  enable: true
+  openapi:
+    title: ZBoot API文档 - 测试环境
+    description: ZBoot超级脚手架API接口文档 - 测试环境
+    version: 1.0.0
+    concat: CodeIcee
+    url: https://github.com/CodeIcee
+    email: codeicee@gmail.com
+    license: Apache 2.0
+    license-url: https://www.apache.org/licenses/LICENSE-2.0
+  setting:
+    language: zh_cn
+    enable-version: true
+    enable-swagger-models: true
+    swagger-model-name: 实体类列表
+    enable-document-manage: true
+    enable-reload-cache-parameter: false
+    enable-after-script: true
+    enable-filter-multipart-api-method-type: POST
+    enable-filter-multipart-apis: false
+    enable-request-cache: true
+    enable-host: false
+    enable-host-text: ""
+    enable-home-custom: true
+    home-custom-path: classpath:markdown/home.md
+    enable-search: true
+    enable-footer: false
+    enable-footer-custom: true
+    footer-custom-content: Apache License 2.0 | Copyright  2025-[CodeIcee](https://github.com/CodeIcee)
+    enable-dynamic-parameter: false
+    enable-debug: false
+    enable-open-api: false
+    enable-group: true
+  cors: false
+  production: false

@@ -17,31 +17,8 @@ spring:
   application:
     name: zboot-backend-java
   profiles:
-    active: dev
-  # 数据源配置
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.zaxxer.hikari.HikariDataSource
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 15
-      auto-commit: true
-      idle-timeout: 30000
-      pool-name: ZbootHikariCP
-      max-lifetime: 1800000
-      connection-timeout: 30000
-      connection-test-query: SELECT 1
-  
-  # Redis配置
-  data:
-    redis:
-      timeout: 10s
-      lettuce:
-        pool:
-          min-idle: 0
-          max-idle: 8
-          max-active: 8
-          max-wait: -1ms
+    active: ${APP_PROFILE:dev}
+
   
   # 文件上传配置
   servlet:
@@ -87,9 +64,9 @@ sa-token:
   # token临时有效期 (指定时间内无操作就视为token过期) 单位: 秒
   activity-timeout: -1
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
-  is-concurrent: true
+  is-concurrent: false
   # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
-  is-share: true
+  is-share: false
   # token风格
   token-style: uuid
   # 是否输出操作日志

@@ -22,48 +22,6 @@
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 
-    <!-- 根据会话ID查询消息列表 -->
-    <select id="selectBySessionId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_chat_message
-        WHERE session_id = #{sessionId}
-        AND del_flag = 0
-        ORDER BY create_time ASC
-    </select>
 
-    <!-- 根据用户ID查询消息列表 -->
-    <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_chat_message
-        WHERE user_id = #{userId}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据角色查询消息列表 -->
-    <select id="selectByRole" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_chat_message
-        WHERE role = #{role}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据会话ID和角色查询消息列表 -->
-    <select id="selectBySessionIdAndRole" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_chat_message
-        WHERE session_id = #{sessionId}
-        AND role = #{role}
-        AND del_flag = 0
-        ORDER BY create_time ASC
-    </select>
-
-    <!-- 根据会话ID删除消息 -->
-    <delete id="deleteBySessionId">
-        UPDATE t_ai_chat_message
-        SET del_flag = 1
-        WHERE session_id = #{sessionId}
-    </delete>
 
 </mapper>
