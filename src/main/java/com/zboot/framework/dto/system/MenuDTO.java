@@ -18,7 +18,7 @@ import jakarta.validation.constraints.NotBlank;
  * @date 2025-08-11
  */
 @Data
-public class SysMenuDTO {
+public class MenuDTO {
 
     @Schema(description = "菜单ID")
     private Long id;

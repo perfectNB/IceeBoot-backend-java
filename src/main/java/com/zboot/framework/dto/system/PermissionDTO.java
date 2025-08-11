@@ -18,7 +18,7 @@ import jakarta.validation.constraints.NotBlank;
  * @date 2025-08-11
  */
 @Data
-public class SysPermissionDTO {
+public class PermissionDTO {
 
     @Schema(description = "权限ID")
     private Long id;

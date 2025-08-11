@@ -9,7 +9,7 @@ package com.zboot.framework.service.system;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.RoleDO;
-import com.zboot.framework.dto.system.SysRoleDTO;
+import com.zboot.framework.dto.system.RoleDTO;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.vo.system.SysRoleVO;
 
@@ -52,7 +52,7 @@ public interface ISysRoleService extends IService<RoleDO> {
      * @param roleDTO 角色信息
      * @return 是否成功
      */
-    boolean addRole(SysRoleDTO roleDTO);
+    boolean addRole(RoleDTO roleDTO);
 
     /**
      * 更新角色
@@ -60,7 +60,7 @@ public interface ISysRoleService extends IService<RoleDO> {
      * @param roleDTO 角色信息
      * @return 是否成功
      */
-    boolean updateRole(SysRoleDTO roleDTO);
+    boolean updateRole(RoleDTO roleDTO);
 
     /**
      * 删除角色

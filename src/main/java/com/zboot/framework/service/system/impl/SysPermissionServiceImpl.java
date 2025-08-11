@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.system.SysPermissionDTO;
+import com.zboot.framework.dto.system.PermissionDTO;
 import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.mapper.system.SysPermissionMapper;
 import com.zboot.framework.query.system.SysPermissionQuery;
@@ -86,7 +86,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     }
 
     @Override
-    public boolean addPermission(SysPermissionDTO permissionDTO) {
+    public boolean addPermission(PermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), null)) {
             throw new RuntimeException(ResponseMessage.PERMISSION_CODE_EXISTS);
@@ -98,7 +98,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     }
 
     @Override
-    public boolean updatePermission(SysPermissionDTO permissionDTO) {
+    public boolean updatePermission(PermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), permissionDTO.getId())) {
             throw new RuntimeException(ResponseMessage.PERMISSION_CODE_EXISTS);

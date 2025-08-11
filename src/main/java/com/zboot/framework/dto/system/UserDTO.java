@@ -21,7 +21,7 @@ import java.util.List;
  * @date 2025-08-11
  */
 @Data
-public class SysUserDTO {
+public class UserDTO {
 
     @Schema(description = "用户ID")
     private Long id;

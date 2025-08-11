@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.system.SysMenuDTO;
+import com.zboot.framework.dto.system.MenuDTO;
 import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.mapper.system.SysMenuMapper;
 import com.zboot.framework.query.system.SysMenuQuery;
@@ -86,7 +86,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     }
 
     @Override
-    public boolean addMenu(SysMenuDTO menuDTO) {
+    public boolean addMenu(MenuDTO menuDTO) {
         // 检查菜单名称是否重复
         if (existsName(menuDTO.getName(), null)) {
             throw new RuntimeException(ResponseMessage.MENU_NAME_EXISTS);
@@ -98,7 +98,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     }
 
     @Override
-    public boolean updateMenu(SysMenuDTO menuDTO) {
+    public boolean updateMenu(MenuDTO menuDTO) {
         // 检查菜单名称是否重复
         if (existsName(menuDTO.getName(), menuDTO.getId())) {
             throw new RuntimeException(ResponseMessage.MENU_NAME_EXISTS);
