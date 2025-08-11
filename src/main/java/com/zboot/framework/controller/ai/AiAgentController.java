@@ -1,6 +1,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.ai.AiAgentDTO;
 import com.zboot.framework.query.ai.AiAgentQuery;
@@ -51,7 +52,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail("创建失败");
+        return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
     @Operation(summary = "更新代理")
@@ -64,7 +65,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail("更新失败");
+        return R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除代理")
@@ -74,7 +75,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail("删除失败");
+        return R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "更新代理状态")
@@ -86,7 +87,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail("状态更新失败");
+        return R.fail(ResponseMessage.STATUS_UPDATE_FAIL_AI);
     }
 
     @Operation(summary = "根据平台获取代理列表")

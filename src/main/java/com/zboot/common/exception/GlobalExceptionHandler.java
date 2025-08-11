@@ -8,7 +8,9 @@ package com.zboot.common.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -42,7 +44,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotPermissionException(NotPermissionException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',权限码校验失败'{}'", requestURI, e.getMessage());
-        return R.forbidden("没有访问权限，请联系管理员授权");
+        return R.forbidden(ResponseMessage.FORBIDDEN);
     }
 
     /**
@@ -52,7 +54,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotRoleException(NotRoleException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',角色权限校验失败'{}'", requestURI, e.getMessage());
-        return R.forbidden("没有访问权限，请联系管理员授权");
+        return R.forbidden(ResponseMessage.FORBIDDEN);
     }
 
     /**
@@ -62,7 +64,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotLoginException(NotLoginException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, e.getMessage());
-        return R.unauthorized("认证失败，无法访问系统资源");
+        return R.unauthorized(ResponseMessage.UNAUTHORIZED);
     }
 
     /**
@@ -93,7 +95,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生未知异常.", requestURI, e);
-        return R.fail("系统异常，请联系管理员");
+        return R.fail(ResponseMessage.SYSTEM_ERROR);
     }
 
     /**
@@ -103,7 +105,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleException(Exception e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生系统异常.", requestURI, e);
-        return R.fail("系统异常，请联系管理员");
+        return R.fail(ResponseMessage.SYSTEM_ERROR);
     }
 
     /**
@@ -155,6 +157,6 @@ public class GlobalExceptionHandler {
     public R<Void> handleNoHandlerFoundException(NoHandlerFoundException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',无法找到该资源.", requestURI, e);
-        return R.notFound("请求资源不存在");
+        return R.notFound(ResponseMessage.NOT_FOUND);
     }
 }

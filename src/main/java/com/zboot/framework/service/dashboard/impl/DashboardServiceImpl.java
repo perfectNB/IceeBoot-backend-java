@@ -1,8 +1,6 @@
 package com.zboot.framework.service.dashboard.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.zboot.framework.entity.dashboard.DashboardDO;
-import com.zboot.framework.mapper.dashboard.DashboardMapper;
+
 import com.zboot.framework.service.dashboard.DashboardService;
 import com.zboot.framework.vo.dashboard.DashboardStatsVO;
 import com.zboot.framework.vo.dashboard.UserDistributionVO;
@@ -25,7 +23,7 @@ import java.util.Random;
  */
 @Service
 @RequiredArgsConstructor
-public class DashboardServiceImpl extends ServiceImpl<DashboardMapper, DashboardDO> implements DashboardService {
+public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsVO getDashboardStats() {

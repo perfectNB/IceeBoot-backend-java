@@ -7,7 +7,7 @@
 package com.zboot.framework.mapper.system;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.zboot.framework.entity.system.SysMenuDO;
+import com.zboot.framework.entity.system.MenuDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,7 +20,7 @@ import java.util.List;
  * @date 2025-01-11
  */
 @Mapper
-public interface SysMenuMapper extends BaseMapper<SysMenuDO> {
+public interface SysMenuMapper extends BaseMapper<MenuDO> {
 
 
 }

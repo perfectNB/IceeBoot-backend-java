@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_permission")
-public class SysPermissionDO extends ZbootDO {
+@TableName("t_permission")
+public class PermissionDO extends ZbootDO {
 
     @Schema(description = "权限名称")
     @TableField("name")

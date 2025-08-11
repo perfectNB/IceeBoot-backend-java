@@ -6,6 +6,7 @@
  */
 package com.zboot.framework.controller.system;
 
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.SysUserDTO;
@@ -63,7 +64,7 @@ public class SysUserController {
     @PostMapping
     public R<Void> addUser(@Validated @RequestBody SysUserDTO userDTO) {
         boolean success = userService.addUser(userDTO);
-        return success ? R.ok("用户创建成功") : R.fail("用户创建失败");
+        return success ? R.ok(ResponseMessage.USER_CREATE_SUCCESS) : R.fail(ResponseMessage.USER_CREATE_FAIL);
     }
 
     /**
@@ -73,7 +74,7 @@ public class SysUserController {
     @PutMapping
     public R<Void> updateUser(@Validated @RequestBody SysUserDTO userDTO) {
         boolean success = userService.updateUser(userDTO);
-        return success ? R.ok("用户更新成功") : R.fail("用户更新失败");
+        return success ? R.ok(ResponseMessage.USER_UPDATE_SUCCESS) : R.fail(ResponseMessage.USER_UPDATE_FAIL);
     }
 
     /**
@@ -83,7 +84,7 @@ public class SysUserController {
     @DeleteMapping
     public R<Void> deleteUsers(@RequestBody List<Long> ids) {
         boolean success = userService.deleteUsers(ids);
-        return success ? R.ok("用户删除成功") : R.fail("用户删除失败");
+        return success ? R.ok(ResponseMessage.USER_DELETE_SUCCESS) : R.fail(ResponseMessage.USER_DELETE_FAIL);
     }
 
     /**
@@ -93,7 +94,7 @@ public class SysUserController {
     @PutMapping("/{id}/password")
     public R<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
         boolean success = userService.resetPassword(id, newPassword);
-        return success ? R.ok("密码重置成功") : R.fail("密码重置失败");
+        return success ? R.ok(ResponseMessage.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.PASSWORD_RESET_FAIL);
     }
 
     /**
@@ -103,7 +104,7 @@ public class SysUserController {
     @PutMapping("/{id}/status")
     public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         boolean success = userService.updateStatus(id, status);
-        return success ? R.ok("状态修改成功") : R.fail("状态修改失败");
+        return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
 
     /**

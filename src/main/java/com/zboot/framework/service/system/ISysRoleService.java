@@ -8,7 +8,7 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.entity.system.SysRoleDO;
+import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.dto.system.SysRoleDTO;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.vo.system.SysRoleVO;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface ISysRoleService extends IService<SysRoleDO> {
+public interface ISysRoleService extends IService<RoleDO> {
 
     /**
      * 分页查询角色列表
@@ -85,7 +85,7 @@ public interface ISysRoleService extends IService<SysRoleDO> {
      * @param code 角色编码
      * @return 角色信息
      */
-    SysRoleDO getRoleByCode(String code);
+    RoleDO getRoleByCode(String code);
 
     /**
      * 检查角色编码是否存在
@@ -111,7 +111,7 @@ public interface ISysRoleService extends IService<SysRoleDO> {
      * @param userId 用户ID
      * @return 角色列表
      */
-    List<SysRoleDO> getRolesByUserId(Long userId);
+    List<RoleDO> getRolesByUserId(Long userId);
 
     /**
      * 为用户分配角色

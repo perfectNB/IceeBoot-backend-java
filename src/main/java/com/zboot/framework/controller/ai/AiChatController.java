@@ -6,6 +6,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.ai.AiChatSessionDTO;
 import com.zboot.framework.dto.ai.AiChatMessageDTO;
@@ -58,7 +59,7 @@ public class AiChatController {
         if (result) {
             return R.ok();
         }
-        return R.fail("创建失败");
+        return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
     @Operation(summary = "删除对话会话")
@@ -68,7 +69,7 @@ public class AiChatController {
         if (result) {
             return R.ok();
         }
-        return R.fail("删除失败");
+        return R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "发送消息")

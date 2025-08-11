@@ -4,15 +4,16 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.framework.service.impl.system;
+package com.zboot.framework.service.system.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.system.SysPermissionDTO;
-import com.zboot.framework.entity.system.SysPermissionDO;
+import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.mapper.system.SysPermissionMapper;
 import com.zboot.framework.query.system.SysPermissionQuery;
 import com.zboot.framework.service.system.ISysPermissionService;
@@ -31,25 +32,25 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
-public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, SysPermissionDO> implements ISysPermissionService {
+public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, PermissionDO> implements ISysPermissionService {
 
     @Override
     public PageResult<SysPermissionVO> getPermissionPage(SysPermissionQuery query) {
         // 构建查询条件
-        LambdaQueryWrapper<SysPermissionDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(StringUtils.hasText(query.getName()), SysPermissionDO::getName, query.getName())
-                .like(StringUtils.hasText(query.getCode()), SysPermissionDO::getCode, query.getCode())
-                .eq(StringUtils.hasText(query.getType()), SysPermissionDO::getType, query.getType())
-                .eq(StringUtils.hasText(query.getStatus()), SysPermissionDO::getStatus, query.getStatus())
-                .eq(query.getParentId() != null, SysPermissionDO::getParentId, query.getParentId())
-                .ge(query.getStartTime() != null, SysPermissionDO::getCreateTime, query.getStartTime())
-                .le(query.getEndTime() != null, SysPermissionDO::getCreateTime, query.getEndTime())
-                .orderByAsc(SysPermissionDO::getSort)
-                .orderByDesc(SysPermissionDO::getCreateTime);
+        LambdaQueryWrapper<PermissionDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StringUtils.hasText(query.getName()), PermissionDO::getName, query.getName())
+                .like(StringUtils.hasText(query.getCode()), PermissionDO::getCode, query.getCode())
+                .eq(StringUtils.hasText(query.getType()), PermissionDO::getType, query.getType())
+                .eq(StringUtils.hasText(query.getStatus()), PermissionDO::getStatus, query.getStatus())
+                .eq(query.getParentId() != null, PermissionDO::getParentId, query.getParentId())
+                .ge(query.getStartTime() != null, PermissionDO::getCreateTime, query.getStartTime())
+                .le(query.getEndTime() != null, PermissionDO::getCreateTime, query.getEndTime())
+                .orderByAsc(PermissionDO::getSort)
+                .orderByDesc(PermissionDO::getCreateTime);
 
         // 分页查询
-        IPage<SysPermissionDO> page = new Page<>(query.getPageNum(), query.getPageSize());
-        IPage<SysPermissionDO> result = this.page(page, wrapper);
+        IPage<PermissionDO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<PermissionDO> result = this.page(page, wrapper);
 
         // 转换为VO
         List<SysPermissionVO> voList = result.getRecords().stream().map(permission -> {
@@ -63,10 +64,10 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
 
     @Override
     public List<SysPermissionVO> getPermissionTree() {
-        List<SysPermissionDO> permissions = this.list(
-                new LambdaQueryWrapper<SysPermissionDO>()
-                        .eq(SysPermissionDO::getStatus, "active")
-                        .orderByAsc(SysPermissionDO::getSort)
+        List<PermissionDO> permissions = this.list(
+                new LambdaQueryWrapper<PermissionDO>()
+                        .eq(PermissionDO::getStatus, "active")
+                        .orderByAsc(PermissionDO::getSort)
         );
 
         return buildPermissionTree(permissions, 0L);
@@ -74,7 +75,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
 
     @Override
     public SysPermissionVO getPermissionById(Long id) {
-        SysPermissionDO permission = this.getById(id);
+        PermissionDO permission = this.getById(id);
         if (permission == null) {
             return null;
         }
@@ -88,10 +89,10 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
     public boolean addPermission(SysPermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), null)) {
-            throw new RuntimeException("权限编码已存在");
+            throw new RuntimeException(ResponseMessage.PERMISSION_CODE_EXISTS);
         }
 
-        SysPermissionDO permission = new SysPermissionDO();
+        PermissionDO permission = new PermissionDO();
         BeanUtils.copyProperties(permissionDTO, permission);
         return this.save(permission);
     }
@@ -100,10 +101,10 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
     public boolean updatePermission(SysPermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), permissionDTO.getId())) {
-            throw new RuntimeException("权限编码已存在");
+            throw new RuntimeException(ResponseMessage.PERMISSION_CODE_EXISTS);
         }
 
-        SysPermissionDO permission = new SysPermissionDO();
+        PermissionDO permission = new PermissionDO();
         BeanUtils.copyProperties(permissionDTO, permission);
         return this.updateById(permission);
     }
@@ -115,49 +116,49 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
 
     @Override
     public boolean updateStatus(Long id, String status) {
-        SysPermissionDO permission = new SysPermissionDO();
+        PermissionDO permission = new PermissionDO();
         permission.setId(id);
         permission.setStatus(status);
         return this.updateById(permission);
     }
 
     @Override
-    public SysPermissionDO getPermissionByCode(String code) {
+    public PermissionDO getPermissionByCode(String code) {
         return this.getOne(
-                new LambdaQueryWrapper<SysPermissionDO>()
-                        .eq(SysPermissionDO::getCode, code)
+                new LambdaQueryWrapper<PermissionDO>()
+                        .eq(PermissionDO::getCode, code)
         );
     }
 
     @Override
     public boolean existsCode(String code, Long excludeId) {
-        LambdaQueryWrapper<SysPermissionDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysPermissionDO::getCode, code);
+        LambdaQueryWrapper<PermissionDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(PermissionDO::getCode, code);
         if (excludeId != null) {
-            wrapper.ne(SysPermissionDO::getId, excludeId);
+            wrapper.ne(PermissionDO::getId, excludeId);
         }
         return this.count(wrapper) > 0;
     }
 
     @Override
-    public List<SysPermissionDO> getPermissionsByUserId(Long userId) {
+    public List<PermissionDO> getPermissionsByUserId(Long userId) {
         // 简化实现，实际应该通过用户角色权限关联查询
         return this.list();
     }
 
     @Override
-    public List<SysPermissionDO> getPermissionsByRoleId(Long roleId) {
+    public List<PermissionDO> getPermissionsByRoleId(Long roleId) {
         // 简化实现，实际应该通过角色权限关联查询
         return this.list();
     }
 
     @Override
     public List<SysPermissionVO> getChildrenByParentId(Long parentId) {
-        List<SysPermissionDO> permissions = this.list(
-                new LambdaQueryWrapper<SysPermissionDO>()
-                        .eq(SysPermissionDO::getParentId, parentId)
-                        .eq(SysPermissionDO::getStatus, "active")
-                        .orderByAsc(SysPermissionDO::getSort)
+        List<PermissionDO> permissions = this.list(
+                new LambdaQueryWrapper<PermissionDO>()
+                        .eq(PermissionDO::getParentId, parentId)
+                        .eq(PermissionDO::getStatus, "active")
+                        .orderByAsc(PermissionDO::getSort)
         );
 
         return permissions.stream().map(permission -> {
@@ -170,7 +171,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
     /**
      * 构建权限树
      */
-    private List<SysPermissionVO> buildPermissionTree(List<SysPermissionDO> permissions, Long parentId) {
+    private List<SysPermissionVO> buildPermissionTree(List<PermissionDO> permissions, Long parentId) {
         return permissions.stream()
                 .filter(permission -> parentId.equals(permission.getParentId()))
                 .map(permission -> {

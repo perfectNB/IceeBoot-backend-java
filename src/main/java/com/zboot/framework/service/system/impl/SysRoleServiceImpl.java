@@ -4,15 +4,16 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.framework.service.impl.system;
+package com.zboot.framework.service.system.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.system.SysRoleDTO;
-import com.zboot.framework.entity.system.SysRoleDO;
+import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.service.system.ISysRoleService;
@@ -31,23 +32,23 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
-public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> implements ISysRoleService {
+public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> implements ISysRoleService {
 
     @Override
     public PageResult<SysRoleVO> getRolePage(SysRoleQuery query) {
         // 构建查询条件
-        LambdaQueryWrapper<SysRoleDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(StringUtils.hasText(query.getName()), SysRoleDO::getName, query.getName())
-                .like(StringUtils.hasText(query.getCode()), SysRoleDO::getCode, query.getCode())
-                .eq(StringUtils.hasText(query.getStatus()), SysRoleDO::getStatus, query.getStatus())
-                .ge(query.getStartTime() != null, SysRoleDO::getCreateTime, query.getStartTime())
-                .le(query.getEndTime() != null, SysRoleDO::getCreateTime, query.getEndTime())
-                .orderByAsc(SysRoleDO::getSort)
-                .orderByDesc(SysRoleDO::getCreateTime);
+        LambdaQueryWrapper<RoleDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StringUtils.hasText(query.getName()), RoleDO::getName, query.getName())
+                .like(StringUtils.hasText(query.getCode()), RoleDO::getCode, query.getCode())
+                .eq(StringUtils.hasText(query.getStatus()), RoleDO::getStatus, query.getStatus())
+                .ge(query.getStartTime() != null, RoleDO::getCreateTime, query.getStartTime())
+                .le(query.getEndTime() != null, RoleDO::getCreateTime, query.getEndTime())
+                .orderByAsc(RoleDO::getSort)
+                .orderByDesc(RoleDO::getCreateTime);
 
         // 分页查询
-        IPage<SysRoleDO> page = new Page<>(query.getPageNum(), query.getPageSize());
-        IPage<SysRoleDO> result = this.page(page, wrapper);
+        IPage<RoleDO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<RoleDO> result = this.page(page, wrapper);
 
         // 转换为VO
         List<SysRoleVO> voList = result.getRecords().stream().map(role -> {
@@ -61,10 +62,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> im
 
     @Override
     public List<SysRoleVO> getAllRoles() {
-        List<SysRoleDO> roles = this.list(
-                new LambdaQueryWrapper<SysRoleDO>()
-                        .eq(SysRoleDO::getStatus, "active")
-                        .orderByAsc(SysRoleDO::getSort)
+        List<RoleDO> roles = this.list(
+                new LambdaQueryWrapper<RoleDO>()
+                        .eq(RoleDO::getStatus, "active")
+                        .orderByAsc(RoleDO::getSort)
         );
 
         return roles.stream().map(role -> {
@@ -76,7 +77,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> im
 
     @Override
     public SysRoleVO getRoleById(Long id) {
-        SysRoleDO role = this.getById(id);
+        RoleDO role = this.getById(id);
         if (role == null) {
             return null;
         }
@@ -90,15 +91,15 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> im
     public boolean addRole(SysRoleDTO roleDTO) {
         // 检查角色名称是否重复
         if (existsName(roleDTO.getName(), null)) {
-            throw new RuntimeException("角色名称已存在");
+            throw new RuntimeException(ResponseMessage.ROLE_NAME_EXISTS);
         }
 
         // 检查角色编码是否重复
         if (existsCode(roleDTO.getCode(), null)) {
-            throw new RuntimeException("角色编码已存在");
+            throw new RuntimeException(ResponseMessage.ROLE_CODE_EXISTS);
         }
 
-        SysRoleDO role = new SysRoleDO();
+        RoleDO role = new RoleDO();
         BeanUtils.copyProperties(roleDTO, role);
         return this.save(role);
     }
@@ -107,15 +108,15 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> im
     public boolean updateRole(SysRoleDTO roleDTO) {
         // 检查角色名称是否重复
         if (existsName(roleDTO.getName(), roleDTO.getId())) {
-            throw new RuntimeException("角色名称已存在");
+            throw new RuntimeException(ResponseMessage.ROLE_NAME_EXISTS);
         }
 
         // 检查角色编码是否重复
         if (existsCode(roleDTO.getCode(), roleDTO.getId())) {
-            throw new RuntimeException("角色编码已存在");
+            throw new RuntimeException(ResponseMessage.ROLE_CODE_EXISTS);
         }
 
-        SysRoleDO role = new SysRoleDO();
+        RoleDO role = new RoleDO();
         BeanUtils.copyProperties(roleDTO, role);
         return this.updateById(role);
     }
@@ -127,42 +128,42 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleDO> im
 
     @Override
     public boolean updateStatus(Long id, String status) {
-        SysRoleDO role = new SysRoleDO();
+        RoleDO role = new RoleDO();
         role.setId(id);
         role.setStatus(status);
         return this.updateById(role);
     }
 
     @Override
-    public SysRoleDO getRoleByCode(String code) {
+    public RoleDO getRoleByCode(String code) {
         return this.getOne(
-                new LambdaQueryWrapper<SysRoleDO>()
-                        .eq(SysRoleDO::getCode, code)
+                new LambdaQueryWrapper<RoleDO>()
+                        .eq(RoleDO::getCode, code)
         );
     }
 
     @Override
     public boolean existsCode(String code, Long excludeId) {
-        LambdaQueryWrapper<SysRoleDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysRoleDO::getCode, code);
+        LambdaQueryWrapper<RoleDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RoleDO::getCode, code);
         if (excludeId != null) {
-            wrapper.ne(SysRoleDO::getId, excludeId);
+            wrapper.ne(RoleDO::getId, excludeId);
         }
         return this.count(wrapper) > 0;
     }
 
     @Override
     public boolean existsName(String name, Long excludeId) {
-        LambdaQueryWrapper<SysRoleDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysRoleDO::getName, name);
+        LambdaQueryWrapper<RoleDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RoleDO::getName, name);
         if (excludeId != null) {
-            wrapper.ne(SysRoleDO::getId, excludeId);
+            wrapper.ne(RoleDO::getId, excludeId);
         }
         return this.count(wrapper) > 0;
     }
 
     @Override
-    public List<SysRoleDO> getRolesByUserId(Long userId) {
+    public List<RoleDO> getRolesByUserId(Long userId) {
         // 简化实现，实际应该通过用户角色关联表查询
         return this.list();
     }

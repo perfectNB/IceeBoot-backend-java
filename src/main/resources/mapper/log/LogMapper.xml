@@ -16,7 +16,7 @@
         <result column="update_time" property="updateTime" />
         <result column="create_by" property="createBy" />
         <result column="update_by" property="updateBy" />
-        <result column="deleted" property="deleted" />
+        <result column="delFlag" property="delFlag" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

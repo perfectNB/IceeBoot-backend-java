@@ -8,7 +8,7 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.entity.system.SysPermissionDO;
+import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.dto.system.SysPermissionDTO;
 import com.zboot.framework.query.system.SysPermissionQuery;
 import com.zboot.framework.vo.system.SysPermissionVO;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface ISysPermissionService extends IService<SysPermissionDO> {
+public interface ISysPermissionService extends IService<PermissionDO> {
 
     /**
      * 分页查询权限列表
@@ -85,7 +85,7 @@ public interface ISysPermissionService extends IService<SysPermissionDO> {
      * @param code 权限编码
      * @return 权限信息
      */
-    SysPermissionDO getPermissionByCode(String code);
+    PermissionDO getPermissionByCode(String code);
 
     /**
      * 检查权限编码是否存在
@@ -102,7 +102,7 @@ public interface ISysPermissionService extends IService<SysPermissionDO> {
      * @param userId 用户ID
      * @return 权限列表
      */
-    List<SysPermissionDO> getPermissionsByUserId(Long userId);
+    List<PermissionDO> getPermissionsByUserId(Long userId);
 
     /**
      * 根据角色ID获取权限列表
@@ -110,7 +110,7 @@ public interface ISysPermissionService extends IService<SysPermissionDO> {
      * @param roleId 角色ID
      * @return 权限列表
      */
-    List<SysPermissionDO> getPermissionsByRoleId(Long roleId);
+    List<PermissionDO> getPermissionsByRoleId(Long roleId);
 
     /**
      * 根据父级ID获取子权限列表

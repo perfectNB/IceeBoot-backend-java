@@ -8,7 +8,7 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.entity.system.SysMenuDO;
+import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.dto.system.SysMenuDTO;
 import com.zboot.framework.query.system.SysMenuQuery;
 import com.zboot.framework.vo.system.SysMenuVO;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface ISysMenuService extends IService<SysMenuDO> {
+public interface ISysMenuService extends IService<MenuDO> {
 
     /**
      * 分页查询菜单列表
@@ -94,7 +94,7 @@ public interface ISysMenuService extends IService<SysMenuDO> {
      * @param userId 用户ID
      * @return 菜单列表
      */
-    List<SysMenuDO> getMenusByUserId(Long userId);
+    List<MenuDO> getMenusByUserId(Long userId);
 
     /**
      * 根据角色ID获取菜单列表
@@ -102,7 +102,7 @@ public interface ISysMenuService extends IService<SysMenuDO> {
      * @param roleId 角色ID
      * @return 菜单列表
      */
-    List<SysMenuDO> getMenusByRoleId(Long roleId);
+    List<MenuDO> getMenusByRoleId(Long roleId);
 
     /**
      * 根据父级ID获取子菜单列表

@@ -6,6 +6,7 @@
 package com.zboot.common.core.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.enums.ResultCodeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -126,7 +127,7 @@ public class R<T> implements Serializable {
      * @return 成功消息
      */
     public static <T> R<T> ok() {
-        return new R<>(SUCCESS, "操作成功");
+        return new R<>(SUCCESS, ResponseMessage.SUCCESS);
     }
 
     /**
@@ -135,7 +136,7 @@ public class R<T> implements Serializable {
      * @return 成功消息
      */
     public static <T> R<T> ok(T result) {
-        return new R<>(SUCCESS, "操作成功", result);
+        return new R<>(SUCCESS, ResponseMessage.SUCCESS, result);
     }
 
     /**
@@ -165,7 +166,7 @@ public class R<T> implements Serializable {
      * @return 错误消息
      */
     public static <T> R<T> fail() {
-        return new R<>(FAIL, "操作失败");
+        return new R<>(FAIL, ResponseMessage.FAIL);
     }
 
     /**
@@ -228,7 +229,7 @@ public class R<T> implements Serializable {
      * @return 未授权消息
      */
     public static <T> R<T> unauthorized() {
-        return new R<>(UNAUTHORIZED, "未检测到登录用户");
+        return new R<>(UNAUTHORIZED, ResponseMessage.UNAUTHORIZED);
     }
 
     /**
@@ -247,7 +248,7 @@ public class R<T> implements Serializable {
      * @return 禁止访问消息
      */
     public static <T> R<T> forbidden() {
-        return new R<>(FORBIDDEN, "没有权限访问该资源");
+        return new R<>(FORBIDDEN, ResponseMessage.FORBIDDEN);
     }
 
     /**
@@ -285,7 +286,7 @@ public class R<T> implements Serializable {
      * @return 参数错误消息
      */
     public static <T> R<T> badRequest() {
-        return new R<>(BAD_REQUEST, "请求参数错误");
+        return new R<>(BAD_REQUEST, ResponseMessage.BAD_REQUEST);
     }
 
     /**

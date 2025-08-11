@@ -6,8 +6,6 @@
  */
 package com.zboot.framework.service.dashboard;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.entity.dashboard.DashboardDO;
 import com.zboot.framework.vo.dashboard.DashboardStatsVO;
 import com.zboot.framework.vo.dashboard.UserDistributionVO;
 import com.zboot.framework.vo.dashboard.VisitTrendVO;
@@ -20,7 +18,7 @@ import java.util.List;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface DashboardService extends IService<DashboardDO> {
+public interface DashboardService {
 
     /**
      * 获取工作台统计数据

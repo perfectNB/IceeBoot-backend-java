@@ -6,10 +6,8 @@
  */
 package com.zboot.framework.service.redis;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.redis.RedisQueryDTO;
-import com.zboot.framework.entity.redis.RedisDO;
 import com.zboot.framework.vo.redis.RedisKeyVO;
 
 /**
@@ -18,7 +16,7 @@ import com.zboot.framework.vo.redis.RedisKeyVO;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface RedisService extends IService<RedisDO> {
+public interface RedisService {
 
     /**
      * 获取Redis键列表

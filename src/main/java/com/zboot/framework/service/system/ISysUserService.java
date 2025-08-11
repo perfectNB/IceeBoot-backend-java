@@ -8,7 +8,7 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.entity.system.SysUserDO;
+import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.dto.system.SysUserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author CodeIcee
  * @date 2025-08-11
  */
-public interface ISysUserService extends IService<SysUserDO> {
+public interface ISysUserService extends IService<UserDO> {
 
     /**
      * 分页查询用户列表
@@ -87,7 +87,7 @@ public interface ISysUserService extends IService<SysUserDO> {
      * @param username 用户名
      * @return 用户信息
      */
-    SysUserDO getUserByUsername(String username);
+    UserDO getUserByUsername(String username);
 
     /**
      * 根据手机号获取用户
@@ -95,7 +95,7 @@ public interface ISysUserService extends IService<SysUserDO> {
      * @param phone 手机号
      * @return 用户信息
      */
-    SysUserDO getUserByPhone(String phone);
+    UserDO getUserByPhone(String phone);
 
     /**
      * 根据邮箱获取用户
@@ -103,7 +103,7 @@ public interface ISysUserService extends IService<SysUserDO> {
      * @param email 邮箱
      * @return 用户信息
      */
-    SysUserDO getUserByEmail(String email);
+    UserDO getUserByEmail(String email);
 
     /**
      * 检查用户名是否存在

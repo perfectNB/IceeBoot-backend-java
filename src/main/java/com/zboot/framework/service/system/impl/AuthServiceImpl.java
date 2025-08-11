@@ -4,11 +4,12 @@
  * @author CodeIcee
  * @date 2025-01-11
  */
-package com.zboot.framework.service.impl.system;
+package com.zboot.framework.service.system.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.framework.dto.system.LoginDTO;
-import com.zboot.framework.entity.system.SysUserDO;
+import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.service.system.IAuthService;
 import com.zboot.framework.service.system.ISysUserService;
 import com.zboot.framework.vo.system.LoginVO;
@@ -45,9 +46,9 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 查询用户
-        SysUserDO user = userService.getUserByUsername(loginDTO.getUsername());
+        UserDO user = userService.getUserByUsername(loginDTO.getUsername());
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new RuntimeException(ResponseMessage.USER_NOT_EXIST);
         }
 
         // 检查用户状态
@@ -57,7 +58,7 @@ public class AuthServiceImpl implements IAuthService {
 
         // 验证密码
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-            throw new RuntimeException("密码错误");
+            throw new RuntimeException(ResponseMessage.PASSWORD_ERROR);
         }
 
         // 更新最后登录信息
@@ -102,7 +103,7 @@ public class AuthServiceImpl implements IAuthService {
         }
         
         Long userId = StpUtil.getLoginIdAsLong();
-        SysUserDO user = userService.getById(userId);
+        UserDO user = userService.getById(userId);
         
         // 生成新token
         String accessToken = StpUtil.getTokenValue();
