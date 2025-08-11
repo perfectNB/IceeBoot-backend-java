@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.system.SysRoleDTO;
+import com.zboot.framework.dto.system.RoleDTO;
 import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
 import com.zboot.framework.query.system.SysRoleQuery;
@@ -88,7 +88,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     }
 
     @Override
-    public boolean addRole(SysRoleDTO roleDTO) {
+    public boolean addRole(RoleDTO roleDTO) {
         // 检查角色名称是否重复
         if (existsName(roleDTO.getName(), null)) {
             throw new RuntimeException(ResponseMessage.ROLE_NAME_EXISTS);
@@ -105,7 +105,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     }
 
     @Override
-    public boolean updateRole(SysRoleDTO roleDTO) {
+    public boolean updateRole(RoleDTO roleDTO) {
         // 检查角色名称是否重复
         if (existsName(roleDTO.getName(), roleDTO.getId())) {
             throw new RuntimeException(ResponseMessage.ROLE_NAME_EXISTS);

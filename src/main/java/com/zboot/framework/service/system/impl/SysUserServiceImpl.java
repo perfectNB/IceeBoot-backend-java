@@ -14,7 +14,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.mapper.system.SysUserMapper;
 import com.zboot.framework.service.system.ISysUserService;
-import com.zboot.framework.dto.system.SysUserDTO;
+import com.zboot.framework.dto.system.UserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
@@ -81,7 +81,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     }
 
     @Override
-    public boolean addUser(SysUserDTO userDTO) {
+    public boolean addUser(UserDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         
@@ -94,7 +94,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     }
 
     @Override
-    public boolean updateUser(SysUserDTO userDTO) {
+    public boolean updateUser(UserDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         

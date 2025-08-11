@@ -9,7 +9,7 @@ package com.zboot.framework.controller.system;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.SysUserDTO;
+import com.zboot.framework.dto.system.UserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.service.system.ISysUserService;
 import com.zboot.framework.vo.system.SysUserVO;
@@ -62,7 +62,7 @@ public class SysUserController {
      */
     @Operation(summary = "新增用户", description = "创建新用户")
     @PostMapping
-    public R<Void> addUser(@Validated @RequestBody SysUserDTO userDTO) {
+    public R<Void> addUser(@Validated @RequestBody UserDTO userDTO) {
         boolean success = userService.addUser(userDTO);
         return success ? R.ok(ResponseMessage.USER_CREATE_SUCCESS) : R.fail(ResponseMessage.USER_CREATE_FAIL);
     }
@@ -72,7 +72,7 @@ public class SysUserController {
      */
     @Operation(summary = "更新用户", description = "更新用户信息")
     @PutMapping
-    public R<Void> updateUser(@Validated @RequestBody SysUserDTO userDTO) {
+    public R<Void> updateUser(@Validated @RequestBody UserDTO userDTO) {
         boolean success = userService.updateUser(userDTO);
         return success ? R.ok(ResponseMessage.USER_UPDATE_SUCCESS) : R.fail(ResponseMessage.USER_UPDATE_FAIL);
     }

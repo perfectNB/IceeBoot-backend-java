@@ -9,9 +9,7 @@ package com.zboot.framework.mapper.system;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zboot.framework.entity.system.RolePermissionDO;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
 
 /**
  * 角色权限关联Mapper接口

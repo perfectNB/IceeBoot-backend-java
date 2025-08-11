@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2025-08-11
  */
 @Data
-public class SysRoleDTO {
+public class RoleDTO {
 
     /**
      * 角色ID

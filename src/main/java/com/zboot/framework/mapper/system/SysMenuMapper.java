@@ -9,9 +9,7 @@ package com.zboot.framework.mapper.system;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zboot.framework.entity.system.MenuDO;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
 
 /**
  * 系统菜单Mapper接口
