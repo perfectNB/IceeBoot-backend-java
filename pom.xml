@@ -21,8 +21,8 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.2.0</spring-boot.version>
-        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <spring-boot.version>3.1.5</spring-boot.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <sa-token.version>1.37.0</sa-token.version>
         <mysql.version>8.0.33</mysql.version>
         <redis.version>3.2.0</redis.version>
@@ -54,6 +54,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Spring Boot WebFlux for reactive streaming -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!-- Spring Boot Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,11 +72,19 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+        <!-- Spring Boot Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- Spring Boot Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+
+
 
         <!-- Spring Boot MongoDB -->
         <dependency>
@@ -94,7 +108,7 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <version>3.5.8</version>
         </dependency>
 
         <!-- MySQL Driver -->
@@ -119,11 +133,11 @@
         </dependency>
 
         <!-- Activiti -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.activiti</groupId>
             <artifactId>activiti-spring-boot-starter</artifactId>
             <version>${activiti.version}</version>
-        </dependency>
+        </dependency> -->
 
         <!-- Hutool -->
         <dependency>
@@ -179,7 +193,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
+                <version>3.1.5</version>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -192,9 +206,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.10.1</version>
                 <configuration>
-                    <release>17</release>
+                    <source>17</source>
+                    <target>17</target>
                     <encoding>UTF-8</encoding>
                     <annotationProcessorPaths>
                         <path>

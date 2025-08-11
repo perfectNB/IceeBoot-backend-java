@@ -16,6 +16,8 @@ spring:
       connection-timeout: 30000
       connection-test-query: SELECT 1
 
+     
+
   # Redis配置
   data:
     redis:
@@ -30,6 +32,14 @@ spring:
           max-idle: 16
           max-active: 16
           max-wait: -1ms
+    # MongoDB配置（默认关闭）
+    mongodb:
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DATABASE:zboot}
+      username: ${MONGODB_USERNAME:}
+      password: ${MONGODB_PASSWORD:}
+      auto-index-creation: false
 
   # Elasticsearch配置（默认关闭）
   elasticsearch:
@@ -40,6 +50,11 @@ spring:
     repositories:
       enabled: ${ELASTICSEARCH_REPOSITORIES_ENABLED:false}
 
+  # 自动配置排除（禁用MongoDB自动配置）
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
 
   # RabbitMQ配置（默认关闭）
   rabbitmq:
@@ -77,7 +92,7 @@ mybatis-plus:
 sa-token:
   token-name: Authorization
   timeout: 7200
-  activity-timeout: 1800
+  active-timeout: 1800
   is-concurrent: true
   is-share: true
   token-style: uuid
