@@ -21,19 +21,5 @@ import java.util.List;
 @Mapper
 public interface AiLLMMapper extends BaseMapper<AiLLMDO> {
 
-    /**
-     * 根据状态获取模型列表
-     *
-     * @param status 状态
-     * @return 模型列表
-     */
-    List<AiLLMDO> selectByStatus(@Param("status") String status);
 
-    /**
-     * 根据名称模糊查询
-     *
-     * @param name 模型名称
-     * @return 模型列表
-     */
-    List<AiLLMDO> selectByNameLike(@Param("name") String name);
 }

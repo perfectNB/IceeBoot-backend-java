@@ -27,41 +27,6 @@
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 
-    <!-- 根据平台查询代理列表 -->
-    <select id="selectByPlatform" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_agent
-        WHERE platform = #{platform}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
-    <!-- 根据类型查询代理列表 -->
-    <select id="selectByType" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_agent
-        WHERE type = #{type}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据平台和类型查询代理列表 -->
-    <select id="selectByPlatformAndType" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_agent
-        WHERE platform = #{platform}
-        AND type = #{type}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据状态查询代理列表 -->
-    <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_ai_agent
-        WHERE status = #{status}
-        AND del_flag = 0
-        ORDER BY create_time DESC
-    </select>
 
 </mapper>

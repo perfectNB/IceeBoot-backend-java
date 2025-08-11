@@ -21,21 +21,7 @@ import java.util.List;
 @Mapper
 public interface AiLLMKeyMapper extends BaseMapper<AiLLMKeyDO> {
 
-    /**
-     * 根据大模型ID获取密钥列表
-     *
-     * @param llmId 大模型ID
-     * @return 密钥列表
-     */
-    List<AiLLMKeyDO> selectByLlmId(@Param("llmId") Long llmId);
 
-    /**
-     * 根据状态获取密钥列表
-     *
-     * @param status 状态
-     * @return 密钥列表
-     */
-    List<AiLLMKeyDO> selectByStatus(@Param("status") String status);
 
     /**
      * 根据大模型ID和状态获取密钥列表

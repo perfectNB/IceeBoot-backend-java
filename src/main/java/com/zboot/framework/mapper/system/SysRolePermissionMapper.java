@@ -46,27 +46,5 @@ public interface SysRolePermissionMapper extends BaseMapper<SysRolePermissionDO>
      */
     List<Long> selectPermissionIdsByUserId(@Param("userId") Long userId);
 
-    /**
-     * 批量插入角色权限关联
-     *
-     * @param rolePermissions 角色权限关联列表
-     * @return 影响行数
-     */
-    int insertBatch(@Param("rolePermissions") List<SysRolePermissionDO> rolePermissions);
 
-    /**
-     * 根据角色ID删除角色权限关联
-     *
-     * @param roleId 角色ID
-     * @return 影响行数
-     */
-    int deleteByRoleId(@Param("roleId") Long roleId);
-
-    /**
-     * 根据权限ID删除角色权限关联
-     *
-     * @param permissionId 权限ID
-     * @return 影响行数
-     */
-    int deleteByPermissionId(@Param("permissionId") Long permissionId);
 }

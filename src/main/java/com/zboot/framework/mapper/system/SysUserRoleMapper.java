@@ -38,27 +38,5 @@ public interface SysUserRoleMapper extends BaseMapper<SysUserRoleDO> {
      */
     List<Long> selectUserIdsByRoleId(@Param("roleId") Long roleId);
 
-    /**
-     * 批量插入用户角色关联
-     *
-     * @param userRoles 用户角色关联列表
-     * @return 影响行数
-     */
-    int insertBatch(@Param("userRoles") List<SysUserRoleDO> userRoles);
 
-    /**
-     * 根据用户ID删除用户角色关联
-     *
-     * @param userId 用户ID
-     * @return 影响行数
-     */
-    int deleteByUserId(@Param("userId") Long userId);
-
-    /**
-     * 根据角色ID删除用户角色关联
-     *
-     * @param roleId 角色ID
-     * @return 影响行数
-     */
-    int deleteByRoleId(@Param("roleId") Long roleId);
 }
