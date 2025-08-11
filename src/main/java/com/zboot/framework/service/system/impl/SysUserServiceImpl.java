@@ -180,12 +180,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
     @Override
     public List<String> getUserPermissions(Long userId) {
-        return sysUserMapper.selectPermissionsByUserId(userId);
+        return sysUserMapper.selectPermissionsByUserId(userId)
+                .stream()
+                .map(permission -> permission.getCode())
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<String> getUserRoles(Long userId) {
-        return sysUserMapper.selectRolesByUserId(userId);
+        return sysUserMapper.selectRolesByUserId(userId)
+                .stream()
+                .map(role -> role.getCode())
+                .collect(Collectors.toList());
     }
 
     /**

@@ -18,6 +18,8 @@ spring:
     name: zboot-backend-java
   profiles:
     active: ${APP_PROFILE:dev}
+  main:
+    allow-bean-definition-overriding: true
 
   
   # 文件上传配置
