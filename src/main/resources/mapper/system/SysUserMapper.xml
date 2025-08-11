@@ -25,4 +25,26 @@
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 
+    <!-- 根据用户ID查询权限 -->
+    <select id="selectPermissionsByUserId" parameterType="java.lang.Long" resultType="com.zboot.framework.entity.system.PermissionDO">
+        SELECT DISTINCT p.*
+        FROM permission p
+        INNER JOIN role_permission rp ON p.id = rp.permission_id
+        INNER JOIN user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.del_flag = 0
+        AND ur.del_flag = 0
+        AND rp.del_flag = 0
+    </select>
+
+    <!-- 根据用户ID查询角色 -->
+    <select id="selectRolesByUserId" parameterType="java.lang.Long" resultType="com.zboot.framework.entity.system.RoleDO">
+        SELECT r.*
+        FROM role r
+        INNER JOIN user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND r.del_flag = 0
+        AND ur.del_flag = 0
+    </select>
+
 </mapper>
