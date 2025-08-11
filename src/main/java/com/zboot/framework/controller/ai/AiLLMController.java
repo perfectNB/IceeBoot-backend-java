@@ -25,7 +25,7 @@ import java.util.Map;
  * AI大模型管理控制器
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-08-11
  */
 @Tag(name = "AI大模型管理", description = "AI大模型相关接口")
 @RestController

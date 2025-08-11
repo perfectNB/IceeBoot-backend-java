@@ -22,29 +22,7 @@ import java.util.List;
 @Mapper
 public interface SysRolePermissionMapper extends BaseMapper<SysRolePermissionDO> {
 
-    /**
-     * 根据角色ID查询权限ID列表
-     *
-     * @param roleId 角色ID
-     * @return 权限ID列表
-     */
-    List<Long> selectPermissionIdsByRoleId(@Param("roleId") Long roleId);
 
-    /**
-     * 根据权限ID查询角色ID列表
-     *
-     * @param permissionId 权限ID
-     * @return 角色ID列表
-     */
-    List<Long> selectRoleIdsByPermissionId(@Param("permissionId") Long permissionId);
-
-    /**
-     * 根据用户ID查询权限ID列表
-     *
-     * @param userId 用户ID
-     * @return 权限ID列表
-     */
-    List<Long> selectPermissionIdsByUserId(@Param("userId") Long userId);
 
 
 }

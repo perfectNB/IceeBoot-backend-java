@@ -24,11 +24,5 @@ public interface SysPermissionMapper extends BaseMapper<SysPermissionDO> {
 
 
 
-    /**
-     * 根据父级ID查询子权限列表
-     *
-     * @param parentId 父级ID
-     * @return 权限列表
-     */
-    List<SysPermissionDO> selectByParentId(@Param("parentId") Long parentId);
+
 }

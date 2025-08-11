@@ -27,7 +27,7 @@ import java.util.Map;
  * AI对话管理控制器
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-08-11
  */
 @Tag(name = "AI对话管理", description = "AI对话相关接口")
 @RestController
