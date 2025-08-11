@@ -3,7 +3,7 @@
 <mapper namespace="com.zboot.framework.mapper.system.SysUserMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.SysUserDO">
+    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.UserDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="username" property="username" jdbcType="VARCHAR"/>
         <result column="password" property="password" jdbcType="VARCHAR"/>

@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_role_permission")
-public class SysRolePermissionDO extends ZbootDO {
+@TableName("t_role_permission")
+public class RolePermissionDO extends ZbootDO {
 
     @Schema(description = "角色ID")
     @TableField("role_id")

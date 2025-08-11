@@ -1,17 +1,11 @@
 package com.zboot.framework.service.redis.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.utils.RedisUtils;
 import com.zboot.framework.dto.redis.RedisQueryDTO;
-import com.zboot.framework.entity.redis.RedisDO;
-import com.zboot.framework.mapper.redis.RedisMapper;
 import com.zboot.framework.service.redis.RedisService;
 import com.zboot.framework.vo.redis.RedisKeyVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -29,8 +23,9 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class RedisServiceImpl extends ServiceImpl<RedisMapper, RedisDO> implements RedisService {
+public class RedisServiceImpl implements RedisService {
 
+    private final RedisUtils redisUtils;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override

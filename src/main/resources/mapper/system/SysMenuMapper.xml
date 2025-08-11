@@ -3,28 +3,32 @@
 <mapper namespace="com.zboot.framework.mapper.system.SysMenuMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.SysMenuDO">
+    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.MenuDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="menu_name" property="menuName" jdbcType="VARCHAR"/>
-        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
-        <result column="menu_type" property="menuType" jdbcType="VARCHAR"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
         <result column="path" property="path" jdbcType="VARCHAR"/>
         <result column="component" property="component" jdbcType="VARCHAR"/>
-        <result column="permission" property="permission" jdbcType="VARCHAR"/>
         <result column="icon" property="icon" jdbcType="VARCHAR"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
         <result column="sort" property="sort" jdbcType="INTEGER"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="hidden" property="hidden" jdbcType="TINYINT"/>
+        <result column="keep_alive" property="keepAlive" jdbcType="TINYINT"/>
+        <result column="requires_auth" property="requiresAuth" jdbcType="TINYINT"/>
+        <result column="link" property="link" jdbcType="VARCHAR"/>
         <result column="status" property="status" jdbcType="VARCHAR"/>
-        <result column="visible" property="visible" jdbcType="TINYINT"/>
+        <result column="permissions" property="permissions" jdbcType="VARCHAR"/>
         <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
-        <result column="del_flag" property="delFlag" jdbcType="TINYINT"/>
+        <result column="del_flag" property="delFlag" jdbcType="INTEGER"/>
     </resultMap>
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, menu_name, parent_id, menu_type, path, component, permission, icon, sort, status, visible,
+        id, title, name, path, component, icon, parent_id, sort, type, hidden, keep_alive, requires_auth, link, status, permissions,
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 

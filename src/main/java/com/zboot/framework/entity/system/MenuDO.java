@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_menu")
-public class SysMenuDO extends ZbootDO {
+@TableName("t_menu")
+public class MenuDO extends ZbootDO {
 
     @Schema(description = "菜单标题")
     @TableField("title")

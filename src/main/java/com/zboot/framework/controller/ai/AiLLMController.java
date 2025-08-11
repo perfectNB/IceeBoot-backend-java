@@ -6,6 +6,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.ai.AiLLMDTO;
 import com.zboot.framework.query.ai.AiLLMQuery;
@@ -56,7 +57,7 @@ public class AiLLMController {
         if (result) {
             return R.ok();
         }
-        return R.fail("创建失败");
+        return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
     @Operation(summary = "更新大模型")
@@ -69,7 +70,7 @@ public class AiLLMController {
         if (result) {
             return R.ok();
         }
-        return R.fail("更新失败");
+        return R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除大模型")
@@ -79,7 +80,7 @@ public class AiLLMController {
         if (result) {
             return R.ok();
         }
-        return R.fail("删除失败");
+        return R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "添加大模型密钥")

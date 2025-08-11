@@ -22,8 +22,8 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_role")
-public class SysRoleDO extends ZbootDO {
+@TableName("t_role")
+public class RoleDO extends ZbootDO {
 
     @Schema(description = "角色名称")
     @TableField("name")

@@ -7,7 +7,7 @@
 package com.zboot.framework.mapper.system;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.zboot.framework.entity.system.SysRolePermissionDO;
+import com.zboot.framework.entity.system.RolePermissionDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,7 +20,7 @@ import java.util.List;
  * @date 2025-08-11
  */
 @Mapper
-public interface SysRolePermissionMapper extends BaseMapper<SysRolePermissionDO> {
+public interface SysRolePermissionMapper extends BaseMapper<RolePermissionDO> {
 
 
 

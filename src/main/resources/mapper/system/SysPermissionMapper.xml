@@ -3,25 +3,27 @@
 <mapper namespace="com.zboot.framework.mapper.system.SysPermissionMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.SysPermissionDO">
+    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.PermissionDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="permission_name" property="permissionName" jdbcType="VARCHAR"/>
-        <result column="permission_code" property="permissionCode" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
         <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
-        <result column="permission_type" property="permissionType" jdbcType="VARCHAR"/>
-        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+        <result column="method" property="method" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
         <result column="status" property="status" jdbcType="VARCHAR"/>
         <result column="sort" property="sort" jdbcType="INTEGER"/>
         <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
-        <result column="del_flag" property="delFlag" jdbcType="TINYINT"/>
+        <result column="del_flag" property="delFlag" jdbcType="INTEGER"/>
     </resultMap>
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, permission_name, permission_code, parent_id, permission_type, remark, status, sort,
+        id, name, code, type, parent_id, path, method, description, status, sort,
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 

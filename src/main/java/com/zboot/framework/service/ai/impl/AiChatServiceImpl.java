@@ -1,4 +1,4 @@
-package com.zboot.framework.service.impl.ai;
+package com.zboot.framework.service.ai.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
