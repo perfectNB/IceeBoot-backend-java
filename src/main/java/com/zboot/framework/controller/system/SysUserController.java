@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Tag(name = "用户管理", description = "用户增删改查、状态管理等接口")
 @RestController
-@RequestMapping("/system/user")
+@RequestMapping("/v1/users")
 @RequiredArgsConstructor
 public class SysUserController {
 

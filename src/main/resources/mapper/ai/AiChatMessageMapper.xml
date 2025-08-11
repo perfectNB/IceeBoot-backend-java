@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zboot.framework.mapper.ai.AiChatMessageMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.ai.AiChatMessageDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="session_id" property="sessionId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="role" property="role" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="del_flag" property="delFlag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, session_id, user_id, role, content,
+        create_by, create_time, update_by, update_time, del_flag
+    </sql>
+
+    <!-- 根据会话ID查询消息列表 -->
+    <select id="selectBySessionId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_ai_chat_message
+        WHERE session_id = #{sessionId}
+        AND del_flag = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 根据用户ID查询消息列表 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_ai_chat_message
+        WHERE user_id = #{userId}
+        AND del_flag = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据角色查询消息列表 -->
+    <select id="selectByRole" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_ai_chat_message
+        WHERE role = #{role}
+        AND del_flag = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据会话ID和角色查询消息列表 -->
+    <select id="selectBySessionIdAndRole" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_ai_chat_message
+        WHERE session_id = #{sessionId}
+        AND role = #{role}
+        AND del_flag = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 根据会话ID删除消息 -->
+    <delete id="deleteBySessionId">
+        UPDATE t_ai_chat_message
+        SET del_flag = 1
+        WHERE session_id = #{sessionId}
+    </delete>
+
+</mapper>
