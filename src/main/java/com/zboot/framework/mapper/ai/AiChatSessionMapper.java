@@ -16,7 +16,7 @@ import java.util.List;
  * AI对话会话Mapper接口
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-08-11
  */
 @Mapper
 public interface AiChatSessionMapper extends BaseMapper<AiChatSessionDO> {

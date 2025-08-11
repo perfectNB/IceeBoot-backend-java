@@ -16,19 +16,12 @@ import java.util.List;
  * AI大模型密钥Mapper接口
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-08-11
  */
 @Mapper
 public interface AiLLMKeyMapper extends BaseMapper<AiLLMKeyDO> {
 
 
 
-    /**
-     * 根据大模型ID和状态获取密钥列表
-     *
-     * @param llmId 大模型ID
-     * @param status 状态
-     * @return 密钥列表
-     */
-    List<AiLLMKeyDO> selectByLlmIdAndStatus(@Param("llmId") Long llmId, @Param("status") String status);
+
 }

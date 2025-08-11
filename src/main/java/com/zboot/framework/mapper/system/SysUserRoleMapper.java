@@ -22,21 +22,7 @@ import java.util.List;
 @Mapper
 public interface SysUserRoleMapper extends BaseMapper<SysUserRoleDO> {
 
-    /**
-     * 根据用户ID查询角色ID列表
-     *
-     * @param userId 用户ID
-     * @return 角色ID列表
-     */
-    List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
 
-    /**
-     * 根据角色ID查询用户ID列表
-     *
-     * @param roleId 角色ID
-     * @return 用户ID列表
-     */
-    List<Long> selectUserIdsByRoleId(@Param("roleId") Long roleId);
 
 
 }

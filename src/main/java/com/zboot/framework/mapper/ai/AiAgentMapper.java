@@ -16,7 +16,7 @@ import java.util.List;
  * AI代理Mapper接口
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-08-11
  */
 @Mapper
 public interface AiAgentMapper extends BaseMapper<AiAgentDO> {
