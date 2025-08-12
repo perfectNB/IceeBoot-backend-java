@@ -20,11 +20,15 @@ spring:
     active: ${APP_PROFILE:dev}
   main:
     allow-bean-definition-overriding: true
-  # 排除Spring Security自动配置
+  # 排除Spring Security、Elasticsearch、RabbitMQ自动配置
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.amqp.RabbitHealthContributorAutoConfiguration
 
   
   # 文件上传配置
@@ -102,6 +106,14 @@ logging:
     name: logs/zboot.log
     max-size: 10MB
     max-history: 30
+
+# Spring Boot Actuator配置
+management:
+  health:
+    rabbit:
+      enabled: false
+    elasticsearch:
+      enabled: false
 
 # Knife4j配置
 knife4j:

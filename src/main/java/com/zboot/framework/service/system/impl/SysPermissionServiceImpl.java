@@ -15,7 +15,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.system.PermissionDTO;
 import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.mapper.system.SysPermissionMapper;
-import com.zboot.framework.query.system.SysPermissionQuery;
+import com.zboot.framework.dto.system.SysPermissionQueryDTO;
 import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.vo.system.SysPermissionVO;
 import org.springframework.beans.BeanUtils;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, PermissionDO> implements ISysPermissionService {
 
     @Override
-    public PageResult<SysPermissionVO> getPermissionPage(SysPermissionQuery query) {
+    public PageResult<SysPermissionVO> getPermissionPage(SysPermissionQueryDTO query) {
         // 构建查询条件
         LambdaQueryWrapper<PermissionDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(query.getName()), PermissionDO::getName, query.getName())

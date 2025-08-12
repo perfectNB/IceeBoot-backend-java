@@ -1,4 +1,4 @@
-package com.zboot.framework.service.impl;
+package com.zboot.framework.service.task.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,7 +8,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.TaskDO;
 import com.zboot.framework.mapper.TaskMapper;
 import com.zboot.framework.query.system.TaskQuery;
-import com.zboot.framework.service.ITaskService;
+import com.zboot.framework.service.task.ITaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;

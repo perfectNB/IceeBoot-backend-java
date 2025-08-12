@@ -1,10 +1,10 @@
-package com.zboot.framework.controller.system;
+package com.zboot.framework.controller.task;
 
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.entity.TaskDO;
 import com.zboot.framework.query.system.TaskQuery;
-import com.zboot.framework.service.ITaskService;
+import com.zboot.framework.service.task.ITaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.dto.system.PermissionDTO;
-import com.zboot.framework.query.system.SysPermissionQuery;
+import com.zboot.framework.dto.system.SysPermissionQueryDTO;
 import com.zboot.framework.vo.system.SysPermissionVO;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public interface ISysPermissionService extends IService<PermissionDO> {
      * @param query 查询条件
      * @return 权限分页列表
      */
-    PageResult<SysPermissionVO> getPermissionPage(SysPermissionQuery query);
+    PageResult<SysPermissionVO> getPermissionPage(SysPermissionQueryDTO query);
 
     /**
      * 获取权限树
