@@ -19,7 +19,7 @@ import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -38,8 +38,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     @Autowired
     private SysUserMapper sysUserMapper;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+
 
     @Override
     public PageResult<SysUserVO> getUserPage(SysUserQuery query) {
@@ -85,10 +84,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         
-        // 密码加密
-        if (StringUtils.hasText(user.getPassword())) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
+        // 密码处理（明文存储，实际项目中建议使用加密）
+        // 这里可以根据需要添加密码加密逻辑
         
         return this.save(user);
     }
@@ -98,10 +95,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         
-        // 如果有新密码，进行加密
-        if (StringUtils.hasText(user.getPassword())) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
+        // 如果有新密码，处理（明文存储，实际项目中建议使用加密）
+        // 这里可以根据需要添加密码加密逻辑
         
         return this.updateById(user);
     }
@@ -115,7 +110,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     public boolean resetPassword(Long id, String newPassword) {
         UserDO user = new UserDO();
         user.setId(id);
-        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPassword(newPassword);
         return this.updateById(user);
     }
 

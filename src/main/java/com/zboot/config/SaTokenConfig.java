@@ -27,18 +27,21 @@ public class SaTokenConfig implements WebMvcConfigurer {
         // 注册Sa-Token拦截器，校验规则为StpUtil.checkLogin()登录校验
         registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
-                    .notMatch("/zboot/auth/login")
-                    .notMatch("/zboot/auth/register")
-                    .notMatch("/zboot/auth/wechat/login")
-                    .notMatch("/zboot/auth/captcha")
-                    .notMatch("/zboot/health")
-                    .notMatch("/zboot/doc.html")
-                    .notMatch("/zboot/swagger-ui/**")
-                    .notMatch("/zboot/v3/api-docs/**")
-                    .notMatch("/zboot/webjars/**")
-                    .notMatch("/zboot/favicon.ico")
-                    .notMatch("/zboot/error")
+                    .notMatch("/v1/auth/login")
+                    .notMatch("/v1/auth/register")
+                    .notMatch("/v1/auth/wechat/login")
+                    .notMatch("/v1/auth/captcha")
+                    .notMatch("/health")
+                    .notMatch("/doc.html")
+                    .notMatch("/swagger-ui/**")
+                    .notMatch("/v3/api-docs/**")
+                    .notMatch("/webjars/**")
+                    .notMatch("/favicon.ico")
+                    .notMatch("/error")
                     .check(r -> {
+                        // 打印请求路径用于调试
+                        System.out.println("Sa-Token拦截器检查请求: " + r);
+                        
                         // 检查登录状态
                         StpUtil.checkLogin();
                         

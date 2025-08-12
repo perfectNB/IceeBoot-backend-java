@@ -16,7 +16,7 @@ import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -35,8 +35,7 @@ public class AuthServiceImpl implements IAuthService {
     @Autowired
     private ISysUserService userService;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+
 
     @Override
     public LoginVO login(LoginDTO loginDTO) {
@@ -57,7 +56,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 验证密码
-        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+        if (!loginDTO.getPassword().equals(user.getPassword())) {
             throw new RuntimeException(ResponseMessage.PASSWORD_ERROR);
         }
 
