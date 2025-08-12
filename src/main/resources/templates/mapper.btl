@@ -1,0 +1,16 @@
+package ${basePackage}.mapper.${packageName};
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import ${basePackage}.entity.${packageName}.${entityName}DO;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * ${entityName}Mapper
+ * 
+ * @author ${author}
+ * @date ${date}
+ */
+@Mapper
+public interface ${entityName}Mapper extends BaseMapper<${entityName}DO> {
+    // TODO: 添加自定义查询方法
+}

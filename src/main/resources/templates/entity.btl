@@ -1,0 +1,30 @@
+package ${basePackage}.entity.${packageName};
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.zboot.common.core.domain.ZbootDO;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * ${entityName}实体类
+ * 
+ * @author ${author}
+ * @date ${date}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("t_${lowerEntityName}")
+@Schema(description = "${entityName}实体")
+public class ${entityName}DO extends ZbootDO {
+
+    // TODO: 添加具体字段
+    // 示例字段：
+    // @Schema(description = "名称")
+    // @TableField("name")
+    // private String name;
+    
+    // @Schema(description = "状态")
+    // @TableField("status")
+    // private String status;
+}
