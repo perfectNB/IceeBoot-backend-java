@@ -6,6 +6,7 @@
  */
 package com.zboot.framework.vo.system;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -17,28 +18,18 @@ import lombok.Data;
 @Data
 public class LoginVO {
 
-    /**
-     * 访问令牌
-     */
+    @Schema(description = "访问令牌")
     private String accessToken;
 
-    /**
-     * 刷新令牌
-     */
+    @Schema(description = "刷新令牌")
     private String refreshToken;
 
-    /**
-     * 用户信息
-     */
+    @Schema(description = "用户信息")
     private SysUserVO user;
 
-    /**
-     * 过期时间（秒）
-     */
+    @Schema(description = "过期时间（秒）")
     private Long expires;
 
-    /**
-     * 令牌类型
-     */
+    @Schema(description = "令牌类型")
     private String tokenType = "Bearer";
 }

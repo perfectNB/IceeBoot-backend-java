@@ -15,7 +15,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.system.MenuDTO;
 import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.mapper.system.SysMenuMapper;
-import com.zboot.framework.query.system.SysMenuQuery;
+import com.zboot.framework.dto.system.SysMenuQueryDTO;
 import com.zboot.framework.service.system.ISysMenuService;
 import com.zboot.framework.vo.system.SysMenuVO;
 import org.springframework.beans.BeanUtils;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> implements ISysMenuService {
 
     @Override
-    public PageResult<SysMenuVO> getMenuPage(SysMenuQuery query) {
+    public PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query) {
         // 构建查询条件
         LambdaQueryWrapper<MenuDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(query.getTitle()), MenuDO::getTitle, query.getTitle())

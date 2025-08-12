@@ -1,6 +1,6 @@
-package com.zboot.framework.service.impl;
+package com.zboot.framework.service.workflow.impl;
 
-import com.zboot.framework.service.IWorkflowService;
+import com.zboot.framework.service.workflow.IWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.*;

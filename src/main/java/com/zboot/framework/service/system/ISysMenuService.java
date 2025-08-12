@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.dto.system.MenuDTO;
-import com.zboot.framework.query.system.SysMenuQuery;
+import com.zboot.framework.dto.system.SysMenuQueryDTO;
 import com.zboot.framework.vo.system.SysMenuVO;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public interface ISysMenuService extends IService<MenuDO> {
      * @param query 查询条件
      * @return 菜单分页列表
      */
-    PageResult<SysMenuVO> getMenuPage(SysMenuQuery query);
+    PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query);
 
     /**
      * 获取菜单树

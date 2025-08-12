@@ -8,6 +8,7 @@ package com.zboot.common.core.domain;
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -26,77 +27,55 @@ public class ZbootDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID
-     */
+    @Schema(description = "主键ID")
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
-    /**
-     * 创建者
-     */
+    @Schema(description = "创建者")
     @TableField(value = "create_by", fill = FieldFill.INSERT)
     private String createBy;
 
-    /**
-     * 创建时间
-     */
+    @Schema(description = "创建时间")
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    /**
-     * 更新者
-     */
+    @Schema(description = "更新者")
     @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
 
-    /**
-     * 更新时间
-     */
+    @Schema(description = "更新时间")
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    /**
-     * 删除标志（0代表存在 1代表删除）
-     */
+    @Schema(description = "删除标志")
     @TableLogic
     @TableField(value = "del_flag")
     @JsonIgnore
     private Integer delFlag;
 
-    /**
-     * 页码（查询参数，不存储到数据库）
-     */
+    @Schema(description = "页码")
     @TableField(exist = false)
     @JsonIgnore
     private Integer pageNumber;
 
-    /**
-     * 页大小（查询参数，不存储到数据库）
-     */
+    @Schema(description = "每页数量")
     @TableField(exist = false)
     @JsonIgnore
     private Integer pageSize;
 
-    /**
-     * 搜索关键字（查询参数，不存储到数据库）
-     */
+    @Schema(description = "搜索关键字")
     @TableField(exist = false)
     @JsonIgnore
     private String keyword;
 
-    /**
-     * 排序字段（查询参数，不存储到数据库）
-     */
+    @Schema(description = "排序字段")
     @TableField(exist = false)
     @JsonIgnore
     private String orderBy;
 
-    /**
-     * 排序方向（查询参数，不存储到数据库）
-     */
+    @Schema(description = "排序方向")
     @TableField(exist = false)
     @JsonIgnore
     private String orderDirection;

@@ -34,8 +34,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysUserController {
 
-    @Autowired
-    private ISysUserService userService;
+
+    private final ISysUserService userService;
 
     /**
      * 分页查询用户列表

@@ -7,6 +7,7 @@
 package com.zboot.framework.vo.system;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,55 +22,35 @@ import java.util.List;
 @Data
 public class SysRoleVO {
 
-    /**
-     * 角色ID
-     */
+    @Schema(description = "角色ID")
     private Long id;
 
-    /**
-     * 角色名称
-     */
+    @Schema(description = "角色名称")
     private String name;
 
-    /**
-     * 角色编码
-     */
+    @Schema(description = "角色编码")
     private String code;
 
-    /**
-     * 角色描述
-     */
+    @Schema(description = "角色描述")
     private String description;
 
-    /**
-     * 状态
-     */
+    @Schema(description = "状态")
     private String status;
 
-    /**
-     * 排序
-     */
+    @Schema(description = "排序")
     private Integer sort;
 
-    /**
-     * 创建时间
-     */
+    @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    /**
-     * 更新时间
-     */
+    @Schema(description = "更新时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    /**
-     * 权限列表
-     */
+    @Schema(description = "权限列表")
     private List<String> permissions;
 
-    /**
-     * 用户数量
-     */
+    @Schema(description = "用户数量")
     private Integer userCount;
 }

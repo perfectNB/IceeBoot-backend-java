@@ -1,4 +1,4 @@
-package com.zboot.framework.service;
+package com.zboot.framework.service.task;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.framework.entity.TaskDO;

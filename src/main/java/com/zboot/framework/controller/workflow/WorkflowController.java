@@ -1,7 +1,7 @@
 package com.zboot.framework.controller.workflow;
 
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.service.IWorkflowService;
+import com.zboot.framework.service.workflow.IWorkflowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

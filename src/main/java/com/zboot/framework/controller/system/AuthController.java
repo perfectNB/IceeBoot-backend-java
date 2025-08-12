@@ -31,8 +31,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private IAuthService authService;
+
+    private final IAuthService authService;
 
     /**
      * 用户登录
