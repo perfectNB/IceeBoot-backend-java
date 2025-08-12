@@ -27,6 +27,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
         // 注册Sa-Token拦截器，校验规则为StpUtil.checkLogin()登录校验
         registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
+                    .notMatch("/v1/auth/test1")
                     .notMatch("/v1/auth/login")
                     .notMatch("/v1/auth/register")
                     .notMatch("/v1/auth/wechat/login")
