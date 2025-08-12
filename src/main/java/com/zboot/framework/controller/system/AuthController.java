@@ -37,6 +37,37 @@ public class AuthController {
     /**
      * 用户登录
      */
+    @Operation(summary = "test1", description = "test")
+    @GetMapping("/test1")
+    public R<LoginVO> test1() {
+
+        return R.ok("谢谢您使用ZBOOT超级脚手架");
+    }
+
+    @Operation(summary = "test2", description = "test")
+    @GetMapping("/test2")
+    public R<LoginVO> test2() {
+
+        return R.ok("谢谢您使用ZBOOT超级脚手架");
+    }
+
+    @Operation(summary = "test3", description = "test")
+    @GetMapping("/test3")
+    public R<LoginVO> test3() {
+
+        return R.ok("谢谢您使用ZBOOT超级脚手架");
+    }
+
+    @Operation(summary = "test4", description = "test")
+    @GetMapping("/test4")
+    public R<LoginVO> test() {
+
+        return R.ok("谢谢您使用ZBOOT超级脚手架");
+    }
+
+    /**
+     * 用户登录
+     */
     @Operation(summary = "用户登录", description = "用户名密码登录")
     @PostMapping("/login")
     public R<LoginVO> login(@Validated @RequestBody LoginDTO loginDTO) {
