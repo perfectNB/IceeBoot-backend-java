@@ -264,26 +264,34 @@
 
 ## 权限管理 (Permission)
 
-### 1. 获取权限列表
-- **接口地址**: `GET /api/v1/permissions`
+### 1. 分页查询权限列表
+- **接口地址**: `GET /api/v1/permissions/page`
 - **传递参数**: 
   ```typescript
   {
     page: number,        // 页码
     size: number,        // 每页数量
-    keyword?: string,    // 关键词搜索（可选）
+    name?: string,       // 权限名称搜索（可选）
+    code?: string,       // 权限编码搜索（可选）
     type?: string,       // 类型筛选（可选）
-    parentId?: string    // 父级ID筛选（可选）
+    status?: string,     // 状态筛选（可选）
+    parentId?: number    // 父级ID筛选（可选）
   }
   ```
 - **返回参数**: `PageResult<Permission>` 分页权限列表
 
-### 2. 获取所有权限
-- **接口地址**: `GET /api/v1/permissions`
+### 2. 获取权限树
+- **接口地址**: `GET /api/v1/permissions/tree`
 - **传递参数**: 无
-- **返回参数**: `Permission[]` 权限列表
+- **返回参数**: `Permission[]` 权限树列表
 
-### 3. 创建权限
+### 3. 根据ID获取权限详情
+- **接口地址**: `GET /api/v1/permissions/{id}`
+- **传递参数**: 
+  - **路径参数**: `id: string | number` // 权限ID
+- **返回参数**: `Permission` 对象
+
+### 4. 创建权限
 - **接口地址**: `POST /api/v1/permissions`
 - **传递参数**: 
   ```typescript
@@ -294,45 +302,78 @@
     parentId?: string | number | null,        // 父级ID（可选）
     path?: string,                             // 路径（可选）
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',  // 请求方法（可选）
-    description?: string                       // 描述（可选）
+    description?: string,                      // 描述（可选）
+    status?: string,                           // 状态（可选）
+    sort?: number                              // 排序（可选）
   }
   ```
 - **返回参数**: `Permission` 对象
 
-### 4. 更新权限
-- **接口地址**: `PUT /api/v1/permissions/{id}`
+### 5. 更新权限
+- **接口地址**: `PUT /api/v1/permissions`
 - **传递参数**: 
-  - **路径参数**: `id: string | number` // 权限ID
   - **请求体**: `Partial<Permission>` // 部分权限信息
-- **返回参数**: `Permission` 对象
-
-### 5. 删除权限
-- **接口地址**: `DELETE /api/v1/permissions/{id}`
-- **传递参数**: 
-  - **路径参数**: `id: string | number` // 权限ID
 - **返回参数**: `void`
 
-### 6. 根据ID获取权限
-- **接口地址**: `GET /api/v1/permissions/{id}`
+### 6. 删除权限
+- **接口地址**: `DELETE /api/v1/permissions`
+- **传递参数**: 
+  - **请求体**: `number[]` // 权限ID列表
+- **返回参数**: `void`
+
+### 7. 修改权限状态
+- **接口地址**: `PUT /api/v1/permissions/{id}/status`
 - **传递参数**: 
   - **路径参数**: `id: string | number` // 权限ID
-- **返回参数**: `Permission` 对象
+  - **查询参数**: `status: 'active' | 'inactive'` // 新状态
+- **返回参数**: `void`
+
+### 8. 检查权限编码
+- **接口地址**: `GET /api/v1/permissions/check/code`
+- **传递参数**: 
+  - **查询参数**: 
+    - `code: string` // 权限编码
+    - `excludeId?: number` // 排除的权限ID（可选）
+- **返回参数**: `boolean` // 是否存在
+
+### 9. 获取子权限
+- **接口地址**: `GET /api/v1/permissions/children/{parentId}`
+- **传递参数**: 
+  - **路径参数**: `parentId: string | number` // 父级权限ID
+- **返回参数**: `Permission[]` 子权限列表
 
 ---
 
 ## 菜单管理 (Menu)
 
-### 1. 获取用户菜单
-- **接口地址**: `GET /api/v1/menus/user`
-- **传递参数**: 无
-- **返回参数**: `MenuItem[]` 菜单列表
+### 1. 分页查询菜单列表
+- **接口地址**: `GET /api/v1/menus/page`
+- **传递参数**: 
+  ```typescript
+  {
+    page: number,        // 页码
+    size: number,        // 每页数量
+    title?: string,      // 菜单标题搜索（可选）
+    name?: string,       // 菜单名称搜索（可选）
+    type?: string,       // 菜单类型筛选（可选）
+    status?: string,     // 状态筛选（可选）
+    parentId?: number    // 父级ID筛选（可选）
+  }
+  ```
+- **返回参数**: `PageResult<MenuItem>` 分页菜单列表
 
-### 2. 获取所有菜单
-- **接口地址**: `GET /api/v1/menus`
+### 2. 获取菜单树
+- **接口地址**: `GET /api/v1/menus/tree`
 - **传递参数**: 无
-- **返回参数**: `MenuItem[]` 菜单列表
+- **返回参数**: `MenuItem[]` 菜单树列表
 
-### 3. 创建菜单
+### 3. 根据ID获取菜单详情
+- **接口地址**: `GET /api/v1/menus/{id}`
+- **传递参数**: 
+  - **路径参数**: `id: string | number` // 菜单ID
+- **返回参数**: `MenuItem` 对象
+
+### 4. 创建菜单
 - **接口地址**: `POST /api/v1/menus`
 - **传递参数**: 
   ```typescript
@@ -354,18 +395,38 @@
   ```
 - **返回参数**: `MenuItem` 对象
 
-### 4. 更新菜单
-- **接口地址**: `PUT /api/v1/menus/{id}`
+### 5. 更新菜单
+- **接口地址**: `PUT /api/v1/menus`
 - **传递参数**: 
-  - **路径参数**: `id: string | number` // 菜单ID
   - **请求体**: `Partial<MenuItem>` // 部分菜单信息
-- **返回参数**: `MenuItem` 对象
+- **返回参数**: `void`
 
-### 5. 删除菜单
-- **接口地址**: `DELETE /api/v1/menus/{id}`
+### 6. 删除菜单
+- **接口地址**: `DELETE /api/v1/menus`
+- **传递参数**: 
+  - **请求体**: `number[]` // 菜单ID列表
+- **返回参数**: `void`
+
+### 7. 修改菜单状态
+- **接口地址**: `PUT /api/v1/menus/{id}/status`
 - **传递参数**: 
   - **路径参数**: `id: string | number` // 菜单ID
+  - **查询参数**: `status: 'active' | 'inactive'` // 新状态
 - **返回参数**: `void`
+
+### 8. 检查菜单名称
+- **接口地址**: `GET /api/v1/menus/check/name`
+- **传递参数**: 
+  - **查询参数**: 
+    - `name: string` // 菜单名称
+    - `excludeId?: number` // 排除的菜单ID（可选）
+- **返回参数**: `boolean` // 是否存在
+
+### 9. 获取子菜单
+- **接口地址**: `GET /api/v1/menus/children/{parentId}`
+- **传递参数**: 
+  - **路径参数**: `parentId: string | number` // 父级菜单ID
+- **返回参数**: `MenuItem[]` 子菜单列表
 
 ---
 
@@ -1061,8 +1122,8 @@ interface ApiResponse<T> {
 | 认证管理 (Auth) | 6 | 用户登录、登出、获取用户信息、刷新令牌、微信登录 |
 | 用户管理 (User) | 7 | 用户CRUD操作、密码重置、状态更新 |
 | 角色管理 (Role) | 6 | 角色CRUD操作、权限分配 |
-| 权限管理 (Permission) | 6 | 权限CRUD操作、权限树管理 |
-| 菜单管理 (Menu) | 5 | 菜单CRUD操作、用户菜单获取 |
+| 权限管理 (Permission) | 9 | 权限CRUD操作、权限树管理、状态管理、编码检查 |
+| 菜单管理 (Menu) | 9 | 菜单CRUD操作、菜单树管理、状态管理、名称检查 |
 | AI代理管理 (Agent) | 6 | AI代理CRUD操作、状态管理 |
 | 大模型管理 (LLM) | 8 | 大模型CRUD操作、密钥管理 |
 | 任务管理 (Task) | 6 | 任务CRUD操作、启停控制 |
@@ -1071,7 +1132,7 @@ interface ApiResponse<T> {
 | 日志管理 (Log) | 4 | 日志查询、删除、清空 |
 | Redis管理 (Redis) | 3 | Redis键管理、查询、删除 |
 
-**总计**: 68个API接口
+**总计**: 74个API接口
 
 ### 按HTTP方法统计
 
