@@ -1,0 +1,98 @@
+package ${basePackage}.service.${packageName}.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.core.domain.PageResult;
+import ${basePackage}.entity.${packageName}.${entityName}DO;
+import ${basePackage}.dto.${packageName}.${entityName}DTO;
+import ${basePackage}.mapper.${packageName}.${entityName}Mapper;
+import ${basePackage}.query.${packageName}.${entityName}Query;
+import ${basePackage}.service.${packageName}.I${entityName}Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+/**
+ * ${entityName}服务实现类
+ * 
+ * @author ${author}
+ * @date ${date}
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, ${entityName}DO> implements I${entityName}Service {
+
+    @Override
+    public PageResult<${entityName}DO> get${entityName}Page(${entityName}Query query) {
+        LambdaQueryWrapper<${entityName}DO> wrapper = new LambdaQueryWrapper<>();
+        
+        // TODO: 根据实际需求添加查询条件
+        // if (StringUtils.hasText(query.getName())) {
+        //     wrapper.like(${entityName}DO::getName, query.getName());
+        // }
+        
+        wrapper.orderByDesc(${entityName}DO::getCreateTime);
+        
+        Page<${entityName}DO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<${entityName}DO> pageResult = this.page(page, wrapper);
+        
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
+    }
+
+    @Override
+    public ${entityName}DO create${entityName}(${entityName}DTO ${lowerEntityName}DTO) {
+        try {
+            ${entityName}DO ${lowerEntityName} = new ${entityName}DO();
+            BeanUtils.copyProperties(${lowerEntityName}DTO, ${lowerEntityName});
+            
+            // TODO: 添加业务逻辑
+            
+            this.save(${lowerEntityName});
+            return ${lowerEntityName};
+        } catch (Exception e) {
+            log.error("创建${entityName}失败: {}", e.getMessage(), e);
+            throw new RuntimeException("创建${entityName}失败", e);
+        }
+    }
+
+    @Override
+    public ${entityName}DO update${entityName}(${entityName}DTO ${lowerEntityName}DTO) {
+        try {
+            ${entityName}DO ${lowerEntityName} = this.getById(${lowerEntityName}DTO.getId());
+            if (${lowerEntityName} == null) {
+                throw new RuntimeException("${entityName}不存在");
+            }
+            
+            BeanUtils.copyProperties(${lowerEntityName}DTO, ${lowerEntityName});
+            
+            // TODO: 添加业务逻辑
+            
+            this.updateById(${lowerEntityName});
+            return ${lowerEntityName};
+        } catch (Exception e) {
+            log.error("更新${entityName}失败: {}", e.getMessage(), e);
+            throw new RuntimeException("更新${entityName}失败", e);
+        }
+    }
+
+    @Override
+    public void delete${entityName}(Long id) {
+        try {
+            ${entityName}DO ${lowerEntityName} = this.getById(id);
+            if (${lowerEntityName} != null) {
+                // TODO: 添加删除前的业务逻辑检查
+                
+                this.removeById(id);
+                log.info("删除${entityName}成功: {}", id);
+            }
+        } catch (Exception e) {
+            log.error("删除${entityName}失败: {}", e.getMessage(), e);
+            throw new RuntimeException("删除${entityName}失败", e);
+        }
+    }
+}

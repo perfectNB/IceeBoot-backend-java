@@ -1,0 +1,47 @@
+package ${basePackage}.service.${packageName};
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import ${basePackage}.entity.${packageName}.${entityName}DO;
+import ${basePackage}.dto.${packageName}.${entityName}DTO;
+import ${basePackage}.query.${packageName}.${entityName}Query;
+import com.zboot.common.core.domain.PageResult;
+
+/**
+ * ${entityName}服务接口
+ * 
+ * @author ${author}
+ * @date ${date}
+ */
+public interface I${entityName}Service extends IService<${entityName}DO> {
+
+    /**
+     * 分页查询${entityName}列表
+     * 
+     * @param query 查询条件
+     * @return 分页结果
+     */
+    PageResult<${entityName}DO> get${entityName}Page(${entityName}Query query);
+
+    /**
+     * 创建${entityName}
+     * 
+     * @param ${lowerEntityName}DTO ${entityName}信息
+     * @return ${entityName}信息
+     */
+    ${entityName}DO create${entityName}(${entityName}DTO ${lowerEntityName}DTO);
+
+    /**
+     * 更新${entityName}
+     * 
+     * @param ${lowerEntityName}DTO ${entityName}信息
+     * @return ${entityName}信息
+     */
+    ${entityName}DO update${entityName}(${entityName}DTO ${lowerEntityName}DTO);
+
+    /**
+     * 删除${entityName}
+     * 
+     * @param id ${entityName}ID
+     */
+    void delete${entityName}(Long id);
+}
