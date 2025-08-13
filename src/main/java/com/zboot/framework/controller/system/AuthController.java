@@ -7,6 +7,7 @@
 package com.zboot.framework.controller.system;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.LoginDTO;
 import com.zboot.framework.service.system.IAuthService;
@@ -60,6 +61,7 @@ public class AuthController {
 
     @Operation(summary = "用户登出", description = "退出登录")
     @PostMapping("/logout")
+    @RequirePermission(dynamic = true)
     public R<Void> logout() {
         authService.logout();
         return R.ok();
