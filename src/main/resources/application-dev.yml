@@ -24,7 +24,7 @@ spring:
       host: ${REDIS_HOST:8.140.202.19}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:ehero000921}
-      database: ${REDIS_DATABASE:1}
+      database: ${REDIS_DATABASE:0}
       timeout: 10000
       lettuce:
         pool:

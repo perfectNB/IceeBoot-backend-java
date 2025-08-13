@@ -6,6 +6,7 @@
  */
 package com.zboot.framework.controller.system;
 
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
@@ -39,6 +40,7 @@ public class SysPermissionController {
 
     @Operation(summary = "分页查询权限列表", description = "根据条件分页查询权限列表")
     @GetMapping("/page")
+    @RequirePermission(dynamic = true)
     public R<PageResult<SysPermissionVO>> getPermissionPage(SysPermissionQueryDTO query) {
         PageResult<SysPermissionVO> pageResult = permissionService.getPermissionPage(query);
         return R.ok(pageResult);
@@ -47,6 +49,7 @@ public class SysPermissionController {
 
     @Operation(summary = "获取权限树", description = "获取完整的权限树结构")
     @GetMapping("/tree")
+    @RequirePermission(dynamic = true)
     public R<List<SysPermissionVO>> getPermissionTree() {
         List<SysPermissionVO> permissionTree = permissionService.getPermissionTree();
         return R.ok(permissionTree);
@@ -55,6 +58,7 @@ public class SysPermissionController {
 
     @Operation(summary = "获取权限详情", description = "根据权限ID获取权限详细信息")
     @GetMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<SysPermissionVO> getPermissionById(@PathVariable Long id) {
         SysPermissionVO permissionVO = permissionService.getPermissionById(id);
         return R.ok(permissionVO);
@@ -63,6 +67,7 @@ public class SysPermissionController {
 
     @Operation(summary = "新增权限", description = "创建新权限")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<Void> addPermission(@Validated @RequestBody PermissionDTO permissionDTO) {
         boolean success = permissionService.addPermission(permissionDTO);
         return success ? R.ok(ResponseMessage.PERMISSION_CREATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_CREATE_FAIL);
@@ -71,6 +76,7 @@ public class SysPermissionController {
 
     @Operation(summary = "更新权限", description = "更新权限信息")
     @PutMapping
+    @RequirePermission(dynamic = true)
     public R<Void> updatePermission(@Validated @RequestBody PermissionDTO permissionDTO) {
         boolean success = permissionService.updatePermission(permissionDTO);
         return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
@@ -79,6 +85,7 @@ public class SysPermissionController {
 
     @Operation(summary = "删除权限", description = "批量删除权限")
     @DeleteMapping
+    @RequirePermission(dynamic = true)
     public R<Void> deletePermissions(@RequestBody List<Long> ids) {
         boolean success = permissionService.deletePermissions(ids);
         return success ? R.ok(ResponseMessage.PERMISSION_DELETE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_DELETE_FAIL);
@@ -95,6 +102,7 @@ public class SysPermissionController {
 
     @Operation(summary = "检查权限编码", description = "检查权限编码是否已存在")
     @GetMapping("/check/code")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkCode(@RequestParam String code, @RequestParam(required = false) Long excludeId) {
         boolean exists = permissionService.existsCode(code, excludeId);
         return R.ok(exists);
@@ -103,6 +111,7 @@ public class SysPermissionController {
 
     @Operation(summary = "获取子权限", description = "根据父级ID获取子权限列表")
     @GetMapping("/children/{parentId}")
+    @RequirePermission(dynamic = true)
     public R<List<SysPermissionVO>> getChildrenByParentId(@PathVariable Long parentId) {
         List<SysPermissionVO> children = permissionService.getChildrenByParentId(parentId);
         return R.ok(children);

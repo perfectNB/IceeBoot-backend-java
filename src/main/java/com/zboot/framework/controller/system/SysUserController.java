@@ -6,6 +6,7 @@
  */
 package com.zboot.framework.controller.system;
 
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
@@ -40,6 +41,7 @@ public class SysUserController {
 
     @Operation(summary = "分页查询用户列表", description = "根据条件分页查询用户列表")
     @GetMapping("/page")
+    @RequirePermission(dynamic = true)
     public R<PageResult<SysUserVO>> getUserPage(SysUserQuery query) {
         PageResult<SysUserVO> pageResult = userService.getUserPage(query);
         return R.ok(pageResult);
@@ -48,6 +50,7 @@ public class SysUserController {
 
     @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详细信息")
     @GetMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<SysUserVO> getUserById(@PathVariable Long id) {
         SysUserVO userVO = userService.getUserById(id);
         return R.ok(userVO);
@@ -56,6 +59,7 @@ public class SysUserController {
 
     @Operation(summary = "新增用户", description = "创建新用户")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<Void> addUser(@Validated @RequestBody UserDTO userDTO) {
         boolean success = userService.addUser(userDTO);
         return success ? R.ok(ResponseMessage.USER_CREATE_SUCCESS) : R.fail(ResponseMessage.USER_CREATE_FAIL);
@@ -64,6 +68,7 @@ public class SysUserController {
 
     @Operation(summary = "更新用户", description = "更新用户信息")
     @PutMapping
+    @RequirePermission(dynamic = true)
     public R<Void> updateUser(@Validated @RequestBody UserDTO userDTO) {
         boolean success = userService.updateUser(userDTO);
         return success ? R.ok(ResponseMessage.USER_UPDATE_SUCCESS) : R.fail(ResponseMessage.USER_UPDATE_FAIL);
@@ -71,6 +76,7 @@ public class SysUserController {
 
     @Operation(summary = "删除用户", description = "批量删除用户")
     @DeleteMapping
+    @RequirePermission(dynamic = true)
     public R<Void> deleteUsers(@RequestBody List<Long> ids) {
         boolean success = userService.deleteUsers(ids);
         return success ? R.ok(ResponseMessage.USER_DELETE_SUCCESS) : R.fail(ResponseMessage.USER_DELETE_FAIL);
@@ -79,6 +85,7 @@ public class SysUserController {
 
     @Operation(summary = "重置密码", description = "重置用户密码")
     @PutMapping("/{id}/password")
+    @RequirePermission(dynamic = true)
     public R<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
         boolean success = userService.resetPassword(id, newPassword);
         return success ? R.ok(ResponseMessage.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.PASSWORD_RESET_FAIL);
@@ -87,6 +94,7 @@ public class SysUserController {
 
     @Operation(summary = "修改用户状态", description = "启用或禁用用户")
     @PutMapping("/{id}/status")
+    @RequirePermission(dynamic = true)
     public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         boolean success = userService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
@@ -94,6 +102,7 @@ public class SysUserController {
 
     @Operation(summary = "检查用户名", description = "检查用户名是否已存在")
     @GetMapping("/check/username")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkUsername(@RequestParam String username, @RequestParam(required = false) Long excludeId) {
         boolean exists = userService.existsUsername(username, excludeId);
         return R.ok(exists);
@@ -102,6 +111,7 @@ public class SysUserController {
 
     @Operation(summary = "检查手机号", description = "检查手机号是否已存在")
     @GetMapping("/check/phone")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkPhone(@RequestParam String phone, @RequestParam(required = false) Long excludeId) {
         boolean exists = userService.existsPhone(phone, excludeId);
         return R.ok(exists);
@@ -110,6 +120,7 @@ public class SysUserController {
 
     @Operation(summary = "检查邮箱", description = "检查邮箱是否已存在")
     @GetMapping("/check/email")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkEmail(@RequestParam String email, @RequestParam(required = false) Long excludeId) {
         boolean exists = userService.existsEmail(email, excludeId);
         return R.ok(exists);

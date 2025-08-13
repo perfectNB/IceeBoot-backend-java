@@ -1,6 +1,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.ai.AiAgentDTO;
@@ -31,22 +32,25 @@ public class AiAgentController {
 
     private final IAiAgentService aiAgentService;
 
-    @Operation(summary = "获取代理列表")
+    @Operation(summary = "获取AI代理列表")
     @GetMapping
+    @RequirePermission(dynamic = true)
     public R<IPage<AiAgentVO>> getAgentPage(AiAgentQuery query) {
         IPage<AiAgentVO> page = aiAgentService.getAgentPage(query);
         return R.ok(page);
     }
 
-    @Operation(summary = "根据ID获取代理")
+    @Operation(summary = "根据ID获取AI代理")
     @GetMapping("/{id}")
-    public R<AiAgentVO> getAgentById(@Parameter(description = "代理ID") @PathVariable Long id) {
+    @RequirePermission(dynamic = true)
+    public R<AiAgentVO> getAgentById(@Parameter(description = "AI代理ID") @PathVariable Long id) {
         AiAgentVO agent = aiAgentService.getAgentById(id);
         return R.ok(agent);
     }
 
-    @Operation(summary = "创建代理")
+    @Operation(summary = "创建AI代理")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<AiAgentVO> addAgent(@Validated @RequestBody AiAgentDTO dto) {
         Boolean result = aiAgentService.addAgent(dto);
         if (result) {
@@ -55,8 +59,9 @@ public class AiAgentController {
         return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
-    @Operation(summary = "更新代理")
+    @Operation(summary = "更新AI代理")
     @PutMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<AiAgentVO> updateAgent(
             @Parameter(description = "代理ID") @PathVariable Long id,
             @Validated @RequestBody AiAgentDTO dto) {
@@ -68,9 +73,10 @@ public class AiAgentController {
         return R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
-    @Operation(summary = "删除代理")
+    @Operation(summary = "删除AI代理")
     @DeleteMapping("/{id}")
-    public R<Void> deleteAgent(@Parameter(description = "代理ID") @PathVariable Long id) {
+    @RequirePermission(dynamic = true)
+    public R<Void> deleteAgent(@Parameter(description = "AI代理ID") @PathVariable Long id) {
         Boolean result = aiAgentService.deleteAgent(List.of(id));
         if (result) {
             return R.ok();

@@ -255,19 +255,8 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             return new ArrayList<>();
         }
         
-        List<MenuDO> userMenus = new ArrayList<>();
-        for (Map<String, Object> menuMap : allMenus) {
-            Object idObj = menuMap.get("id");
-            if (idObj != null && menuIds.contains(Long.valueOf(idObj.toString()))) {
-                // 这里需要从数据库获取完整的MenuDO对象来构建树形结构
-                MenuDO menu = menuMapper.selectById(Long.valueOf(idObj.toString()));
-                if (menu != null) {
-                    userMenus.add(menu);
-                }
-            }
-        }
-        
-        return buildMenuTree(userMenus);
+        // 直接从已构建的菜单树中过滤用户有权限的菜单，保持树形结构
+        return filterMenusByPermission(allMenus, menuIds);
     }
 
     /**
@@ -492,6 +481,54 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     }
 
     /**
+     * 从菜单树中过滤用户有权限的菜单，保持树形结构
+     */
+    private List<Map<String, Object>> filterMenusByPermission(List<Map<String, Object>> menus, List<Long> menuIds) {
+        if (menus == null || menus.isEmpty() || menuIds == null || menuIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<Map<String, Object>> filteredMenus = new ArrayList<>();
+        
+        for (Map<String, Object> menu : menus) {
+            Object idObj = menu.get("id");
+            if (idObj != null) {
+                Long menuId = Long.valueOf(idObj.toString());
+                
+                // 检查当前菜单是否有权限
+                if (menuIds.contains(menuId)) {
+                    Map<String, Object> filteredMenu = new HashMap<>(menu);
+                    
+                    // 递归处理子菜单
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> children = (List<Map<String, Object>>) menu.get("children");
+                    if (children != null && !children.isEmpty()) {
+                        List<Map<String, Object>> filteredChildren = filterMenusByPermission(children, menuIds);
+                        filteredMenu.put("children", filteredChildren);
+                    }
+                    
+                    filteredMenus.add(filteredMenu);
+                } else {
+                    // 即使当前菜单没有权限，也要检查子菜单是否有权限
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> children = (List<Map<String, Object>>) menu.get("children");
+                    if (children != null && !children.isEmpty()) {
+                        List<Map<String, Object>> filteredChildren = filterMenusByPermission(children, menuIds);
+                        if (!filteredChildren.isEmpty()) {
+                            // 如果子菜单有权限，则包含父菜单
+                            Map<String, Object> filteredMenu = new HashMap<>(menu);
+                            filteredMenu.put("children", filteredChildren);
+                            filteredMenus.add(filteredMenu);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return filteredMenus;
+    }
+    
+    /**
      * 转换菜单为Map
      */
     private Map<String, Object> convertMenuToMap(MenuDO menu) {
@@ -506,7 +543,20 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         map.put("type", menu.getType());
         map.put("sort", menu.getSort());
         map.put("requiresAuth", menu.getRequiresAuth());
-        map.put("status", menu.getStatus());
+        
+        // 处理permissions字段，将逗号分隔的字符串转换为字符串数组
+        String permissionsStr = menu.getPermissions();
+        if (permissionsStr != null && !permissionsStr.trim().isEmpty()) {
+            String[] permissionsArray = permissionsStr.split(",");
+            List<String> permissionsList = Arrays.stream(permissionsArray)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            map.put("permissions", permissionsList);
+        } else {
+            map.put("permissions", new ArrayList<>());
+        }
+        
         return map;
     }
 
