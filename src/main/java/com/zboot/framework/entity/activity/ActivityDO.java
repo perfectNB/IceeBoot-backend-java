@@ -2,7 +2,7 @@
  * 活动实体类
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 package com.zboot.framework.entity.activity;
 
@@ -19,11 +19,11 @@ import java.time.LocalDateTime;
  * 活动实体类
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("activity")
+@TableName("t_activity")
 @Schema(description = "活动信息")
 public class ActivityDO extends ZbootDO {
 

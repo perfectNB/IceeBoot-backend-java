@@ -92,6 +92,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Zboot自定义异常
+     */
+    @ExceptionHandler(ZbootException.class)
+    public R<Void> handleZbootException(ZbootException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生自定义异常: {}", requestURI, e.getMessage());
+        Integer code = e.getCode();
+        return code != null ? R.fail(code, e.getMessage()) : R.fail(e.getMessage());
+    }
+
+    /**
      * 拦截未知的运行时异常
      */
     @ExceptionHandler(RuntimeException.class)

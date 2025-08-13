@@ -2,7 +2,7 @@
  * 系统用户Mapper接口
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 package com.zboot.framework.mapper.system;
 
@@ -19,7 +19,7 @@ import java.util.List;
  * 系统用户Mapper接口
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 @Mapper
 public interface SysUserMapper extends BaseMapper<UserDO> {

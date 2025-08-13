@@ -2,7 +2,7 @@
  * 数据库初始化服务
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 package com.zboot.framework.service.database;
 
@@ -13,8 +13,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.SystemPropertyUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -28,7 +37,7 @@ import java.util.*;
  * 在项目启动时自动检查并创建DO对应的数据库表
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 @Slf4j
 @Service
@@ -36,9 +45,15 @@ public class DatabaseInitService implements ApplicationRunner {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private static final String ENTITY_PACKAGE = "com.zboot.framework.entity";
-    private static final String RESOURCE_PATTERN = "/**/*.class";
+    private static final String RESOURCE_PATTERN = "classpath*:com/zboot/**/*.class";
+    
+    private final ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+    private final MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory();
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -49,7 +64,7 @@ public class DatabaseInitService implements ApplicationRunner {
             // 扫描并创建实体类对应的表
             Set<Class<?>> entityClasses = scanEntityClasses();
             for (Class<?> entityClass : entityClasses) {
-                createTableIfNotExists(entityClass);
+                processTable(entityClass);
             }
             log.info("数据库表检查完成，共处理 {} 个实体类", entityClasses.size());
         } catch (Exception e) {
@@ -63,49 +78,40 @@ public class DatabaseInitService implements ApplicationRunner {
     private Set<Class<?>> scanEntityClasses() throws Exception {
         Set<Class<?>> entityClasses = new HashSet<>();
         
-        // 手动添加已知的实体类
         try {
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.UserDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.RoleDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.PermissionDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.MenuDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.RolePermissionDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.system.UserRoleDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.log.LogDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.ai.AiAgentDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.ai.AiChatSessionDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.ai.AiLLMDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.task.TaskDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.activity.ActivityDO");
-            addEntityClass(entityClasses, "com.zboot.framework.entity.job.JobDO");
+            Resource[] resources = resourcePatternResolver.getResources(RESOURCE_PATTERN);
+            
+            for (Resource resource : resources) {
+                if (resource.isReadable()) {
+                    MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(resource);
+                    String className = metadataReader.getClassMetadata().getClassName();
+                    
+                    try {
+                        Class<?> clazz = Class.forName(className);
+                        
+                        // 检查是否有@TableName注解且继承自ZbootDO
+                        if (clazz.isAnnotationPresent(TableName.class) && 
+                            ZbootDO.class.isAssignableFrom(clazz) &&
+                            !clazz.equals(ZbootDO.class)) {
+                            entityClasses.add(clazz);
+                            log.debug("发现实体类: {}", className);
+                        }
+                    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                        log.warn("无法加载类: {}, 错误: {}", className, e.getMessage());
+                    }
+                }
+            }
         } catch (Exception e) {
-            log.error("加载实体类失败", e);
+            log.error("扫描实体类失败", e);
         }
         
         return entityClasses;
     }
     
     /**
-     * 添加实体类
+     * 处理表（创建表或增量更新字段）
      */
-    private void addEntityClass(Set<Class<?>> entityClasses, String className) {
-        try {
-            Class<?> clazz = Class.forName(className);
-            if (ZbootDO.class.isAssignableFrom(clazz) && 
-                clazz.isAnnotationPresent(TableName.class) &&
-                !clazz.equals(ZbootDO.class)) {
-                entityClasses.add(clazz);
-                log.debug("发现实体类: {}", className);
-            }
-        } catch (ClassNotFoundException e) {
-            log.warn("无法加载类: {}", className);
-        }
-    }
-
-    /**
-     * 为实体类创建对应的表
-     */
-    private void createTableIfNotExists(Class<?> entityClass) {
+    private void processTable(Class<?> entityClass) {
         TableName tableNameAnnotation = entityClass.getAnnotation(TableName.class);
         if (tableNameAnnotation == null) {
             return;
@@ -116,19 +122,18 @@ public class DatabaseInitService implements ApplicationRunner {
         try {
             // 检查表是否存在
             if (tableExists(tableName)) {
-                log.debug("表 {} 已存在，跳过创建", tableName);
-                return;
+                log.debug("表 {} 已存在，检查字段", tableName);
+                // 表存在，检查并添加缺失的字段
+                addMissingColumns(entityClass, tableName);
+            } else {
+                // 表不存在，创建表
+                String createTableSql = generateCreateTableSql(entityClass, tableName);
+                jdbcTemplate.execute(createTableSql);
+                log.info("成功创建表: {}", tableName);
             }
             
-            // 生成建表SQL
-            String createTableSql = generateCreateTableSql(entityClass, tableName);
-            
-            // 执行建表SQL
-            jdbcTemplate.execute(createTableSql);
-            log.info("成功创建表: {}", tableName);
-            
         } catch (Exception e) {
-            log.error("创建表 {} 失败", tableName, e);
+            log.error("处理表 {} 失败", tableName, e);
         }
     }
 
@@ -145,20 +150,62 @@ public class DatabaseInitService implements ApplicationRunner {
             return false;
         }
     }
-
+    
     /**
-     * 生成建表SQL
+     * 添加缺失的字段
      */
-    private String generateCreateTableSql(Class<?> entityClass, String tableName) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE `").append(tableName).append("` (\n");
+    private void addMissingColumns(Class<?> entityClass, String tableName) {
+        try {
+            // 获取表中现有的字段
+            Set<String> existingColumns = getExistingColumns(tableName);
+            
+            // 获取实体类中定义的所有字段（包括父类字段）
+            Map<String, String> entityColumns = getAllEntityColumns(entityClass);
+            
+            // 找出缺失的字段并添加
+            for (Map.Entry<String, String> entry : entityColumns.entrySet()) {
+                String columnName = entry.getKey();
+                String columnDefinition = entry.getValue();
+                
+                if (!existingColumns.contains(columnName.toLowerCase())) {
+                    String addColumnSql = String.format("ALTER TABLE `%s` ADD COLUMN %s", tableName, columnDefinition);
+                    jdbcTemplate.execute(addColumnSql);
+                    log.info("为表 {} 添加字段: {}", tableName, columnName);
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("为表 {} 添加缺失字段失败", tableName, e);
+        }
+    }
+    
+    /**
+     * 获取表中现有的字段名
+     */
+    private Set<String> getExistingColumns(String tableName) {
+        Set<String> columns = new HashSet<>();
+        try {
+            String sql = "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ?";
+            List<String> columnNames = jdbcTemplate.queryForList(sql, String.class, tableName);
+            for (String columnName : columnNames) {
+                columns.add(columnName.toLowerCase());
+            }
+        } catch (Exception e) {
+            log.error("获取表 {} 的字段信息失败", tableName, e);
+        }
+        return columns;
+    }
+    
+    /**
+     * 获取实体类中所有字段（包括父类字段）
+     */
+    private Map<String, String> getAllEntityColumns(Class<?> entityClass) {
+        Map<String, String> columns = new LinkedHashMap<>();
         
-        List<String> columns = new ArrayList<>();
+        // 添加基础字段（来自ZbootDO）
+        addBaseColumnsToMap(columns);
         
-        // 处理父类字段（ZbootDO的字段）
-        addBaseColumns(columns);
-        
-        // 处理当前类的字段
+        // 添加当前类的字段
         Field[] fields = entityClass.getDeclaredFields();
         for (Field field : fields) {
             TableField tableField = field.getAnnotation(TableField.class);
@@ -172,36 +219,56 @@ public class DatabaseInitService implements ApplicationRunner {
             String comment = getColumnComment(field);
             
             if (columnName != null && columnType != null) {
-                StringBuilder column = new StringBuilder();
-                column.append("  `").append(columnName).append("` ").append(columnType);
+                StringBuilder columnDef = new StringBuilder();
+                columnDef.append("`").append(columnName).append("` ").append(columnType);
                 
                 // 添加注释
                 if (comment != null && !comment.isEmpty()) {
-                    column.append(" COMMENT '").append(comment).append("'");
+                    columnDef.append(" COMMENT '").append(comment).append("'");
                 }
                 
-                columns.add(column.toString());
+                columns.put(columnName, columnDef.toString());
             }
         }
         
-        sql.append(String.join(",\n", columns));
+        return columns;
+    }
+    
+    /**
+     * 添加基础字段到Map中
+     */
+    private void addBaseColumnsToMap(Map<String, String> columns) {
+        columns.put("id", "`id` bigint NOT NULL COMMENT '主键ID'");
+        columns.put("create_by", "`create_by` varchar(64) DEFAULT NULL COMMENT '创建者'");
+        columns.put("create_time", "`create_time` datetime DEFAULT NULL COMMENT '创建时间'");
+        columns.put("update_by", "`update_by` varchar(64) DEFAULT NULL COMMENT '更新者'");
+        columns.put("update_time", "`update_time` datetime DEFAULT NULL COMMENT '更新时间'");
+        columns.put("del_flag", "`del_flag` tinyint DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）'");
+    }
+
+    /**
+     * 生成建表SQL
+     */
+    private String generateCreateTableSql(Class<?> entityClass, String tableName) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("CREATE TABLE `").append(tableName).append("` (\n");
+        
+        // 获取所有字段定义
+        Map<String, String> entityColumns = getAllEntityColumns(entityClass);
+        List<String> columnDefinitions = new ArrayList<>();
+        
+        for (String columnDefinition : entityColumns.values()) {
+            columnDefinitions.add("  " + columnDefinition);
+        }
+        
+        sql.append(String.join(",\n", columnDefinitions));
         sql.append(",\n  PRIMARY KEY (`id`)");
         sql.append("\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='").append(getTableComment(entityClass)).append("';");
         
         return sql.toString();
     }
 
-    /**
-     * 添加基础字段（来自ZbootDO）
-     */
-    private void addBaseColumns(List<String> columns) {
-        columns.add("  `id` bigint NOT NULL COMMENT '主键ID'");
-        columns.add("  `create_by` varchar(64) DEFAULT NULL COMMENT '创建者'");
-        columns.add("  `create_time` datetime DEFAULT NULL COMMENT '创建时间'");
-        columns.add("  `update_by` varchar(64) DEFAULT NULL COMMENT '更新者'");
-        columns.add("  `update_time` datetime DEFAULT NULL COMMENT '更新时间'");
-        columns.add("  `del_flag` tinyint DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）'");
-    }
+
 
     /**
      * 获取字段对应的数据库列名

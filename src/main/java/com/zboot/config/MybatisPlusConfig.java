@@ -14,6 +14,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import com.zboot.common.utils.TokenUtils;
 
 import java.time.LocalDateTime;
 
@@ -66,14 +67,15 @@ public class MybatisPlusConfig {
         
         /**
          * 获取当前用户ID
-         * TODO: 后续从Sa-Token中获取当前登录用户ID
+         * 从TokenUtils获取当前登录用户ID
          */
         private String getCurrentUserId() {
             try {
-                // 这里后续可以通过Sa-Token获取当前登录用户ID
-                // return StpUtil.getLoginIdAsString();
-                return "system";
+                // 从TokenUtils获取当前登录用户ID
+                String userId = TokenUtils.getCurrentUserIdAsString();
+                return userId != null ? userId : "system";
             } catch (Exception e) {
+                // 如果获取失败，返回系统用户
                 return "system";
             }
         }

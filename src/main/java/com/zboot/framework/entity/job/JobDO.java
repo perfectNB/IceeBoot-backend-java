@@ -2,7 +2,7 @@
  * 任务作业实体类
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 package com.zboot.framework.entity.job;
 
@@ -19,11 +19,11 @@ import java.time.LocalDateTime;
  * 任务作业实体类
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("job")
+@TableName("t_job")
 @Schema(description = "任务作业信息")
 public class JobDO extends ZbootDO {
 

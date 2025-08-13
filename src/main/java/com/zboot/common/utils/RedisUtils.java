@@ -6,6 +6,7 @@
  */
 package com.zboot.common.utils;
 
+import com.zboot.common.exception.ZbootException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -135,7 +136,7 @@ public class RedisUtils {
      */
     public long incr(String key, long delta) {
         if (delta < 0) {
-            throw new RuntimeException("递增因子必须大于0");
+            throw new ZbootException("递增因子必须大于0");
         }
         return redisTemplate.opsForValue().increment(key, delta);
     }
@@ -147,7 +148,7 @@ public class RedisUtils {
      */
     public long decr(String key, long delta) {
         if (delta < 0) {
-            throw new RuntimeException("递减因子必须大于0");
+            throw new ZbootException("递减因子必须大于0");
         }
         return redisTemplate.opsForValue().increment(key, -delta);
     }

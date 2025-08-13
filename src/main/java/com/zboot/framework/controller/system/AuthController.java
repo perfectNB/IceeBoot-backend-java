@@ -121,7 +121,9 @@ public class AuthController {
     @Operation(summary = "检查登录状态", description = "检查当前用户是否已登录")
     @GetMapping("/check")
     public R<Boolean> checkLogin() {
-        boolean isLogin = StpUtil.isLogin();
+        boolean isLogin = authService.checkLogin();
         return R.ok(isLogin);
     }
+    
+
 }
