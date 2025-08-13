@@ -2,7 +2,7 @@
  * 系统菜单Mapper接口
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 package com.zboot.framework.mapper.system;
 
@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 系统菜单Mapper接口
  * 
  * @author CodeIcee
- * @date 2025-01-11
+ * @date 2025-08-11
  */
 @Mapper
 public interface SysMenuMapper extends BaseMapper<MenuDO> {

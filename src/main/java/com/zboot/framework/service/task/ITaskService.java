@@ -1,7 +1,7 @@
 package com.zboot.framework.service.task;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.entity.TaskDO;
+import com.zboot.framework.entity.task.TaskDO;
 import com.zboot.framework.query.system.TaskQuery;
 import com.zboot.common.core.domain.PageResult;
 

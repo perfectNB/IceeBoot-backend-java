@@ -56,7 +56,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
             return ${lowerEntityName};
         } catch (Exception e) {
             log.error("创建${entityName}失败: {}", e.getMessage(), e);
-            throw new RuntimeException("创建${entityName}失败", e);
+            throw new ZbootException("创建${entityName}失败", e);
         }
     }
 
@@ -65,7 +65,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
         try {
             ${entityName}DO ${lowerEntityName} = this.getById(${lowerEntityName}DTO.getId());
             if (${lowerEntityName} == null) {
-                throw new RuntimeException("${entityName}不存在");
+                throw new ZbootException("${entityName}不存在");
             }
             
             BeanUtils.copyProperties(${lowerEntityName}DTO, ${lowerEntityName});
@@ -76,7 +76,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
             return ${lowerEntityName};
         } catch (Exception e) {
             log.error("更新${entityName}失败: {}", e.getMessage(), e);
-            throw new RuntimeException("更新${entityName}失败", e);
+            throw new ZbootException("更新${entityName}失败", e);
         }
     }
 
@@ -92,7 +92,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
             }
         } catch (Exception e) {
             log.error("删除${entityName}失败: {}", e.getMessage(), e);
-            throw new RuntimeException("删除${entityName}失败", e);
+            throw new ZbootException("删除${entityName}失败", e);
         }
     }
 }

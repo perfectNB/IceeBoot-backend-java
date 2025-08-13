@@ -1,7 +1,7 @@
 package com.zboot.framework.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.zboot.framework.entity.TaskDO;
+import com.zboot.framework.entity.task.TaskDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

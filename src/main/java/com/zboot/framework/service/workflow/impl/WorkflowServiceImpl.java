@@ -1,5 +1,6 @@
 package com.zboot.framework.service.workflow.impl;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.framework.service.workflow.IWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return processInstance;
         } catch (Exception e) {
             log.error("启动流程实例失败，流程定义Key: {}", processDefinitionKey, e);
-            throw new RuntimeException("启动流程实例失败", e);
+            throw new ZbootException("启动流程实例失败", e);
         }
     }
 
@@ -49,7 +50,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return processInstance;
         } catch (Exception e) {
             log.error("启动流程实例失败，流程定义Key: {}, 业务Key: {}", processDefinitionKey, businessKey, e);
-            throw new RuntimeException("启动流程实例失败", e);
+            throw new ZbootException("启动流程实例失败", e);
         }
     }
 
@@ -58,14 +59,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
             if (task == null) {
-                throw new RuntimeException("任务不存在，任务ID: " + taskId);
+                throw new ZbootException("任务不存在，任务ID: " + taskId);
             }
             
             taskService.complete(taskId, variables);
             log.info("完成任务成功，任务ID: {}, 任务名称: {}", taskId, task.getName());
         } catch (Exception e) {
             log.error("完成任务失败，任务ID: {}", taskId, e);
-            throw new RuntimeException("完成任务失败", e);
+            throw new ZbootException("完成任务失败", e);
         }
     }
 
@@ -81,7 +82,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return tasks;
         } catch (Exception e) {
             log.error("查询用户任务失败，用户: {}", assignee, e);
-            throw new RuntimeException("查询用户任务失败", e);
+            throw new ZbootException("查询用户任务失败", e);
         }
     }
 
@@ -97,7 +98,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return tasks;
         } catch (Exception e) {
             log.error("查询候选任务失败，候选用户: {}", candidateUser, e);
-            throw new RuntimeException("查询候选任务失败", e);
+            throw new ZbootException("查询候选任务失败", e);
         }
     }
 
@@ -111,7 +112,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return processInstance;
         } catch (Exception e) {
             log.error("查询流程实例失败，流程实例ID: {}", processInstanceId, e);
-            throw new RuntimeException("查询流程实例失败", e);
+            throw new ZbootException("查询流程实例失败", e);
         }
     }
 
@@ -122,7 +123,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.info("删除流程实例成功，流程实例ID: {}, 删除原因: {}", processInstanceId, deleteReason);
         } catch (Exception e) {
             log.error("删除流程实例失败，流程实例ID: {}", processInstanceId, e);
-            throw new RuntimeException("删除流程实例失败", e);
+            throw new ZbootException("删除流程实例失败", e);
         }
     }
 
@@ -135,7 +136,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return isEnded;
         } catch (Exception e) {
             log.error("判断流程是否结束失败，流程实例ID: {}", processInstanceId, e);
-            throw new RuntimeException("判断流程是否结束失败", e);
+            throw new ZbootException("判断流程是否结束失败", e);
         }
     }
 
@@ -144,7 +145,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
             if (task == null) {
-                throw new RuntimeException("任务不存在，任务ID: " + taskId);
+                throw new ZbootException("任务不存在，任务ID: " + taskId);
             }
             
             // 使用Activiti的跳转功能
@@ -158,7 +159,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.info("跳转任务成功，任务ID: {}, 目标节点: {}", taskId, targetActivityId);
         } catch (Exception e) {
             log.error("跳转任务失败，任务ID: {}, 目标节点: {}", taskId, targetActivityId, e);
-            throw new RuntimeException("跳转任务失败", e);
+            throw new ZbootException("跳转任务失败", e);
         }
     }
 
@@ -174,7 +175,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             }
         } catch (Exception e) {
             log.error("结束流程失败，流程实例ID: {}", processInstanceId, e);
-            throw new RuntimeException("结束流程失败", e);
+            throw new ZbootException("结束流程失败", e);
         }
     }
 }

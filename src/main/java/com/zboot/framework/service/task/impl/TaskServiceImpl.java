@@ -5,7 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.entity.TaskDO;
+import com.zboot.common.exception.ZbootException;
+import com.zboot.framework.entity.task.TaskDO;
 import com.zboot.framework.mapper.TaskMapper;
 import com.zboot.framework.query.system.TaskQuery;
 import com.zboot.framework.service.task.ITaskService;
@@ -61,7 +62,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             return task;
         } catch (Exception e) {
             log.error("创建定时任务失败: {}", e.getMessage(), e);
-            throw new RuntimeException("创建定时任务失败", e);
+            throw new ZbootException("创建定时任务失败", e);
         }
     }
 
@@ -82,7 +83,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             return task;
         } catch (Exception e) {
             log.error("更新定时任务失败: {}", e.getMessage(), e);
-            throw new RuntimeException("更新定时任务失败", e);
+            throw new ZbootException("更新定时任务失败", e);
         }
     }
 
@@ -98,7 +99,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             }
         } catch (Exception e) {
             log.error("删除定时任务失败: {}", e.getMessage(), e);
-            throw new RuntimeException("删除定时任务失败", e);
+            throw new ZbootException("删除定时任务失败", e);
         }
     }
 
@@ -119,7 +120,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             }
         } catch (Exception e) {
             log.error("启动定时任务失败: {}", e.getMessage(), e);
-            throw new RuntimeException("启动定时任务失败", e);
+            throw new ZbootException("启动定时任务失败", e);
         }
     }
 
@@ -140,7 +141,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             }
         } catch (Exception e) {
             log.error("停止定时任务失败: {}", e.getMessage(), e);
-            throw new RuntimeException("停止定时任务失败", e);
+            throw new ZbootException("停止定时任务失败", e);
         }
     }
 

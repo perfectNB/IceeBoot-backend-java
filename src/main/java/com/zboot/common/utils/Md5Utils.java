@@ -8,6 +8,7 @@ package com.zboot.common.utils;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import com.zboot.common.exception.ZbootException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -138,7 +139,7 @@ public class Md5Utils {
             return result.toString();
         } catch (NoSuchAlgorithmException e) {
             log.error("MD5加密失败", e);
-            throw new RuntimeException("MD5加密失败", e);
+            throw new ZbootException("MD5加密失败", e);
         }
     }
     
@@ -157,7 +158,7 @@ public class Md5Utils {
             return DigestUtil.md5Hex(new java.io.File(filePath));
         } catch (Exception e) {
             log.error("文件MD5计算失败: {}", filePath, e);
-            throw new RuntimeException("文件MD5计算失败", e);
+            throw new ZbootException("文件MD5计算失败", e);
         }
     }
     

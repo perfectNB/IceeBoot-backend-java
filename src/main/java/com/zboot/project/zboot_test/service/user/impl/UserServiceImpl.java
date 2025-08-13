@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.project.zboot_test.entity.user.UserDO;
 import com.zboot.project.zboot_test.dto.user.UserDTO;
 import com.zboot.project.zboot_test.mapper.user.UserMapper;
@@ -56,7 +57,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             return user;
         } catch (Exception e) {
             log.error("创建User失败: {}", e.getMessage(), e);
-            throw new RuntimeException("创建User失败", e);
+            throw new ZbootException("创建User失败", e);
         }
     }
 
@@ -65,7 +66,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         try {
             UserDO user = this.getById(userDTO.getId());
             if (user == null) {
-                throw new RuntimeException("User不存在");
+                throw new ZbootException("User不存在");
             }
             
             BeanUtils.copyProperties(userDTO, user);
@@ -76,7 +77,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             return user;
         } catch (Exception e) {
             log.error("更新User失败: {}", e.getMessage(), e);
-            throw new RuntimeException("更新User失败", e);
+            throw new ZbootException("更新User失败", e);
         }
     }
 
@@ -92,7 +93,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             }
         } catch (Exception e) {
             log.error("删除User失败: {}", e.getMessage(), e);
-            throw new RuntimeException("删除User失败", e);
+            throw new ZbootException("删除User失败", e);
         }
     }
 }

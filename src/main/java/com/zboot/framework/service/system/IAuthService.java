@@ -9,6 +9,7 @@ package com.zboot.framework.service.system;
 import com.zboot.framework.dto.system.LoginDTO;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 认证服务接口
@@ -53,4 +54,11 @@ public interface IAuthService {
      * @return 登录结果
      */
     LoginVO wechatLogin(String code);
+    
+    /**
+     * 检查登录状态
+     *
+     * @return 是否已登录
+     */
+    boolean checkLogin();
 }

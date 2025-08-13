@@ -10,6 +10,7 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
+import com.zboot.common.exception.ZbootException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -75,7 +76,7 @@ public class HttpUtils {
             return response.body();
         } catch (Exception e) {
             log.error("GET请求失败: {}", url, e);
-            throw new RuntimeException("HTTP GET请求失败: " + e.getMessage());
+            throw new ZbootException("HTTP GET请求失败: " + e.getMessage());
         }
     }
     
@@ -115,7 +116,7 @@ public class HttpUtils {
             return response.body();
         } catch (Exception e) {
             log.error("POST JSON请求失败: {}", url, e);
-            throw new RuntimeException("HTTP POST JSON请求失败: " + e.getMessage());
+            throw new ZbootException("HTTP POST JSON请求失败: " + e.getMessage());
         }
     }
     
@@ -180,7 +181,7 @@ public class HttpUtils {
             return response.body();
         } catch (Exception e) {
             log.error("POST FORM请求失败: {}", url, e);
-            throw new RuntimeException("HTTP POST FORM请求失败: " + e.getMessage());
+            throw new ZbootException("HTTP POST FORM请求失败: " + e.getMessage());
         }
     }
     
@@ -220,7 +221,7 @@ public class HttpUtils {
             return response.body();
         } catch (Exception e) {
             log.error("PUT JSON请求失败: {}", url, e);
-            throw new RuntimeException("HTTP PUT JSON请求失败: " + e.getMessage());
+            throw new ZbootException("HTTP PUT JSON请求失败: " + e.getMessage());
         }
     }
     
@@ -256,7 +257,7 @@ public class HttpUtils {
             return response.body();
         } catch (Exception e) {
             log.error("DELETE请求失败: {}", url, e);
-            throw new RuntimeException("HTTP DELETE请求失败: " + e.getMessage());
+            throw new ZbootException("HTTP DELETE请求失败: " + e.getMessage());
         }
     }
     
@@ -272,7 +273,7 @@ public class HttpUtils {
             log.info("文件下载成功: {} -> {}", url, destPath);
         } catch (Exception e) {
             log.error("文件下载失败: {}", url, e);
-            throw new RuntimeException("文件下载失败: " + e.getMessage());
+            throw new ZbootException("文件下载失败: " + e.getMessage());
         }
     }
     

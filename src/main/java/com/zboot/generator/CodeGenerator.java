@@ -1,5 +1,6 @@
 package com.zboot.generator;
 
+import com.zboot.common.exception.ZbootException;
 import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
 import org.beetl.core.Template;
@@ -34,7 +35,7 @@ public class CodeGenerator {
             Configuration cfg = Configuration.defaultConfiguration();
             groupTemplate = new GroupTemplate(resourceLoader, cfg);
         } catch (Exception e) {
-            throw new RuntimeException("初始化模板引擎失败", e);
+            throw new ZbootException("初始化模板引擎失败", e);
         }
     }
     
@@ -65,7 +66,7 @@ public class CodeGenerator {
             
             System.out.println("代码生成完成！");
         } catch (Exception e) {
-            throw new RuntimeException("代码生成失败", e);
+            throw new ZbootException("代码生成失败", e);
         }
     }
     
@@ -94,7 +95,7 @@ public class CodeGenerator {
             
             System.out.println("代码删除完成！");
         } catch (Exception e) {
-            throw new RuntimeException("代码删除失败", e);
+            throw new ZbootException("代码删除失败", e);
         }
     }
     
