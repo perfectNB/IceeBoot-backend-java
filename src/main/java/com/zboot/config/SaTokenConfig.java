@@ -12,6 +12,8 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.context.model.SaRequest;
+import com.zboot.framework.interceptor.PermissionInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,6 +24,9 @@ import org.springframework.util.StringUtils;
  */
 @Configuration
 public class SaTokenConfig implements WebMvcConfigurer {
+    
+    @Autowired
+    private PermissionInterceptor permissionInterceptor;
     
     /**
      * 注册Sa-Token拦截器
@@ -75,6 +80,23 @@ public class SaTokenConfig implements WebMvcConfigurer {
                         // checkPermission(request);
                     });
         })).addPathPatterns("/**");
+        
+        // 注册权限拦截器（基于注解的权限验证）
+        registry.addInterceptor(permissionInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/v1/auth/login",
+                        "/v1/auth/register",
+                        "/v1/auth/wechat/login",
+                        "/v1/auth/captcha",
+                        "/health",
+                        "/doc.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/webjars/**",
+                        "/favicon.ico",
+                        "/error"
+                );
     }
     
     /**

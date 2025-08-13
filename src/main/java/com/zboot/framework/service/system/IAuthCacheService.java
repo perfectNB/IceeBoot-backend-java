@@ -73,4 +73,32 @@ public interface IAuthCacheService {
      * @param userId 用户ID
      */
     void refreshUserCache(Long userId);
+    
+    /**
+     * 获取URL权限映射
+     *
+     * @param url 请求URL
+     * @return 权限编码列表
+     */
+    List<String> getUrlPermissions(String url);
+    
+    /**
+     * 设置URL权限映射
+     *
+     * @param url 请求URL
+     * @param permissions 权限编码列表
+     */
+    void setUrlPermissions(String url, List<String> permissions);
+    
+    /**
+     * 获取所有URL权限映射
+     *
+     * @return URL权限映射Map
+     */
+    Map<String, List<String>> getAllUrlPermissions();
+    
+    /**
+     * 清除URL权限映射缓存
+     */
+    void clearUrlPermissionCache();
 }
