@@ -1,6 +1,6 @@
 /**
  * 认证控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 认证控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -34,9 +34,7 @@ public class AuthController {
 
     private final IAuthService authService;
 
-    /**
-     * 用户登录
-     */
+
     @Operation(summary = "test1", description = "test")
     @GetMapping("/test1")
     public R<LoginVO> test1() {
@@ -51,23 +49,7 @@ public class AuthController {
         return R.ok("谢谢您使用ZBOOT超级脚手架");
     }
 
-    @Operation(summary = "test3", description = "test")
-    @GetMapping("/test3")
-    public R<LoginVO> test3() {
 
-        return R.ok("谢谢您使用ZBOOT超级脚手架");
-    }
-
-    @Operation(summary = "test4", description = "test")
-    @GetMapping("/test4")
-    public R<LoginVO> test() {
-
-        return R.ok("谢谢您使用ZBOOT超级脚手架");
-    }
-
-    /**
-     * 用户登录
-     */
     @Operation(summary = "用户登录", description = "用户名密码登录")
     @PostMapping("/login")
     public R<LoginVO> login(@Validated @RequestBody LoginDTO loginDTO) {
@@ -75,9 +57,7 @@ public class AuthController {
         return R.ok(loginVO);
     }
 
-    /**
-     * 用户登出
-     */
+
     @Operation(summary = "用户登出", description = "退出登录")
     @PostMapping("/logout")
     public R<Void> logout() {
@@ -85,9 +65,7 @@ public class AuthController {
         return R.ok();
     }
 
-    /**
-     * 获取当前用户信息
-     */
+
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/user")
     public R<SysUserVO> getCurrentUser() {
@@ -95,9 +73,7 @@ public class AuthController {
         return R.ok(userVO);
     }
 
-    /**
-     * 刷新令牌
-     */
+
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
     @PostMapping("/refresh")
     public R<LoginVO> refresh(@RequestParam String refreshToken) {
@@ -105,9 +81,7 @@ public class AuthController {
         return R.ok(loginVO);
     }
 
-    /**
-     * 微信登录
-     */
+
     @Operation(summary = "微信登录", description = "使用微信授权码登录")
     @PostMapping("/wechat")
     public R<LoginVO> wechatLogin(@RequestParam String code) {
@@ -115,15 +89,13 @@ public class AuthController {
         return R.ok(loginVO);
     }
 
-    /**
-     * 检查登录状态
-     */
+
     @Operation(summary = "检查登录状态", description = "检查当前用户是否已登录")
     @GetMapping("/check")
     public R<Boolean> checkLogin() {
         boolean isLogin = authService.checkLogin();
         return R.ok(isLogin);
     }
-    
+
 
 }
