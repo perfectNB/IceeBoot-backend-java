@@ -6,6 +6,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.ai.AiLLMDTO;
@@ -38,6 +39,7 @@ public class AiLLMController {
 
     @Operation(summary = "获取大模型列表")
     @GetMapping
+    @RequirePermission(dynamic = true)
     public R<IPage<AiLLMVO>> getLLMPage(AiLLMQuery query) {
         IPage<AiLLMVO> page = aiLLMService.getLLMPage(query);
         return R.ok(page);
@@ -45,6 +47,7 @@ public class AiLLMController {
 
     @Operation(summary = "根据ID获取大模型")
     @GetMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<AiLLMVO> getLLMById(@Parameter(description = "大模型ID") @PathVariable Long id) {
         AiLLMVO llm = aiLLMService.getLLMById(id);
         return R.ok(llm);
@@ -52,6 +55,7 @@ public class AiLLMController {
 
     @Operation(summary = "创建大模型")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<AiLLMVO> addLLM(@Validated @RequestBody AiLLMDTO dto) {
         Boolean result = aiLLMService.addLLM(dto);
         if (result) {
@@ -62,6 +66,7 @@ public class AiLLMController {
 
     @Operation(summary = "更新大模型")
     @PutMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<AiLLMVO> updateLLM(
             @Parameter(description = "大模型ID") @PathVariable Long id,
             @Validated @RequestBody AiLLMDTO dto) {
@@ -75,6 +80,7 @@ public class AiLLMController {
 
     @Operation(summary = "删除大模型")
     @DeleteMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<Void> deleteLLM(@Parameter(description = "大模型ID") @PathVariable Long id) {
         Boolean result = aiLLMService.deleteLLM(List.of(id));
         if (result) {
@@ -85,6 +91,7 @@ public class AiLLMController {
 
     @Operation(summary = "添加大模型密钥")
     @PostMapping("/{modelId}/keys")
+    @RequirePermission(dynamic = true)
     public R<Void> addLLMKey(
             @Parameter(description = "大模型ID") @PathVariable Long modelId,
             @RequestBody Map<String, Object> keyData) {
@@ -94,6 +101,7 @@ public class AiLLMController {
 
     @Operation(summary = "删除大模型密钥")
     @DeleteMapping("/{modelId}/keys/{keyId}")
+    @RequirePermission(dynamic = true)
     public R<Void> deleteLLMKey(
             @Parameter(description = "大模型ID") @PathVariable Long modelId,
             @Parameter(description = "密钥ID") @PathVariable Long keyId) {
@@ -103,6 +111,7 @@ public class AiLLMController {
 
     @Operation(summary = "更新大模型密钥状态")
     @PutMapping("/{modelId}/keys/{keyId}/status")
+    @RequirePermission(dynamic = true)
     public R<Void> updateLLMKeyStatus(
             @Parameter(description = "大模型ID") @PathVariable Long modelId,
             @Parameter(description = "密钥ID") @PathVariable Long keyId,

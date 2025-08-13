@@ -6,6 +6,7 @@
  */
 package com.zboot.framework.controller.system;
 
+import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
@@ -38,6 +39,7 @@ public class SysMenuController {
 
     @Operation(summary = "分页查询菜单列表", description = "根据条件分页查询菜单列表")
     @GetMapping("/page")
+    @RequirePermission(dynamic = true)
     public R<PageResult<SysMenuVO>> getMenuPage(SysMenuQueryDTO query) {
         PageResult<SysMenuVO> pageResult = menuService.getMenuPage(query);
         return R.ok(pageResult);
@@ -45,6 +47,7 @@ public class SysMenuController {
 
     @Operation(summary = "获取菜单树", description = "获取完整的菜单树结构")
     @GetMapping("/tree")
+    @RequirePermission(dynamic = true)
     public R<List<SysMenuVO>> getMenuTree() {
         List<SysMenuVO> menuTree = menuService.getMenuTree();
         return R.ok(menuTree);
@@ -53,6 +56,7 @@ public class SysMenuController {
 
     @Operation(summary = "获取菜单详情", description = "根据菜单ID获取菜单详细信息")
     @GetMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<SysMenuVO> getMenuById(@PathVariable Long id) {
         SysMenuVO menuVO = menuService.getMenuById(id);
         return R.ok(menuVO);
@@ -61,6 +65,7 @@ public class SysMenuController {
 
     @Operation(summary = "新增菜单", description = "创建新菜单")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<Void> addMenu(@Validated @RequestBody MenuDTO menuDTO) {
         boolean success = menuService.addMenu(menuDTO);
         return success ? R.ok(ResponseMessage.MENU_CREATE_SUCCESS) : R.fail(ResponseMessage.MENU_CREATE_FAIL);
@@ -69,6 +74,7 @@ public class SysMenuController {
 
     @Operation(summary = "更新菜单", description = "更新菜单信息")
     @PutMapping
+    @RequirePermission(dynamic = true)
     public R<Void> updateMenu(@Validated @RequestBody MenuDTO menuDTO) {
         boolean success = menuService.updateMenu(menuDTO);
         return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
@@ -76,6 +82,7 @@ public class SysMenuController {
 
     @Operation(summary = "删除菜单", description = "批量删除菜单")
     @DeleteMapping
+    @RequirePermission(dynamic = true)
     public R<Void> deleteMenus(@RequestBody List<Long> ids) {
         boolean success = menuService.deleteMenus(ids);
         return success ? R.ok(ResponseMessage.MENU_DELETE_SUCCESS) : R.fail(ResponseMessage.MENU_DELETE_FAIL);

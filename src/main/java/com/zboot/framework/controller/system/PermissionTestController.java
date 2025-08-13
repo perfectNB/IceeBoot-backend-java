@@ -30,6 +30,7 @@ public class PermissionTestController {
      */
     @Operation(summary = "无权限要求", description = "任何人都可以访问")
     @GetMapping("/public")
+    @RequirePermission(dynamic = true)
     public R<String> publicEndpoint() {
         return R.ok("这是一个公开接口，无需权限验证");
     }
@@ -105,12 +106,14 @@ public class PermissionTestController {
 
         @Operation(summary = "系统配置", description = "查看系统配置")
         @GetMapping("/config")
+        @RequirePermission(dynamic = true)
         public R<String> getSystemConfig() {
             return R.ok("系统配置信息");
         }
 
         @Operation(summary = "系统监控", description = "查看系统监控")
         @GetMapping("/monitor")
+        @RequirePermission(dynamic = true)
         public R<String> getSystemMonitor() {
             return R.ok("系统监控信息");
         }

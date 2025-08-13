@@ -105,7 +105,7 @@ public class AuthServiceImpl implements IAuthService {
         loginVO.setExpires(tokenTimeout);
         loginVO.setTokenType("Bearer");
         loginVO.setMenus(userMenus);
-        loginVO.setPermissions(userPermissions);
+//        loginVO.setPermissions(userPermissions);
         
         return loginVO;
     }

@@ -38,6 +38,7 @@ public class AuthController {
 
     @Operation(summary = "test1", description = "test")
     @GetMapping("/test1")
+    @RequirePermission(dynamic = true)
     public R<LoginVO> test1() {
 
         return R.ok("谢谢您使用ZBOOT超级脚手架");
@@ -45,6 +46,7 @@ public class AuthController {
 
     @Operation(summary = "test2", description = "test")
     @GetMapping("/test2")
+    @RequirePermission(dynamic = true)
     public R<LoginVO> test2() {
 
         return R.ok("谢谢您使用ZBOOT超级脚手架");
@@ -70,6 +72,7 @@ public class AuthController {
 
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/user")
+    @RequirePermission(dynamic = true)
     public R<SysUserVO> getCurrentUser() {
         SysUserVO userVO = authService.getCurrentUser();
         return R.ok(userVO);
@@ -78,6 +81,7 @@ public class AuthController {
 
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
     @PostMapping("/refresh")
+    @RequirePermission(dynamic = true)
     public R<LoginVO> refresh(@RequestParam String refreshToken) {
         LoginVO loginVO = authService.refresh(refreshToken);
         return R.ok(loginVO);
@@ -86,6 +90,7 @@ public class AuthController {
 
     @Operation(summary = "微信登录", description = "使用微信授权码登录")
     @PostMapping("/wechat")
+    @RequirePermission(dynamic = true)
     public R<LoginVO> wechatLogin(@RequestParam String code) {
         LoginVO loginVO = authService.wechatLogin(code);
         return R.ok(loginVO);
@@ -94,6 +99,7 @@ public class AuthController {
 
     @Operation(summary = "检查登录状态", description = "检查当前用户是否已登录")
     @GetMapping("/check")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkLogin() {
         boolean isLogin = authService.checkLogin();
         return R.ok(isLogin);
