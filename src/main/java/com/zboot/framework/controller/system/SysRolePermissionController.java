@@ -1,0 +1,127 @@
+/**
+ * 角色权限关联管理控制器
+ * 
+ * @author CodeIcee
+ * @date 2025-08-13
+ */
+package com.zboot.framework.controller.system;
+
+import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.core.domain.R;
+import com.zboot.framework.dto.system.RolePermissionDTO;
+import com.zboot.framework.query.system.RolePermissionQry;
+import com.zboot.framework.service.system.ISysRolePermissionService;
+import com.zboot.framework.vo.system.RolePermissionVO;
+import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 角色权限关联管理控制器
+ * 
+ * @author CodeIcee
+ * @date 2025-08-13
+ */
+@Tag(name = "角色权限管理", description = "角色权限关联增删改查等接口")
+@RestController
+@RequestMapping("/v1/role-permissions")
+@RequiredArgsConstructor
+public class SysRolePermissionController {
+
+    private final ISysRolePermissionService rolePermissionService;
+
+    /**
+     * 分页查询角色权限关联列表
+     */
+    @Operation(summary = "分页查询角色权限关联列表", description = "根据条件分页查询角色权限关联列表")
+    @GetMapping("/page")
+    public R<PageResult<RolePermissionVO>> getRolePermissionPage(RolePermissionQry query) {
+        PageResult<RolePermissionVO> pageResult = rolePermissionService.getRolePermissionPage(query);
+        return R.ok(pageResult);
+    }
+
+    /**
+     * 获取角色权限关联详情
+     */
+    @Operation(summary = "获取角色权限关联详情", description = "根据ID获取角色权限关联详细信息")
+    @GetMapping("/{id}")
+    public R<RolePermissionVO> getRolePermissionById(@PathVariable Long id) {
+        RolePermissionVO rolePermission = rolePermissionService.getRolePermissionById(id);
+        return R.ok(rolePermission);
+    }
+
+    /**
+     * 新增角色权限关联
+     */
+    @Operation(summary = "新增角色权限关联", description = "创建新的角色权限关联")
+    @PostMapping
+    public R<Void> addRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
+        boolean success = rolePermissionService.addRolePermission(rolePermissionDTO);
+        return success ? R.ok() : R.fail("新增角色权限关联失败");
+    }
+
+    /**
+     * 更新角色权限关联
+     */
+    @Operation(summary = "更新角色权限关联", description = "更新角色权限关联信息")
+    @PutMapping
+    public R<Void> updateRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
+        boolean success = rolePermissionService.updateRolePermission(rolePermissionDTO);
+        return success ? R.ok() : R.fail("更新角色权限关联失败");
+    }
+
+    /**
+     * 删除角色权限关联
+     */
+    @Operation(summary = "删除角色权限关联", description = "批量删除角色权限关联")
+    @DeleteMapping
+    public R<Void> deleteRolePermissions(@RequestBody List<Long> ids) {
+        boolean success = rolePermissionService.deleteRolePermissions(ids);
+        return success ? R.ok() : R.fail("删除角色权限关联失败");
+    }
+
+    /**
+     * 根据角色ID获取权限ID列表
+     */
+    @Operation(summary = "获取角色的权限列表", description = "根据角色ID获取该角色的所有权限ID")
+    @GetMapping("/role/{roleId}/permissions")
+    public R<List<Long>> getPermissionIdsByRoleId(@PathVariable Long roleId) {
+        List<Long> permissionIds = rolePermissionService.getPermissionIdsByRoleId(roleId);
+        return R.ok(permissionIds);
+    }
+
+    /**
+     * 根据权限ID获取角色ID列表
+     */
+    @Operation(summary = "获取权限的角色列表", description = "根据权限ID获取该权限的所有角色ID")
+    @GetMapping("/permission/{permissionId}/roles")
+    public R<List<Long>> getRoleIdsByPermissionId(@PathVariable Long permissionId) {
+        List<Long> roleIds = rolePermissionService.getRoleIdsByPermissionId(permissionId);
+        return R.ok(roleIds);
+    }
+
+    /**
+     * 为角色分配权限
+     */
+    @Operation(summary = "为角色分配权限", description = "为指定角色分配权限列表")
+    @PostMapping("/role/{roleId}/assign-permissions")
+    public R<Void> assignPermissionsToRole(@PathVariable Long roleId, @RequestBody List<Long> permissionIds) {
+        boolean success = rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
+        return success ? R.ok() : R.fail("分配权限失败");
+    }
+
+    /**
+     * 移除角色的所有权限
+     */
+    @Operation(summary = "移除角色的所有权限", description = "移除指定角色的所有权限")
+    @DeleteMapping("/role/{roleId}/permissions")
+    public R<Void> removeAllPermissionsByRoleId(@PathVariable Long roleId) {
+        boolean success = rolePermissionService.removeAllPermissionsByRoleId(roleId);
+        return success ? R.ok() : R.fail("移除角色权限失败");
+    }
+}
