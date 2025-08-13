@@ -14,8 +14,7 @@ import com.zboot.common.utils.PasswordUtil;
 import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.system.LoginDTO;
 import com.zboot.framework.entity.system.UserDO;
-import com.zboot.framework.service.system.IAuthService;
-import com.zboot.framework.service.system.ISysUserService;
+import com.zboot.framework.service.system.*;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
@@ -25,6 +24,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 认证服务实现类
@@ -37,6 +37,21 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private ISysRoleMenuService iSysRoleMenuService;
+
+    @Autowired
+    private ISysRolePermissionService iSysRolePermissionService;
+
+    @Autowired
+    private ISysPermissionService iSysPermissionService;
+
+    @Autowired
+    private ISysMenuService iSysMenuService;
+
+    @Autowired
+    private IAuthCacheService authCacheService;
 
 
     @Override
@@ -77,15 +92,21 @@ public class AuthServiceImpl implements IAuthService {
         
         // 获取用户信息
         SysUserVO userVO = userService.getUserById(user.getId());
-
+        
+        // 获取用户菜单和权限
+        List<Map<String, Object>> userMenus = authCacheService.getUserMenus(user.getId());
+        List<Map<String, Object>> userPermissions = authCacheService.getUserPermissions(user.getId());
+        
         // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setAccessToken(accessToken);
-        loginVO.setRefreshToken(accessToken); // Sa-Token中通常使用同一个token
+        loginVO.setRefreshToken(accessToken); // 这里可以生成不同的refresh token
         loginVO.setUser(userVO);
         loginVO.setExpires(tokenTimeout);
         loginVO.setTokenType("Bearer");
-
+        loginVO.setMenus(userMenus);
+        loginVO.setPermissions(userPermissions);
+        
         return loginVO;
     }
 

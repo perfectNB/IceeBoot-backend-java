@@ -1,6 +1,6 @@
 /**
  * 用户管理控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * 用户管理控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -37,9 +37,7 @@ public class SysUserController {
 
     private final ISysUserService userService;
 
-    /**
-     * 分页查询用户列表
-     */
+
     @Operation(summary = "分页查询用户列表", description = "根据条件分页查询用户列表")
     @GetMapping("/page")
     public R<PageResult<SysUserVO>> getUserPage(SysUserQuery query) {
@@ -47,9 +45,7 @@ public class SysUserController {
         return R.ok(pageResult);
     }
 
-    /**
-     * 根据ID获取用户详情
-     */
+
     @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详细信息")
     @GetMapping("/{id}")
     public R<SysUserVO> getUserById(@PathVariable Long id) {
@@ -57,9 +53,7 @@ public class SysUserController {
         return R.ok(userVO);
     }
 
-    /**
-     * 新增用户
-     */
+
     @Operation(summary = "新增用户", description = "创建新用户")
     @PostMapping
     public R<Void> addUser(@Validated @RequestBody UserDTO userDTO) {
@@ -67,9 +61,7 @@ public class SysUserController {
         return success ? R.ok(ResponseMessage.USER_CREATE_SUCCESS) : R.fail(ResponseMessage.USER_CREATE_FAIL);
     }
 
-    /**
-     * 更新用户
-     */
+
     @Operation(summary = "更新用户", description = "更新用户信息")
     @PutMapping
     public R<Void> updateUser(@Validated @RequestBody UserDTO userDTO) {
@@ -77,9 +69,6 @@ public class SysUserController {
         return success ? R.ok(ResponseMessage.USER_UPDATE_SUCCESS) : R.fail(ResponseMessage.USER_UPDATE_FAIL);
     }
 
-    /**
-     * 删除用户
-     */
     @Operation(summary = "删除用户", description = "批量删除用户")
     @DeleteMapping
     public R<Void> deleteUsers(@RequestBody List<Long> ids) {
@@ -87,9 +76,7 @@ public class SysUserController {
         return success ? R.ok(ResponseMessage.USER_DELETE_SUCCESS) : R.fail(ResponseMessage.USER_DELETE_FAIL);
     }
 
-    /**
-     * 重置密码
-     */
+
     @Operation(summary = "重置密码", description = "重置用户密码")
     @PutMapping("/{id}/password")
     public R<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
@@ -97,9 +84,7 @@ public class SysUserController {
         return success ? R.ok(ResponseMessage.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.PASSWORD_RESET_FAIL);
     }
 
-    /**
-     * 修改用户状态
-     */
+
     @Operation(summary = "修改用户状态", description = "启用或禁用用户")
     @PutMapping("/{id}/status")
     public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
@@ -107,9 +92,6 @@ public class SysUserController {
         return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
 
-    /**
-     * 检查用户名是否存在
-     */
     @Operation(summary = "检查用户名", description = "检查用户名是否已存在")
     @GetMapping("/check/username")
     public R<Boolean> checkUsername(@RequestParam String username, @RequestParam(required = false) Long excludeId) {
@@ -117,9 +99,7 @@ public class SysUserController {
         return R.ok(exists);
     }
 
-    /**
-     * 检查手机号是否存在
-     */
+
     @Operation(summary = "检查手机号", description = "检查手机号是否已存在")
     @GetMapping("/check/phone")
     public R<Boolean> checkPhone(@RequestParam String phone, @RequestParam(required = false) Long excludeId) {
@@ -127,9 +107,7 @@ public class SysUserController {
         return R.ok(exists);
     }
 
-    /**
-     * 检查邮箱是否存在
-     */
+
     @Operation(summary = "检查邮箱", description = "检查邮箱是否已存在")
     @GetMapping("/check/email")
     public R<Boolean> checkEmail(@RequestParam String email, @RequestParam(required = false) Long excludeId) {

@@ -1,6 +1,6 @@
 /**
  * 角色菜单关联管理控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-13
  */
@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * 角色菜单关联管理控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-13
  */
@@ -35,9 +35,7 @@ public class SysRoleMenuController {
 
     private final ISysRoleMenuService roleMenuService;
 
-    /**
-     * 分页查询角色菜单关联列表
-     */
+
     @Operation(summary = "分页查询角色菜单关联列表", description = "根据条件分页查询角色菜单关联列表")
     @GetMapping("/page")
     public R<PageResult<RoleMenuVO>> getRoleMenuPage(RoleMenuQry query) {
@@ -45,9 +43,7 @@ public class SysRoleMenuController {
         return R.ok(pageResult);
     }
 
-    /**
-     * 获取角色菜单关联详情
-     */
+
     @Operation(summary = "获取角色菜单关联详情", description = "根据ID获取角色菜单关联详细信息")
     @GetMapping("/{id}")
     public R<RoleMenuVO> getRoleMenuById(@PathVariable Long id) {
@@ -55,9 +51,7 @@ public class SysRoleMenuController {
         return R.ok(roleMenu);
     }
 
-    /**
-     * 新增角色菜单关联
-     */
+
     @Operation(summary = "新增角色菜单关联", description = "创建新的角色菜单关联")
     @PostMapping
     public R<Void> addRoleMenu(@Validated @RequestBody RoleMenuDTO roleMenuDTO) {
@@ -65,9 +59,7 @@ public class SysRoleMenuController {
         return success ? R.ok() : R.fail("新增角色菜单关联失败");
     }
 
-    /**
-     * 更新角色菜单关联
-     */
+
     @Operation(summary = "更新角色菜单关联", description = "更新角色菜单关联信息")
     @PutMapping
     public R<Void> updateRoleMenu(@Validated @RequestBody RoleMenuDTO roleMenuDTO) {
@@ -75,9 +67,7 @@ public class SysRoleMenuController {
         return success ? R.ok() : R.fail("更新角色菜单关联失败");
     }
 
-    /**
-     * 删除角色菜单关联
-     */
+
     @Operation(summary = "删除角色菜单关联", description = "批量删除角色菜单关联")
     @DeleteMapping
     public R<Void> deleteRoleMenus(@RequestBody List<Long> ids) {
@@ -85,9 +75,7 @@ public class SysRoleMenuController {
         return success ? R.ok() : R.fail("删除角色菜单关联失败");
     }
 
-    /**
-     * 根据角色ID获取菜单ID列表
-     */
+
     @Operation(summary = "获取角色的菜单列表", description = "根据角色ID获取该角色的所有菜单ID")
     @GetMapping("/role/{roleId}/menus")
     public R<List<Long>> getMenuIdsByRoleId(@PathVariable Long roleId) {
@@ -95,9 +83,6 @@ public class SysRoleMenuController {
         return R.ok(menuIds);
     }
 
-    /**
-     * 根据菜单ID获取角色ID列表
-     */
     @Operation(summary = "获取菜单的角色列表", description = "根据菜单ID获取该菜单的所有角色ID")
     @GetMapping("/menu/{menuId}/roles")
     public R<List<Long>> getRoleIdsByMenuId(@PathVariable Long menuId) {
@@ -105,9 +90,7 @@ public class SysRoleMenuController {
         return R.ok(roleIds);
     }
 
-    /**
-     * 为角色分配菜单
-     */
+
     @Operation(summary = "为角色分配菜单", description = "为指定角色分配菜单列表")
     @PostMapping("/role/{roleId}/assign-menus")
     public R<Void> assignMenusToRole(@PathVariable Long roleId, @RequestBody List<Long> menuIds) {
@@ -115,9 +98,7 @@ public class SysRoleMenuController {
         return success ? R.ok() : R.fail("分配菜单失败");
     }
 
-    /**
-     * 移除角色的所有菜单
-     */
+
     @Operation(summary = "移除角色的所有菜单", description = "移除指定角色的所有菜单")
     @DeleteMapping("/role/{roleId}/menus")
     public R<Void> removeAllMenusByRoleId(@PathVariable Long roleId) {

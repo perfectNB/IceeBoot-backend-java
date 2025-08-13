@@ -9,6 +9,9 @@ package com.zboot.framework.vo.system;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 登录响应视图对象
  * 
@@ -32,4 +35,10 @@ public class LoginVO {
 
     @Schema(description = "令牌类型")
     private String tokenType = "Bearer";
+
+    @Schema(description = "用户菜单列表")
+    private List<Map<String, Object>> menus;
+
+    @Schema(description = "用户权限列表")
+    private List<Map<String, Object>> permissions;
 }
