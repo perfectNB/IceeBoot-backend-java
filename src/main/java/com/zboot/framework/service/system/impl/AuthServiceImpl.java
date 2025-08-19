@@ -92,11 +92,10 @@ public class AuthServiceImpl implements IAuthService {
         
         // 获取用户信息
         SysUserVO userVO = userService.getUserById(user.getId());
-        
-        // 获取用户菜单和权限
-        List<Map<String, Object>> userMenus = authCacheService.getUserMenus(user.getId());
-        List<Map<String, Object>> userPermissions = authCacheService.getUserPermissions(user.getId());
-        
+//
+//        // 获取用户菜单和权限
+//        List<Map<String, Object>> userMenus = authCacheService.getUserMenus(user.getId());
+
         // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setAccessToken(accessToken);
@@ -104,7 +103,7 @@ public class AuthServiceImpl implements IAuthService {
         loginVO.setUser(userVO);
         loginVO.setExpires(tokenTimeout);
         loginVO.setTokenType("Bearer");
-        loginVO.setMenus(userMenus);
+//        loginVO.setMenus(userMenus);
 //        loginVO.setPermissions(userPermissions);
         
         return loginVO;
@@ -122,7 +121,7 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public SysUserVO getCurrentUser() {
-        Long userId = StpUtil.getLoginIdAsLong();
+        Long userId = TokenUtils.getCurrentUserId();
         return userService.getUserById(userId);
     }
 

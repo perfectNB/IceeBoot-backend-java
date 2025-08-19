@@ -72,7 +72,6 @@ public class AuthController {
 
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/user")
-    @RequirePermission(dynamic = true)
     public R<SysUserVO> getCurrentUser() {
         SysUserVO userVO = authService.getCurrentUser();
         return R.ok(userVO);

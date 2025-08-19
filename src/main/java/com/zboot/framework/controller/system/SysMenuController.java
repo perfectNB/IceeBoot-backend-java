@@ -37,13 +37,7 @@ public class SysMenuController {
 
     private final ISysMenuService menuService;
 
-    @Operation(summary = "分页查询菜单列表", description = "根据条件分页查询菜单列表")
-    @GetMapping("/page")
-    @RequirePermission(dynamic = true)
-    public R<PageResult<SysMenuVO>> getMenuPage(SysMenuQueryDTO query) {
-        PageResult<SysMenuVO> pageResult = menuService.getMenuPage(query);
-        return R.ok(pageResult);
-    }
+
 
     @Operation(summary = "获取菜单树", description = "获取完整的菜单树结构")
     @GetMapping("/tree")
@@ -60,6 +54,14 @@ public class SysMenuController {
     public R<SysMenuVO> getMenuById(@PathVariable Long id) {
         SysMenuVO menuVO = menuService.getMenuById(id);
         return R.ok(menuVO);
+    }
+
+    @Operation(summary = "分页查询菜单列表", description = "根据条件分页查询菜单列表")
+    @GetMapping()
+    @RequirePermission(dynamic = true)
+    public R<PageResult<SysMenuVO>> getMenuPage(SysMenuQueryDTO query) {
+        PageResult<SysMenuVO> pageResult = menuService.getMenuPage(query);
+        return R.ok(pageResult);
     }
 
 
