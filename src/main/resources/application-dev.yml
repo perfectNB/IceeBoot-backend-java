@@ -88,15 +88,7 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# Sa-Token配置
-sa-token:
-  token-name: Authorization
-  timeout: 7200
-  active-timeout: 1800
-  is-concurrent: true
-  is-share: true
-  token-style: uuid
-  is-log: false
+
 
 # Knife4j配置
 knife4j:

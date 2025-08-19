@@ -20,7 +20,7 @@ public class ${entityName}Controller {
     private final I${entityName}Service ${lowerEntityName}Service;
 
     @Operation(summary = "分页查询${entityName}列表")
-    @GetMapping("/page")
+    @GetMapping
     public R<PageResult<${entityName}DO>> get${entityName}Page(${entityName}Query query) {
         PageResult<${entityName}DO> pageResult = ${lowerEntityName}Service.get${entityName}Page(query);
         return R.ok(pageResult);

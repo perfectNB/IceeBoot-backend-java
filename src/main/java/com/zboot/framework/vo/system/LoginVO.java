@@ -36,9 +36,9 @@ public class LoginVO {
     @Schema(description = "令牌类型")
     private String tokenType = "Bearer";
 
-    @Schema(description = "用户菜单列表")
-    private List<Map<String, Object>> menus;
-
-    @Schema(description = "用户权限列表")
-    private List<Map<String, Object>> permissions;
+//    @Schema(description = "用户菜单列表")
+//    private List<Map<String, Object>> menus;
+//
+//    @Schema(description = "用户权限列表")
+//    private List<Map<String, Object>> permissions;
 }

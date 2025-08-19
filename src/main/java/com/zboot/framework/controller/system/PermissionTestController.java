@@ -39,7 +39,7 @@ public class PermissionTestController {
      * 需要单个权限的接口
      */
     @Operation(summary = "需要用户查看权限", description = "需要user:view权限")
-    @RequirePermission(code = "system:user:view", description = "用户查看权限")
+    @RequirePermission(dynamic = true)
     @GetMapping("/user-view")
     public R<String> userViewEndpoint() {
         return R.ok("您有用户查看权限，可以访问此接口");
@@ -49,7 +49,7 @@ public class PermissionTestController {
      * 需要多个权限之一的接口（OR关系）
      */
     @Operation(summary = "需要用户管理权限", description = "需要user:add或user:edit权限之一")
-    @RequirePermission(value = {"user:add", "user:edit"}, description = "用户管理权限")
+    @RequirePermission(dynamic = true)
     @PostMapping("/user-manage")
     public R<String> userManageEndpoint() {
         return R.ok("您有用户管理权限，可以访问此接口");
@@ -59,7 +59,7 @@ public class PermissionTestController {
      * 需要多个权限都满足的接口（AND关系）
      */
     @Operation(summary = "需要完整用户权限", description = "需要user:view和user:edit权限")
-    @RequirePermission(value = {"user:view", "user:edit"}, requireAll = true, description = "完整用户权限")
+    @RequirePermission(dynamic = true)
     @PutMapping("/user-full")
     public R<String> userFullEndpoint() {
         return R.ok("您有完整的用户权限，可以访问此接口");
@@ -69,7 +69,7 @@ public class PermissionTestController {
      * 需要管理员权限的接口
      */
     @Operation(summary = "需要管理员权限", description = "需要admin权限")
-    @RequirePermission(code = "admin", description = "管理员权限")
+    @RequirePermission(dynamic = true)
     @DeleteMapping("/admin-only")
     public R<String> adminOnlyEndpoint() {
         return R.ok("您有管理员权限，可以访问此接口");
@@ -101,7 +101,7 @@ public class PermissionTestController {
     @Tag(name = "系统管理", description = "需要系统管理权限的接口组")
     @RestController
     @RequestMapping("/v1/system-admin")
-    @RequirePermission(code = "system:admin", description = "系统管理权限")
+    @RequirePermission(dynamic = true)
     public static class SystemAdminController {
 
         @Operation(summary = "系统配置", description = "查看系统配置")
@@ -122,7 +122,7 @@ public class PermissionTestController {
          * 方法级别的权限注解会覆盖类级别的注解
          */
         @Operation(summary = "超级管理", description = "需要超级管理员权限")
-        @RequirePermission(code = "super:admin", description = "超级管理员权限")
+        @RequirePermission(dynamic = true)
         @PostMapping("/super")
         public R<String> superAdminEndpoint() {
             return R.ok("超级管理员操作");
