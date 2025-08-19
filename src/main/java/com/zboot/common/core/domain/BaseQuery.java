@@ -41,4 +41,9 @@ public class BaseQuery {
      * 关键词搜索
      */
     private String keyword;
+
+    /**
+     * 删除标识
+     */
+    private Integer delFlag = 0;
 }

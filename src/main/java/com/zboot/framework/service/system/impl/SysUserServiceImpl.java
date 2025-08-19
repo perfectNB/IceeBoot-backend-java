@@ -59,7 +59,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         if (StringUtils.hasText(query.getStatus())) {
             wrapper.eq(UserDO::getStatus, query.getStatus());
         }
-        
         wrapper.orderByDesc(UserDO::getCreateTime);
         
         Page<UserDO> page = new Page<>(query.getPageNum(), query.getPageSize());
