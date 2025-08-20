@@ -42,8 +42,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         wrapper.like(StringUtils.hasText(query.getName()), RoleDO::getName, query.getName())
                 .like(StringUtils.hasText(query.getCode()), RoleDO::getCode, query.getCode())
                 .eq(StringUtils.hasText(query.getStatus()), RoleDO::getStatus, query.getStatus())
-                .ge(query.getStartTime() != null, RoleDO::getCreateTime, query.getStartTime())
-                .le(query.getEndTime() != null, RoleDO::getCreateTime, query.getEndTime())
+                .ge(query.getStartTime() != null&&!query.getStartTime().equals(""), RoleDO::getCreateTime, query.getStartTime())
+                .le(query.getEndTime() != null&&!query.getStartTime().equals(""), RoleDO::getCreateTime, query.getEndTime())
                 .orderByAsc(RoleDO::getSort)
                 .orderByDesc(RoleDO::getCreateTime);
 

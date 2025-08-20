@@ -54,7 +54,7 @@ public class SysRoleController {
 
     @Operation(summary = "创建角色", description = "创建新角色")
     @PostMapping
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public R<Void> addRole(@Validated @RequestBody RoleDTO roleDTO) {
         boolean success = roleService.addRole(roleDTO);
         return success ? R.ok(ResponseMessage.ROLE_CREATE_SUCCESS) : R.fail(ResponseMessage.ROLE_CREATE_FAIL);
