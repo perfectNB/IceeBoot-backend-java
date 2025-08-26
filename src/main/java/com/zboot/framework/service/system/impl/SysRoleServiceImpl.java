@@ -18,9 +18,16 @@ import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.service.system.ISysRoleService;
+import com.zboot.framework.service.system.ISysRolePermissionService;
+import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.vo.system.SysRoleVO;
+import com.zboot.framework.vo.system.SysPermissionVO;
+import com.zboot.common.constant.CacheConstants;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -35,6 +42,14 @@ import java.util.stream.Collectors;
 @Service
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> implements ISysRoleService {
 
+    @Autowired
+    private ISysRolePermissionService rolePermissionService;
+    
+    @Autowired
+    private ISysPermissionService permissionService;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
     @Override
     public PageResult<SysRoleVO> getRolePage(SysRoleQuery query) {
         // 构建查询条件
@@ -43,7 +58,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
                 .like(StringUtils.hasText(query.getCode()), RoleDO::getCode, query.getCode())
                 .eq(StringUtils.hasText(query.getStatus()), RoleDO::getStatus, query.getStatus())
                 .ge(query.getStartTime() != null&&!query.getStartTime().equals(""), RoleDO::getCreateTime, query.getStartTime())
-                .le(query.getEndTime() != null&&!query.getStartTime().equals(""), RoleDO::getCreateTime, query.getEndTime())
                 .orderByAsc(RoleDO::getSort)
                 .orderByDesc(RoleDO::getCreateTime);
 
@@ -85,6 +99,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
         SysRoleVO vo = new SysRoleVO();
         BeanUtils.copyProperties(role, vo);
+
+        // 获取权限树（包含权限拥有状态）
+        List<SysPermissionVO> permissionTree = permissionService.getPermissionTreeByRoleId(id);
+        vo.setPermissionTree(permissionTree);
+        
         return vo;
     }
 
@@ -173,5 +192,26 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     public boolean assignRolesToUser(Long userId, List<Long> roleIds) {
         // 简化实现，实际应该操作用户角色关联表
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean saveRolePermissions(Long roleId, List<Long> permissionIds) {
+        try {
+            // 1. 删除角色现有的所有权限
+            rolePermissionService.removeAllPermissionsByRoleId(roleId);
+            
+            // 2. 添加新的权限
+            if (permissionIds != null && !permissionIds.isEmpty()) {
+                rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
+            }
+            
+            // 3. 清空缓存
+            redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY);
+            
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("保存角色权限失败", e);
+        }
     }
 }

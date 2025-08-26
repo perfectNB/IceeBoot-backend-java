@@ -18,8 +18,10 @@ import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.mapper.system.SysPermissionMapper;
 import com.zboot.framework.dto.system.SysPermissionQueryDTO;
 import com.zboot.framework.service.system.ISysPermissionService;
+import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.vo.system.SysPermissionVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -34,6 +36,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, PermissionDO> implements ISysPermissionService {
+
+    @Autowired
+    private ISysRolePermissionService rolePermissionService;
 
     @Override
     public PageResult<SysPermissionVO> getPermissionPage(SysPermissionQueryDTO query) {
@@ -184,6 +189,63 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
                     vo.setChildren(children);
                     
                     return vo;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getPermissionCodesByIds(List<Long> permissionIds) {
+        if (permissionIds == null || permissionIds.isEmpty()) {
+            return List.of();
+        }
+        
+        LambdaQueryWrapper<PermissionDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(PermissionDO::getId, permissionIds)
+                .select(PermissionDO::getCode);
+        
+        List<PermissionDO> permissions = this.list(wrapper);
+        return permissions.stream()
+                .map(PermissionDO::getCode)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SysPermissionVO> getPermissionTreeByRoleId(Long roleId) {
+        // 获取所有权限
+        List<PermissionDO> allPermissions = this.list();
+        
+        // 获取角色拥有的权限ID列表
+        List<Long> rolePermissionIds = rolePermissionService.getPermissionIdsByRoleId(roleId);
+        
+        // 转换为VO并设置权限拥有状态
+        List<SysPermissionVO> permissionVOs = allPermissions.stream().map(permission -> {
+            SysPermissionVO vo = new SysPermissionVO();
+            BeanUtils.copyProperties(permission, vo);
+            // 设置是否拥有该权限
+            vo.setHasPermission(rolePermissionIds.contains(permission.getId()));
+            return vo;
+        }).collect(Collectors.toList());
+        
+        // 构建权限树
+        return buildPermissionTreeWithStatus(permissionVOs, null);
+    }
+
+    /**
+     * 构建带权限状态的权限树
+     */
+    private List<SysPermissionVO> buildPermissionTreeWithStatus(List<SysPermissionVO> permissions, Long parentId) {
+        return permissions.stream()
+                .filter(permission -> {
+                    if (parentId == null) {
+                        return permission.getParentId() == null || permission.getParentId().equals(0L);
+                    }
+                    return parentId.equals(permission.getParentId());
+                })
+                .map(permission -> {
+                    // 递归获取子权限
+                    List<SysPermissionVO> children = buildPermissionTreeWithStatus(permissions, permission.getId());
+                    permission.setChildren(children);
+                    return permission;
                 })
                 .collect(Collectors.toList());
     }

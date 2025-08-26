@@ -13,7 +13,9 @@ import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.RoleDTO;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.service.system.ISysRoleService;
+import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.vo.system.SysRoleVO;
+import com.zboot.framework.vo.system.SysPermissionVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +37,7 @@ import java.util.List;
 public class SysRoleController {
 
     private final ISysRoleService roleService;
+
 
     @Operation(summary = "获取角色列表", description = "根据条件分页查询角色列表")
     @GetMapping
@@ -77,12 +80,13 @@ public class SysRoleController {
         return success ? R.ok(ResponseMessage.ROLE_DELETE_SUCCESS) : R.fail(ResponseMessage.ROLE_DELETE_FAIL);
     }
 
+
+
     @Operation(summary = "保存角色权限", description = "为角色分配权限")
     @PostMapping("/{roleId}/permissions")
     @RequirePermission(dynamic = true)
     public R<Void> saveRolePermissions(@PathVariable Long roleId, @RequestBody List<Long> permissionIds) {
-        // 简化实现，实际应该调用角色权限关联服务
-        // TODO: 实现角色权限分配逻辑
-        return R.ok("角色权限分配成功");
+        boolean success = roleService.saveRolePermissions(roleId, permissionIds);
+        return success ? R.ok("角色权限分配成功") : R.fail("角色权限分配失败");
     }
 }
