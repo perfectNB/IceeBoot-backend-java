@@ -121,4 +121,13 @@ public interface ISysRoleService extends IService<RoleDO> {
      * @return 是否成功
      */
     boolean assignRolesToUser(Long userId, List<Long> roleIds);
+
+    /**
+     * 保存角色权限
+     *
+     * @param roleId 角色ID
+     * @param permissionIds 权限ID列表
+     * @return 是否成功
+     */
+    boolean saveRolePermissions(Long roleId, List<Long> permissionIds);
 }

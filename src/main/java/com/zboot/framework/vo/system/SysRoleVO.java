@@ -48,8 +48,8 @@ public class SysRoleVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    @Schema(description = "权限列表")
-    private List<String> permissions;
+    @Schema(description = "权限树")
+    private List<SysPermissionVO> permissionTree;
 
     @Schema(description = "用户数量")
     private Integer userCount;

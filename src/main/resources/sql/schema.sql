@@ -5,7 +5,7 @@
 
 -- 活动表
 CREATE TABLE IF NOT EXISTS `activity` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `activity_name` varchar(100) NOT NULL COMMENT '活动名称',
     `description` text COMMENT '活动描述',
     `activity_type` varchar(50) COMMENT '活动类型',
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `activity` (
 
 -- 任务作业表
 CREATE TABLE IF NOT EXISTS `job` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `job_name` varchar(100) NOT NULL COMMENT '作业名称',
     `description` text COMMENT '作业描述',
     `job_type` varchar(50) COMMENT '作业类型',
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `job` (
 
 -- 系统用户表
 CREATE TABLE IF NOT EXISTS `sys_user` (
-    `id` bigint NOT NULL COMMENT '用户ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
     `username` varchar(30) NOT NULL COMMENT '用户账号',
     `nickname` varchar(30) NOT NULL COMMENT '用户昵称',
     `email` varchar(50) COMMENT '用户邮箱',
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 
 -- 系统角色表
 CREATE TABLE IF NOT EXISTS `sys_role` (
-    `id` bigint NOT NULL COMMENT '角色ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '角色ID',
     `role_name` varchar(30) NOT NULL COMMENT '角色名称',
     `role_key` varchar(100) NOT NULL COMMENT '角色权限字符串',
     `role_sort` int NOT NULL COMMENT '显示顺序',
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `sys_user_role` (
 
 -- 系统菜单表
 CREATE TABLE IF NOT EXISTS `sys_menu` (
-    `id` bigint NOT NULL COMMENT '菜单ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '菜单ID',
     `menu_name` varchar(50) NOT NULL COMMENT '菜单名称',
     `parent_id` bigint DEFAULT '0' COMMENT '父菜单ID',
     `order_num` int DEFAULT '0' COMMENT '显示顺序',
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `sys_role_menu` (
 
 -- AI代理表
 CREATE TABLE IF NOT EXISTS `ai_agent` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `agent_name` varchar(100) NOT NULL COMMENT '代理名称',
     `description` text COMMENT '代理描述',
     `agent_type` varchar(50) COMMENT '代理类型',
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS `ai_agent` (
 
 -- AI聊天会话表
 CREATE TABLE IF NOT EXISTS `ai_chat_session` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `session_name` varchar(100) COMMENT '会话名称',
     `user_id` bigint NOT NULL COMMENT '用户ID',
     `agent_id` bigint NOT NULL COMMENT '代理ID',
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS `ai_chat_session` (
 
 -- AI聊天消息表
 CREATE TABLE IF NOT EXISTS `ai_chat_message` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `session_id` bigint NOT NULL COMMENT '会话ID',
     `message_type` varchar(20) NOT NULL COMMENT '消息类型（user/assistant/system）',
     `content` text NOT NULL COMMENT '消息内容',
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS `ai_chat_message` (
 
 -- AI大语言模型表
 CREATE TABLE IF NOT EXISTS `ai_llm` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `model_name` varchar(100) NOT NULL COMMENT '模型名称',
     `provider` varchar(50) NOT NULL COMMENT '提供商',
     `api_url` varchar(200) COMMENT 'API地址',
@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS `ai_llm` (
 
 -- AI模型密钥表
 CREATE TABLE IF NOT EXISTS `ai_llm_key` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `llm_id` bigint NOT NULL COMMENT '模型ID',
     `key_name` varchar(100) NOT NULL COMMENT '密钥名称',
     `api_key` varchar(500) NOT NULL COMMENT 'API密钥',
@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS `ai_llm_key` (
 
 -- 任务表
 CREATE TABLE IF NOT EXISTS `task` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `task_name` varchar(100) NOT NULL COMMENT '任务名称',
     `description` text COMMENT '任务描述',
     `task_type` varchar(50) COMMENT '任务类型',
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `task` (
 
 -- 日志表
 CREATE TABLE IF NOT EXISTS `sys_log` (
-    `id` bigint NOT NULL COMMENT '主键ID',
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `log_type` varchar(50) COMMENT '日志类型',
     `log_level` varchar(20) COMMENT '日志级别',
     `module` varchar(100) COMMENT '模块名称',

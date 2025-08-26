@@ -113,10 +113,26 @@ public interface ISysPermissionService extends IService<PermissionDO> {
     List<PermissionDO> getPermissionsByRoleId(Long roleId);
 
     /**
-     * 根据父级ID获取子权限列表
+     * 获取子权限
      *
-     * @param parentId 父级ID
-     * @return 权限列表
+     * @param parentId 父级权限ID
+     * @return 子权限列表
      */
     List<SysPermissionVO> getChildrenByParentId(Long parentId);
+
+    /**
+     * 根据权限ID列表获取权限编码列表
+     *
+     * @param permissionIds 权限ID列表
+     * @return 权限编码列表
+     */
+    List<String> getPermissionCodesByIds(List<Long> permissionIds);
+
+    /**
+     * 根据角色ID获取权限树（包含权限拥有状态）
+     *
+     * @param roleId 角色ID
+     * @return 权限树列表
+     */
+    List<SysPermissionVO> getPermissionTreeByRoleId(Long roleId);
 }

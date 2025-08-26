@@ -62,4 +62,7 @@ public class SysPermissionVO {
 
     @Schema(description = "子权限列表")
     private List<SysPermissionVO> children;
+
+    @Schema(description = "是否拥有该权限")
+    private Boolean hasPermission;
 }
