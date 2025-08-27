@@ -54,6 +54,6 @@ public class UserDTO {
     @Schema(description = "角色ID列表")
     private List<Long> roleIds;
 
-    @Schema(description = "角色列表")
-    private List<String> roles;
+//    @Schema(description = "角色列表")
+//    private List<String> roles;
 }

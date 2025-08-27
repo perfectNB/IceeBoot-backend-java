@@ -12,15 +12,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserDO;
+import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysUserMapper;
 import com.zboot.framework.service.system.ISysUserService;
+import com.zboot.framework.service.system.ISysRoleService;
 import com.zboot.framework.dto.system.UserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -37,6 +39,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
     @Autowired
     private SysUserMapper sysUserMapper;
+    
+    @Autowired
+    private ISysRoleService roleService;
 
 
 
@@ -79,25 +84,37 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     }
 
     @Override
+    @Transactional
     public boolean addUser(UserDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         
-        // 密码处理（明文存储，实际项目中建议使用加密）
-        // 这里可以根据需要添加密码加密逻辑
+        // 保存用户
+        boolean saveResult = this.save(user);
         
-        return this.save(user);
+        // 如果用户保存成功且有角色ID列表，则分配角色
+        if (saveResult && userDTO.getRoleIds() != null && !userDTO.getRoleIds().isEmpty()) {
+            roleService.assignRolesToUser(user.getId(), userDTO.getRoleIds());
+        }
+        
+        return saveResult;
     }
 
     @Override
+    @Transactional
     public boolean updateUser(UserDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         
-        // 如果有新密码，处理（明文存储，实际项目中建议使用加密）
-        // 这里可以根据需要添加密码加密逻辑
+        // 更新用户信息
+        boolean updateResult = this.updateById(user);
         
-        return this.updateById(user);
+        // 如果用户更新成功，重新分配角色（先删除现有角色，再添加新角色）
+        if (updateResult && userDTO.getRoleIds() != null) {
+            roleService.assignRolesToUser(user.getId(), userDTO.getRoleIds());
+        }
+        
+        return updateResult;
     }
 
     @Override
@@ -196,8 +213,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         BeanUtils.copyProperties(user, vo);
         
         // 获取用户角色和权限
-        vo.setRoles(getUserRoles(user.getId()));
+//        vo.setRoles(getUserRoles(user.getId()));
         vo.setPermissions(getUserPermissions(user.getId()));
+        
+        // 获取用户角色对象列表
+        List<RoleDO> roleList = roleService.getRolesByUserId(user.getId());
+        vo.setRoleList(roleList);
         
         return vo;
     }

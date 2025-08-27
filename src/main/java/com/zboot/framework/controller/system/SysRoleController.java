@@ -72,12 +72,20 @@ public class SysRoleController {
         return success ? R.ok(ResponseMessage.ROLE_UPDATE_SUCCESS) : R.fail(ResponseMessage.ROLE_UPDATE_FAIL);
     }
 
-    @Operation(summary = "删除角色", description = "根据角色ID删除角色")
-    @DeleteMapping("/{id}")
+    @Operation(summary = "删除角色", description = "批量删除角色")
+    @DeleteMapping
     @RequirePermission(dynamic = true)
-    public R<Void> deleteRole(@PathVariable Long id) {
-        boolean success = roleService.deleteRoles(List.of(id));
+    public R<Void> deleteRoles(@RequestBody List<Long> ids) {
+        boolean success = roleService.deleteRoles(ids);
         return success ? R.ok(ResponseMessage.ROLE_DELETE_SUCCESS) : R.fail(ResponseMessage.ROLE_DELETE_FAIL);
+    }
+
+    @Operation(summary = "修改角色状态", description = "启用或禁用角色")
+    @PutMapping("/{id}/status")
+    @RequirePermission(dynamic = true)
+    public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        boolean success = roleService.updateStatus(id, status);
+        return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
 
 
@@ -88,5 +96,13 @@ public class SysRoleController {
     public R<Void> saveRolePermissions(@PathVariable Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = roleService.saveRolePermissions(roleId, permissionIds);
         return success ? R.ok("角色权限分配成功") : R.fail("角色权限分配失败");
+    }
+
+    @Operation(summary = "获取全部角色", description = "获取全部角色")
+    @GetMapping("/getAll")
+    @RequirePermission(dynamic = true)
+    public R<List<SysRoleVO>> getAllRole() {
+        List<SysRoleVO> allRoles = roleService.getAllRoles();
+        return R.ok(allRoles);
     }
 }
