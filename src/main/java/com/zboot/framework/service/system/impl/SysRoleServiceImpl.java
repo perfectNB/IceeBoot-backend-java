@@ -15,11 +15,13 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.framework.dto.system.RoleDTO;
 import com.zboot.framework.entity.system.RoleDO;
+import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.service.system.ISysRoleService;
 import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.service.system.ISysPermissionService;
+import com.zboot.framework.service.system.ISysUserRoleService;
 import com.zboot.framework.vo.system.SysRoleVO;
 import com.zboot.framework.vo.system.SysPermissionVO;
 import com.zboot.common.constant.CacheConstants;
@@ -50,6 +52,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+    private ISysUserRoleService userRoleService;
     @Override
     public PageResult<SysRoleVO> getRolePage(SysRoleQuery query) {
         // 构建查询条件
@@ -184,14 +189,41 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
     @Override
     public List<RoleDO> getRolesByUserId(Long userId) {
-        // 简化实现，实际应该通过用户角色关联表查询
-        return this.list();
+        // 通过用户角色关联表查询用户的角色ID列表
+        List<Long> roleIds = userRoleService.getRoleIdsByUserId(userId);
+        if (roleIds == null || roleIds.isEmpty()) {
+            return List.of();
+        }
+        
+        // 根据角色ID列表查询角色详细信息
+        return this.listByIds(roleIds);
     }
 
     @Override
+    @Transactional
     public boolean assignRolesToUser(Long userId, List<Long> roleIds) {
-        // 简化实现，实际应该操作用户角色关联表
-        return true;
+        try {
+            // 先删除用户现有的所有角色
+            LambdaQueryWrapper<UserRoleDO> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(UserRoleDO::getUserId, userId);
+            userRoleService.remove(deleteWrapper);
+            
+            // 添加新的角色关联
+            if (roleIds != null && !roleIds.isEmpty()) {
+                List<UserRoleDO> userRoles = roleIds.stream().map(roleId -> {
+                    UserRoleDO userRole = new UserRoleDO();
+                    userRole.setUserId(userId);
+                    userRole.setRoleId(roleId);
+                    return userRole;
+                }).collect(Collectors.toList());
+                
+                userRoleService.saveBatch(userRoles);
+            }
+            
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("分配用户角色失败", e);
+        }
     }
 
     @Override
