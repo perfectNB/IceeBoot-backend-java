@@ -11,6 +11,8 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.List;
+
 /**
  * 菜单数据传输对象
  * 
@@ -59,7 +61,7 @@ public class MenuDTO {
     private Boolean requiresAuth;
 
     @Schema(description = "权限列表")
-    private String permissions;
+    private List<String> permissions;
 
     @Schema(description = "外链地址")
     private String link;

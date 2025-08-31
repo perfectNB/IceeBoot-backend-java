@@ -23,6 +23,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -163,10 +164,22 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
 
     /**
      * 构建菜单树
+     * 将传入的全部菜单列表按照父子关系转换为菜单树返回
      */
     private List<SysMenuVO> buildMenuTree(List<MenuDO> menus, Long parentId) {
+        if (menus == null || menus.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
         return menus.stream()
-                .filter(menu -> parentId.equals(menu.getParentId()))
+                .filter(menu -> {
+                    // 如果parentId为null或0，则查找根节点（parentId为null或0的菜单）
+                    if (parentId == null || parentId.equals(0L)) {
+                        return menu.getParentId() == null || menu.getParentId().equals(0L);
+                    }
+                    // 否则查找指定父节点的子菜单
+                    return parentId.equals(menu.getParentId());
+                })
                 .map(menu -> {
                     SysMenuVO vo = new SysMenuVO();
                     BeanUtils.copyProperties(menu, vo);
@@ -176,6 +189,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
                     vo.setChildren(children);
                     
                     return vo;
+                })
+                .sorted((a, b) -> {
+                    // 按照sort字段排序，如果sort为null则放到最后
+                    if (a.getSort() == null && b.getSort() == null) return 0;
+                    if (a.getSort() == null) return 1;
+                    if (b.getSort() == null) return -1;
+                    return a.getSort().compareTo(b.getSort());
                 })
                 .collect(Collectors.toList());
     }
