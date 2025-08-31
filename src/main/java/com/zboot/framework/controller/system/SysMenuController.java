@@ -67,7 +67,7 @@ public class SysMenuController {
 
     @Operation(summary = "新增菜单", description = "创建新菜单")
     @PostMapping
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public R<Void> addMenu(@Validated @RequestBody MenuDTO menuDTO) {
         boolean success = menuService.addMenu(menuDTO);
         return success ? R.ok(ResponseMessage.MENU_CREATE_SUCCESS) : R.fail(ResponseMessage.MENU_CREATE_FAIL);

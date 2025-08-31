@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -176,10 +177,22 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
     /**
      * 构建权限树
+     * 将传入的全部权限列表按照父子关系转换为权限树返回
      */
     private List<SysPermissionVO> buildPermissionTree(List<PermissionDO> permissions, Long parentId) {
+        if (permissions == null || permissions.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
         return permissions.stream()
-                .filter(permission -> parentId.equals(permission.getParentId()))
+                .filter(permission -> {
+                    // 如果parentId为null或0，则查找根节点（parentId为null或0的权限）
+                    if (parentId == null || parentId.equals(0L)) {
+                        return permission.getParentId() == null || permission.getParentId().equals(0L);
+                    }
+                    // 否则查找指定父节点的子权限
+                    return parentId.equals(permission.getParentId());
+                })
                 .map(permission -> {
                     SysPermissionVO vo = new SysPermissionVO();
                     BeanUtils.copyProperties(permission, vo);
@@ -189,6 +202,13 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
                     vo.setChildren(children);
                     
                     return vo;
+                })
+                .sorted((a, b) -> {
+                    // 按照sort字段排序，如果sort为null则放到最后
+                    if (a.getSort() == null && b.getSort() == null) return 0;
+                    if (a.getSort() == null) return 1;
+                    if (b.getSort() == null) return -1;
+                    return a.getSort().compareTo(b.getSort());
                 })
                 .collect(Collectors.toList());
     }
