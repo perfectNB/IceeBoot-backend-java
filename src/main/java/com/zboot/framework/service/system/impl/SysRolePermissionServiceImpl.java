@@ -15,13 +15,12 @@ import com.zboot.framework.entity.system.RolePermissionDO;
 import com.zboot.framework.mapper.system.SysRolePermissionMapper;
 import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.dto.system.RolePermissionDTO;
-import com.zboot.framework.query.system.RolePermissionQry;
+import com.zboot.framework.query.system.RolePermissionQuery;
 import com.zboot.framework.vo.system.RolePermissionVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +38,7 @@ public class SysRolePermissionServiceImpl extends ServiceImpl<SysRolePermissionM
     private SysRolePermissionMapper sysRolePermissionMapper;
 
     @Override
-    public PageResult<RolePermissionVO> getRolePermissionPage(RolePermissionQry query) {
+    public PageResult<RolePermissionVO> getRolePermissionPage(RolePermissionQuery query) {
         LambdaQueryWrapper<RolePermissionDO> wrapper = new LambdaQueryWrapper<>();
         
         if (query.getRoleId() != null) {

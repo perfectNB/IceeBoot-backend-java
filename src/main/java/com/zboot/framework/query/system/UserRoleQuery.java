@@ -20,7 +20,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "用户角色关联查询对象")
-public class UserRoleQry extends BaseQuery {
+public class UserRoleQuery extends BaseQuery {
 
     @Schema(description = "用户ID")
     private Long userId;

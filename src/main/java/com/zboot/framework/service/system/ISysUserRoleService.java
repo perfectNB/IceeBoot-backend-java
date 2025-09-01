@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.dto.system.UserRoleDTO;
-import com.zboot.framework.query.system.UserRoleQry;
+import com.zboot.framework.query.system.UserRoleQuery;
 import com.zboot.framework.vo.system.UserRoleVO;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public interface ISysUserRoleService extends IService<UserRoleDO> {
      * @param query 查询条件
      * @return 用户角色关联分页列表
      */
-    PageResult<UserRoleVO> getUserRolePage(UserRoleQry query);
+    PageResult<UserRoleVO> getUserRolePage(UserRoleQuery query);
 
     /**
      * 根据ID获取用户角色关联详情

@@ -1,5 +1,5 @@
 /**
- * 角色权限关联查询对象
+ * 角色菜单关联查询对象
  * 
  * @author CodeIcee
  * @date 2025-08-13
@@ -12,21 +12,21 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 角色权限关联查询对象
+ * 角色菜单关联查询对象
  * 
  * @author CodeIcee
  * @date 2025-08-13
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "角色权限关联查询对象")
-public class RolePermissionQry extends BaseQuery {
+@Schema(description = "角色菜单关联查询对象")
+public class RoleMenuQuery extends BaseQuery {
 
     @Schema(description = "角色ID")
     private Long roleId;
 
-    @Schema(description = "权限ID")
-    private Long permissionId;
+    @Schema(description = "菜单ID")
+    private Long menuId;
 
     @Schema(description = "角色名称")
     private String roleName;
@@ -34,9 +34,9 @@ public class RolePermissionQry extends BaseQuery {
     @Schema(description = "角色编码")
     private String roleCode;
 
-    @Schema(description = "权限名称")
-    private String permissionName;
+    @Schema(description = "菜单名称")
+    private String menuName;
 
-    @Schema(description = "权限编码")
-    private String permissionCode;
+    @Schema(description = "菜单路径")
+    private String menuPath;
 }

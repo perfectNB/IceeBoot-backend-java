@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.RolePermissionDO;
 import com.zboot.framework.dto.system.RolePermissionDTO;
-import com.zboot.framework.query.system.RolePermissionQry;
+import com.zboot.framework.query.system.RolePermissionQuery;
 import com.zboot.framework.vo.system.RolePermissionVO;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public interface ISysRolePermissionService extends IService<RolePermissionDO> {
      * @param query 查询条件
      * @return 角色权限关联分页列表
      */
-    PageResult<RolePermissionVO> getRolePermissionPage(RolePermissionQry query);
+    PageResult<RolePermissionVO> getRolePermissionPage(RolePermissionQuery query);
 
     /**
      * 根据ID获取角色权限关联详情

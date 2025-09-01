@@ -15,13 +15,12 @@ import com.zboot.framework.entity.system.RoleMenuDO;
 import com.zboot.framework.mapper.system.SysRoleMenuMapper;
 import com.zboot.framework.service.system.ISysRoleMenuService;
 import com.zboot.framework.dto.system.RoleMenuDTO;
-import com.zboot.framework.query.system.RoleMenuQry;
+import com.zboot.framework.query.system.RoleMenuQuery;
 import com.zboot.framework.vo.system.RoleMenuVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +38,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, RoleM
     private SysRoleMenuMapper sysRoleMenuMapper;
 
     @Override
-    public PageResult<RoleMenuVO> getRoleMenuPage(RoleMenuQry query) {
+    public PageResult<RoleMenuVO> getRoleMenuPage(RoleMenuQuery query) {
         LambdaQueryWrapper<RoleMenuDO> wrapper = new LambdaQueryWrapper<>();
         
         if (query.getRoleId() != null) {

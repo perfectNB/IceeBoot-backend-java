@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.RoleMenuDO;
 import com.zboot.framework.dto.system.RoleMenuDTO;
-import com.zboot.framework.query.system.RoleMenuQry;
+import com.zboot.framework.query.system.RoleMenuQuery;
 import com.zboot.framework.vo.system.RoleMenuVO;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public interface ISysRoleMenuService extends IService<RoleMenuDO> {
      * @param query 查询条件
      * @return 角色菜单关联分页列表
      */
-    PageResult<RoleMenuVO> getRoleMenuPage(RoleMenuQry query);
+    PageResult<RoleMenuVO> getRoleMenuPage(RoleMenuQuery query);
 
     /**
      * 根据ID获取角色菜单关联详情

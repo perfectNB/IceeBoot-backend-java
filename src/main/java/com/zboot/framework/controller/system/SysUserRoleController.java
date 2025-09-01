@@ -9,10 +9,9 @@ package com.zboot.framework.controller.system;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.UserRoleDTO;
-import com.zboot.framework.query.system.UserRoleQry;
+import com.zboot.framework.query.system.UserRoleQuery;
 import com.zboot.framework.service.system.ISysUserRoleService;
 import com.zboot.framework.vo.system.UserRoleVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "分页查询用户角色关联列表", description = "根据条件分页查询用户角色关联列表")
     @GetMapping("/page")
-    public R<PageResult<UserRoleVO>> getUserRolePage(UserRoleQry query) {
+    public R<PageResult<UserRoleVO>> getUserRolePage(UserRoleQuery query) {
         PageResult<UserRoleVO> pageResult = userRoleService.getUserRolePage(query);
         return R.ok(pageResult);
     }
