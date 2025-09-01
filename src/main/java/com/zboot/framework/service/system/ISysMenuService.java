@@ -14,6 +14,7 @@ import com.zboot.framework.dto.system.SysMenuQueryDTO;
 import com.zboot.framework.vo.system.SysMenuVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 菜单服务接口
@@ -30,6 +31,14 @@ public interface ISysMenuService extends IService<MenuDO> {
      * @return 菜单分页列表
      */
     PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query);
+
+
+    /**
+     * 获取用户菜单
+     *
+     * @return 用户菜单列表
+     */
+    List<SysMenuVO> getUserMenu();
 
     /**
      * 获取菜单树

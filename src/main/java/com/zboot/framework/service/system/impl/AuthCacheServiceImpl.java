@@ -542,6 +542,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         map.put("parentId", menu.getParentId());
         map.put("type", menu.getType());
         map.put("sort", menu.getSort());
+        map.put("link", menu.getLink());
         map.put("requiresAuth", menu.getRequiresAuth());
         
         // 处理permissions字段，将逗号分隔的字符串转换为字符串数组

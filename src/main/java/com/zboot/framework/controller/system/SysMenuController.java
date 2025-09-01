@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 菜单管理控制器
@@ -48,20 +49,14 @@ public class SysMenuController {
     }
 
 
-    @Operation(summary = "获取菜单详情", description = "根据菜单ID获取菜单详细信息")
-    @GetMapping("/{id}")
-    @RequirePermission(dynamic = true)
-    public R<SysMenuVO> getMenuById(@PathVariable Long id) {
-        SysMenuVO menuVO = menuService.getMenuById(id);
-        return R.ok(menuVO);
-    }
 
-    @Operation(summary = "分页查询菜单列表", description = "根据条件分页查询菜单列表")
-    @GetMapping()
+
+    @Operation(summary = "查询用户菜单列表", description = "根据条件分页查询菜单列表")
+    @GetMapping("/user")
     @RequirePermission(dynamic = true)
-    public R<PageResult<SysMenuVO>> getMenuPage(SysMenuQueryDTO query) {
-        PageResult<SysMenuVO> pageResult = menuService.getMenuPage(query);
-        return R.ok(pageResult);
+    public R<List<SysMenuVO>> getUserMenu() {
+        List<SysMenuVO> userMenu = menuService.getUserMenu();
+        return R.ok(userMenu);
     }
 
 

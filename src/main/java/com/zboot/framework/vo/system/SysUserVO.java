@@ -12,6 +12,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
 import com.zboot.framework.entity.system.RoleDO;
 
 /**
@@ -59,9 +61,11 @@ public class SysUserVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-
     @Schema(description = "角色对象列表")
     private List<RoleDO> roleList;
+
+    @Schema(description = "用户菜单列表")
+    private List<Map<String, Object>> menus;
 
     @Schema(description = "权限列表")
     private List<String> permissions;
