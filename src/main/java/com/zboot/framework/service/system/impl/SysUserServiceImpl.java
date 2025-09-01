@@ -14,6 +14,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysUserMapper;
+import com.zboot.framework.service.system.IAuthCacheService;
 import com.zboot.framework.service.system.ISysUserService;
 import com.zboot.framework.service.system.ISysRoleService;
 import com.zboot.framework.dto.system.UserDTO;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +44,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     
     @Autowired
     private ISysRoleService roleService;
+
+    @Autowired
+    private IAuthCacheService authCacheService;
 
 
 
@@ -212,14 +217,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         SysUserVO vo = new SysUserVO();
         BeanUtils.copyProperties(user, vo);
         
-        // 获取用户角色和权限
-//        vo.setRoles(getUserRoles(user.getId()));
+
         vo.setPermissions(getUserPermissions(user.getId()));
         
         // 获取用户角色对象列表
-        List<RoleDO> roleList = roleService.getRolesByUserId(user.getId());
-        vo.setRoleList(roleList);
-        
+        vo.setRoleList(roleService.getRolesByUserId(user.getId()));
+
+        // 获取用户菜单
+        vo.setMenus(authCacheService.getUserMenus(user.getId()));
         return vo;
     }
 }

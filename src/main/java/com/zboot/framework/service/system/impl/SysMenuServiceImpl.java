@@ -13,18 +13,22 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
+import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.system.MenuDTO;
 import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.mapper.system.SysMenuMapper;
 import com.zboot.framework.dto.system.SysMenuQueryDTO;
+import com.zboot.framework.service.system.IAuthCacheService;
 import com.zboot.framework.service.system.ISysMenuService;
 import com.zboot.framework.vo.system.SysMenuVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +40,8 @@ import java.util.stream.Collectors;
 @Service
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> implements ISysMenuService {
 
+    @Autowired
+    private IAuthCacheService authCacheService;
     @Override
     public PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query) {
         // 构建查询条件
@@ -62,6 +68,98 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
         }).collect(Collectors.toList());
 
         return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
+    }
+
+    @Override
+    public List<SysMenuVO> getUserMenu() {
+        Long userId = TokenUtils.getCurrentUserId();
+        // 使用缓存服务获取用户菜单
+        List<Map<String, Object>> userMenus = authCacheService.getUserMenus(userId);
+        
+        // 将Map类型转换为SysMenuVO类型
+        return userMenus.stream().map(this::convertMapToMenuVO).collect(Collectors.toList());
+    }
+    
+    /**
+     * 将Map类型的菜单数据转换为SysMenuVO
+     */
+    private SysMenuVO convertMapToMenuVO(Map<String, Object> menuMap) {
+        SysMenuVO vo = new SysMenuVO();
+        vo.setId(getLongValue(menuMap, "id"));
+        vo.setTitle((String) menuMap.get("title"));
+        vo.setName((String) menuMap.get("name"));
+        vo.setPath((String) menuMap.get("path"));
+        vo.setComponent((String) menuMap.get("component"));
+        vo.setIcon((String) menuMap.get("icon"));
+        vo.setParentId(getLongValue(menuMap, "parentId"));
+        vo.setSort(getIntegerValue(menuMap, "sort"));
+        vo.setType((String) menuMap.get("type"));
+        vo.setHidden(getBooleanValue(menuMap, "hidden"));
+        vo.setKeepAlive(getBooleanValue(menuMap, "keepAlive"));
+        vo.setRequiresAuth(getBooleanValue(menuMap, "requiresAuth"));
+        vo.setStatus((String) menuMap.get("status"));
+        vo.setLink((String) menuMap.get("link"));
+        
+        // 处理子菜单
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> children = (List<Map<String, Object>>) menuMap.get("children");
+        if (children != null && !children.isEmpty()) {
+            List<SysMenuVO> childrenVOs = children.stream()
+                    .map(this::convertMapToMenuVO)
+                    .collect(Collectors.toList());
+            vo.setChildren(childrenVOs);
+        }
+        
+        return vo;
+    }
+    
+    /**
+     * 安全获取Long类型值
+     */
+    private Long getLongValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return null;
+        if (value instanceof Long) return (Long) value;
+        if (value instanceof Integer) return ((Integer) value).longValue();
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 安全获取Integer类型值
+     */
+    private Integer getIntegerValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return null;
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Long) return ((Long) value).intValue();
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 安全获取Boolean类型值
+     */
+    private Boolean getBooleanValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return null;
+        if (value instanceof Boolean) return (Boolean) value;
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return null;
     }
 
     @Override
