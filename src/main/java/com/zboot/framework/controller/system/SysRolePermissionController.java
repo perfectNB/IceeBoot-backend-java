@@ -10,10 +10,9 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.RolePermissionDTO;
-import com.zboot.framework.query.system.RolePermissionQry;
+import com.zboot.framework.query.system.RolePermissionQuery;
 import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.vo.system.RolePermissionVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class SysRolePermissionController {
     @Operation(summary = "分页查询角色权限关联列表", description = "根据条件分页查询角色权限关联列表")
     @GetMapping("/page")
     @RequirePermission(dynamic = true)
-    public R<PageResult<RolePermissionVO>> getRolePermissionPage(RolePermissionQry query) {
+    public R<PageResult<RolePermissionVO>> getRolePermissionPage(RolePermissionQuery query) {
         PageResult<RolePermissionVO> pageResult = rolePermissionService.getRolePermissionPage(query);
         return R.ok(pageResult);
     }

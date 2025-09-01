@@ -4,10 +4,12 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.zboot.framework.dto.redis;
+package com.zboot.framework.query.redis;
 
+import com.zboot.common.core.domain.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Redis查询DTO类
@@ -16,13 +18,9 @@ import lombok.Data;
  * @date 2025-08-11
  */
 @Data
-public class RedisQueryDTO {
-
-    @Schema(description = "页码")
-    private Integer page = 1;
-
-    @Schema(description = "每页数量")
-    private Integer size = 10;
+@EqualsAndHashCode(callSuper = true)
+@Schema(description = "redis查询对象")
+public class RedisQuery extends BaseQuery {
 
     @Schema(description = "键名筛选")
     private String key;

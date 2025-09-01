@@ -2,7 +2,7 @@ package com.zboot.framework.service.redis.impl;
 
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.utils.RedisUtils;
-import com.zboot.framework.dto.redis.RedisQueryDTO;
+import com.zboot.framework.query.redis.RedisQuery;
 import com.zboot.framework.service.redis.RedisService;
 import com.zboot.framework.vo.redis.RedisKeyVO;
 import lombok.RequiredArgsConstructor;
@@ -29,23 +29,23 @@ public class RedisServiceImpl implements RedisService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public PageResult<RedisKeyVO> getRedisKeys(RedisQueryDTO queryDTO) {
+    public PageResult<RedisKeyVO> getRedisKeys(RedisQuery query) {
         // 获取所有键
         Set<String> keys = redisTemplate.keys("*");
         
         // 过滤键名
-        if (StringUtils.hasText(queryDTO.getKey())) {
+        if (StringUtils.hasText(query.getKey())) {
             keys = keys.stream()
-                    .filter(key -> key.contains(queryDTO.getKey()))
+                    .filter(key -> key.contains(query.getKey()))
                     .collect(Collectors.toSet());
         }
         
         // 过滤类型
-        if (StringUtils.hasText(queryDTO.getType())) {
+        if (StringUtils.hasText(query.getType())) {
             keys = keys.stream()
                     .filter(key -> {
                         String type = redisTemplate.type(key).code();
-                        return queryDTO.getType().equals(type);
+                        return query.getType().equals(type);
                     })
                     .collect(Collectors.toSet());
         }
@@ -53,8 +53,8 @@ public class RedisServiceImpl implements RedisService {
         // 分页处理
         List<String> keyList = keys.stream().collect(Collectors.toList());
         int total = keyList.size();
-        int start = (queryDTO.getPage() - 1) * queryDTO.getSize();
-        int end = Math.min(start + queryDTO.getSize(), total);
+        int start = (query.getPageNum() - 1) * query.getPageSize();
+        int end = Math.min(start + query.getPageSize(), total);
         
         List<String> pageKeys = keyList.subList(start, end);
         
@@ -63,12 +63,19 @@ public class RedisServiceImpl implements RedisService {
                 .map(this::convertToVO)
                 .collect(Collectors.toList());
         
-        return PageResult.of(redisKeyVOList, (long) total, (long) queryDTO.getPage(), (long) queryDTO.getSize());
+        return PageResult.of(redisKeyVOList, (long) total, (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override
     public void deleteRedisKey(String key) {
         redisTemplate.delete(key);
+    }
+
+    @Override
+    public void deleteRedisKeys(List<String> keys) {
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 
     @Override
@@ -90,8 +97,8 @@ public class RedisServiceImpl implements RedisService {
         String type = redisTemplate.type(key).code();
         vo.setType(type);
         
-        // 获取值
-        Object value = redisTemplate.opsForValue().get(key);
+        // 根据类型获取值
+        Object value = getValueByType(key, type);
         vo.setValue(value);
         
         // 获取TTL
@@ -103,5 +110,29 @@ public class RedisServiceImpl implements RedisService {
         vo.setSize(String.valueOf(valueStr.getBytes().length));
         
         return vo;
+    }
+    
+    /**
+     * 根据类型获取值
+     */
+    private Object getValueByType(String key, String type) {
+        try {
+            switch (type.toLowerCase()) {
+                case "string":
+                    return redisTemplate.opsForValue().get(key);
+                case "hash":
+                    return redisTemplate.opsForHash().entries(key);
+                case "list":
+                    return redisTemplate.opsForList().range(key, 0, -1);
+                case "set":
+                    return redisTemplate.opsForSet().members(key);
+                case "zset":
+                    return redisTemplate.opsForZSet().rangeWithScores(key, 0, -1);
+                default:
+                    return redisTemplate.opsForValue().get(key);
+            }
+        } catch (Exception e) {
+            return "Error reading value: " + e.getMessage();
+        }
     }
 }

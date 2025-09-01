@@ -10,10 +10,9 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.system.RoleMenuDTO;
-import com.zboot.framework.query.system.RoleMenuQry;
+import com.zboot.framework.query.system.RoleMenuQuery;
 import com.zboot.framework.service.system.ISysRoleMenuService;
 import com.zboot.framework.vo.system.RoleMenuVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class SysRoleMenuController {
     @Operation(summary = "分页查询角色菜单关联列表", description = "根据条件分页查询角色菜单关联列表")
     @GetMapping("/page")
     @RequirePermission(dynamic = true)
-    public R<PageResult<RoleMenuVO>> getRoleMenuPage(RoleMenuQry query) {
+    public R<PageResult<RoleMenuVO>> getRoleMenuPage(RoleMenuQuery query) {
         PageResult<RoleMenuVO> pageResult = roleMenuService.getRoleMenuPage(query);
         return R.ok(pageResult);
     }

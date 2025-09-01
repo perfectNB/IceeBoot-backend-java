@@ -7,8 +7,10 @@
 package com.zboot.framework.service.redis;
 
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.redis.RedisQueryDTO;
+import com.zboot.framework.query.redis.RedisQuery;
 import com.zboot.framework.vo.redis.RedisKeyVO;
+
+import java.util.List;
 
 /**
  * Redis Service接口
@@ -21,10 +23,10 @@ public interface RedisService {
     /**
      * 获取Redis键列表
      * 
-     * @param queryDTO 查询条件
+     * @param query 查询条件
      * @return Redis键列表
      */
-    PageResult<RedisKeyVO> getRedisKeys(RedisQueryDTO queryDTO);
+    PageResult<RedisKeyVO> getRedisKeys(RedisQuery query);
 
     /**
      * 删除Redis键
@@ -32,6 +34,13 @@ public interface RedisService {
      * @param key Redis键名
      */
     void deleteRedisKey(String key);
+
+    /**
+     * 批量删除Redis键
+     * 
+     * @param keys Redis键名列表
+     */
+    void deleteRedisKeys(List<String> keys);
 
     /**
      * 获取Redis键详情

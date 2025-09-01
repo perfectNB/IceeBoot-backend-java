@@ -15,13 +15,12 @@ import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.mapper.system.SysUserRoleMapper;
 import com.zboot.framework.service.system.ISysUserRoleService;
 import com.zboot.framework.dto.system.UserRoleDTO;
-import com.zboot.framework.query.system.UserRoleQry;
+import com.zboot.framework.query.system.UserRoleQuery;
 import com.zboot.framework.vo.system.UserRoleVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +38,7 @@ public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, UserR
     private SysUserRoleMapper sysUserRoleMapper;
 
     @Override
-    public PageResult<UserRoleVO> getUserRolePage(UserRoleQry query) {
+    public PageResult<UserRoleVO> getUserRolePage(UserRoleQuery query) {
         LambdaQueryWrapper<UserRoleDO> wrapper = new LambdaQueryWrapper<>();
         
         if (query.getUserId() != null) {

@@ -9,8 +9,6 @@ package com.zboot.framework.vo.redis;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 /**
  * Redis键VO类
  * 
@@ -34,7 +32,4 @@ public class RedisKeyVO {
 
     @Schema(description = "大小")
     private String size;
-
-    @Schema(description = "创建时间")
-    private LocalDateTime createTime;
 }
