@@ -7,6 +7,7 @@
 package com.zboot.framework.service.redis;
 
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.framework.dto.redis.CreateRedisKeyDTO;
 import com.zboot.framework.query.redis.RedisQuery;
 import com.zboot.framework.vo.redis.RedisKeyVO;
 
@@ -41,6 +42,13 @@ public interface RedisService {
      * @param keys Redis键名列表
      */
     void deleteRedisKeys(List<String> keys);
+
+    /**
+     * 创建Redis键
+     * 
+     * @param createDTO 创建Redis键DTO
+     */
+    void createRedisKey(CreateRedisKeyDTO createDTO);
 
     /**
      * 获取Redis键详情
