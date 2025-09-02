@@ -157,3 +157,25 @@ zboot:
   addressEnabled: false
   # 验证码类型 math 数组计算 char 字符验证
   captchaType: math
+  # 日志存储配置
+  log:
+    # 是否启用日志存储到数据库
+    enabled: true
+    # 日志存储级别 (DEBUG, INFO, WARN, ERROR)
+    level: INFO
+    # 是否异步存储
+    async: true
+    # 日志保留天数
+    retention-days: 30
+    # 批量保存大小
+    batch-size: 100
+    # 是否记录请求参数
+    log-request-params: false
+    # 是否记录响应结果
+    log-response-result: false
+    # 排除的路径模式
+    exclude-patterns:
+      - /actuator/**
+      - /swagger-ui/**
+      - /v3/api-docs/**
+      - /knife4j/**
