@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
+import com.zboot.framework.dto.task.TaskDTO;
 import com.zboot.framework.entity.task.TaskDO;
 import com.zboot.framework.mapper.TaskMapper;
 import com.zboot.framework.query.system.TaskQuery;
@@ -13,8 +14,11 @@ import com.zboot.framework.service.task.ITaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * 定时任务服务实现类
@@ -36,7 +40,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
         if (StringUtils.hasText(query.getName())) {
             wrapper.like(TaskDO::getName, query.getName());
         }
-        if (query.getStatus() != null) {
+        if (StringUtils.hasText(query.getStatus())) {
             wrapper.eq(TaskDO::getStatus, query.getStatus());
         }
         
@@ -55,7 +59,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             this.save(task);
             
             // 创建Quartz任务
-            if (task.getStatus() == 1) {
+            if (task.getStatus().equals("inactive")) {
                 createQuartzJob(task);
             }
             
@@ -67,7 +71,28 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
     }
 
     @Override
-    public TaskDO updateTask(String id, TaskDO task) {
+    public boolean createTask(TaskDTO taskDTO) {
+        try {
+            TaskDO task = new TaskDO();
+            BeanUtils.copyProperties(taskDTO, task);
+            
+            // 保存到数据库
+            this.save(task);
+            
+            // 创建Quartz任务
+            if (task.getStatus() != null && task.getStatus().equals("active")) {
+                createQuartzJob(task);
+            }
+            
+            return true;
+        } catch (Exception e) {
+            log.error("创建定时任务失败: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public TaskDO updateTask(Long id, TaskDO task) {
         try {
             task.setId(id);
             // 更新数据库
@@ -76,7 +101,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             // 删除旧任务
             deleteQuartzJob(task.getName());
             // 创建新任务
-            if (task.getStatus() == 1) {
+            if (task.getStatus().equals("inactive")) {
                 createQuartzJob(task);
             }
             
@@ -88,7 +113,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
     }
 
     @Override
-    public void deleteTask(String id) {
+    public void deleteTask(Long id) {
         try {
             TaskDO task = this.getById(id);
             if (task != null) {
@@ -104,6 +129,27 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
     }
 
     @Override
+    public boolean deleteTasks(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return false;
+        }
+        try {
+            for (Long id : ids) {
+                TaskDO task = this.getById(id);
+                if (task != null) {
+                    // 删除Quartz任务
+                    deleteQuartzJob(task.getName());
+                }
+            }
+            // 批量删除数据库记录
+            return this.removeByIds(ids);
+        } catch (Exception e) {
+            log.error("批量删除定时任务失败: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
     public void startTask(String id) {
         try {
             TaskDO task = this.getById(id);
@@ -113,7 +159,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
                 scheduler.resumeJob(jobKey);
                 
                 // 更新状态
-                task.setStatus(1); // 启用
+                task.setStatus("active"); // 启用
                 this.updateById(task);
                 
                 log.info("启动定时任务成功: {}", task.getName());
@@ -134,7 +180,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
                 scheduler.pauseJob(jobKey);
                 
                 // 更新状态
-                task.setStatus(0); // 禁用
+                task.setStatus("inactive"); // 禁用
                 this.updateById(task);
                 
                 log.info("停止定时任务成功: {}", task.getName());
@@ -164,7 +210,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
         scheduler.scheduleJob(jobDetail, trigger);
         
         // 根据状态决定是否暂停
-        if (task.getStatus() == 0) {
+        if (task.getStatus().equals("inactive")) {
             scheduler.pauseJob(JobKey.jobKey(task.getName()));
         }
     }
