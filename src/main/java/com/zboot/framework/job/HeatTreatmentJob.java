@@ -17,6 +17,6 @@ public class HeatTreatmentJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        System.out.println(HttpUtil.get("http://serverless.znbiscool.icu/zboot/Api/serverless"));
+        System.out.println("迎面走来的你让我如此蠢蠢欲动，这种感觉为曾未有");
     }
 }

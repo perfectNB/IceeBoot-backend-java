@@ -22,8 +22,7 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.SystemPropertyUtils;
+
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -122,7 +121,7 @@ public class DatabaseInitService implements ApplicationRunner {
         try {
             // 检查表是否存在
             if (tableExists(tableName)) {
-                log.debug("表 {} 已存在，检查字段", tableName);
+                log.info("表 {} 已存在，检查字段", tableName);
                 // 表存在，检查并添加缺失的字段
                 addMissingColumns(entityClass, tableName);
             } else {
@@ -238,7 +237,7 @@ public class DatabaseInitService implements ApplicationRunner {
      * 添加基础字段到Map中
      */
     private void addBaseColumnsToMap(Map<String, String> columns) {
-        columns.put("id", "`id` bigint NOT NULL COMMENT '主键ID'");
+        columns.put("id", "`id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID'");
         columns.put("create_by", "`create_by` varchar(64) DEFAULT NULL COMMENT '创建者'");
         columns.put("create_time", "`create_time` datetime DEFAULT NULL COMMENT '创建时间'");
         columns.put("update_by", "`update_by` varchar(64) DEFAULT NULL COMMENT '更新者'");

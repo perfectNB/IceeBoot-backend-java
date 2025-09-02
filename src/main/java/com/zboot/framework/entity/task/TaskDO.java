@@ -1,6 +1,8 @@
 package com.zboot.framework.entity.task;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.zboot.common.core.domain.ZbootDO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,72 +17,32 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_task")
-public class TaskDO {
+public class TaskDO extends ZbootDO {
 
-    /**
-     * 任务ID
-     */
-    @TableId(value = "id", type = IdType.AUTO)
-    private String id;
 
-    /**
-     * 任务名称
-     */
+    @Schema(description = "任务名称")
     @TableField("name")
     private String name;
 
-    /**
-     * 任务类名
-     */
+
+    @Schema(description = "任务类名")
     @TableField("class_name")
     private String className;
 
-    /**
-     * Cron表达式
-     */
+
+    @Schema(description = "Cron表达式")
     @TableField("cron_expression")
     private String cronExpression;
 
-    /**
-     * 任务状态：0-停止，1-运行
-     */
-    @TableField("status")
-    private Integer status;
 
-    /**
-     * 任务描述
-     */
+    @Schema(description = "任务状态：ininactive-停止，inactive-运行")
+    @TableField("status")
+    private String status;
+
+
+    @Schema(description = "任务描述")
     @TableField("description")
     private String description;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
 
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 创建者
-     */
-    @TableField(value = "create_by", fill = FieldFill.INSERT)
-    private String createBy;
-
-    /**
-     * 更新者
-     */
-    @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)
-    private String updateBy;
-
-    /**
-     * 是否删除：0-未删除，1-已删除
-     */
-    @TableLogic
-    @TableField("is_deleted")
-    private Integer isDeleted;
 }

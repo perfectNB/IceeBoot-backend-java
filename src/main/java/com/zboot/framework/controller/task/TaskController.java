@@ -1,14 +1,19 @@
 package com.zboot.framework.controller.task;
 
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
+import com.zboot.framework.dto.task.TaskDTO;
 import com.zboot.framework.entity.task.TaskDO;
 import com.zboot.framework.query.system.TaskQuery;
 import com.zboot.framework.service.task.ITaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 定时任务管理控制器
@@ -18,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "定时任务管理", description = "定时任务管理相关接口")
 @RestController
-@RequestMapping("/api/v1/task")
+@RequestMapping("/v1/tasks")
 @RequiredArgsConstructor
 public class TaskController {
 
@@ -28,7 +33,7 @@ public class TaskController {
      * 分页查询任务列表
      */
     @Operation(summary = "分页查询任务列表", description = "根据条件分页查询任务列表")
-    @GetMapping("/page")
+    @GetMapping()
     public R<PageResult<TaskDO>> getTaskPage(TaskQuery query) {
         PageResult<TaskDO> pageResult = taskService.getTaskPage(query);
         return R.ok(pageResult);
@@ -49,9 +54,9 @@ public class TaskController {
      */
     @Operation(summary = "创建任务", description = "创建新的定时任务")
     @PostMapping
-    public R<TaskDO> createTask(@RequestBody TaskDO task) {
-        TaskDO result = taskService.createTask(task);
-        return R.ok(result);
+    public R<Void> createTask(@Validated @RequestBody TaskDTO taskDTO) {
+        boolean success = taskService.createTask(taskDTO);
+        return success ? R.ok(ResponseMessage.TASK_CREATE_SUCCESS) : R.fail(ResponseMessage.TASK_CREATE_FAIL);
     }
 
     /**
@@ -59,7 +64,7 @@ public class TaskController {
      */
     @Operation(summary = "更新任务", description = "更新定时任务信息")
     @PutMapping("/{id}")
-    public R<TaskDO> updateTask(@PathVariable String id, @RequestBody TaskDO task) {
+    public R<TaskDO> updateTask(@PathVariable Long id, @RequestBody TaskDO task) {
         TaskDO result = taskService.updateTask(id, task);
         return R.ok(result);
     }
@@ -67,11 +72,11 @@ public class TaskController {
     /**
      * 删除任务
      */
-    @Operation(summary = "删除任务", description = "删除定时任务")
-    @DeleteMapping("/{id}")
-    public R<Void> deleteTask(@PathVariable String id) {
-        taskService.deleteTask(id);
-        return R.ok();
+    @Operation(summary = "删除任务", description = "单个删除或批量删除定时任务")
+    @DeleteMapping
+    public R<Void> deleteTasks(@RequestBody List<Long> ids) {
+        boolean success = taskService.deleteTasks(ids);
+        return success ? R.ok(ResponseMessage.TASK_DELETE_SUCCESS) : R.fail(ResponseMessage.TASK_DELETE_FAIL);
     }
 
     /**
