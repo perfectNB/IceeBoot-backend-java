@@ -49,6 +49,14 @@ public class LogDO extends ZbootDO {
     @TableField("stack_trace")
     private String stackTrace;
 
+    @Schema(description = "接口")
+    @TableField("summary")
+    private String summary;
+
+    @Schema(description = "地址")
+    @TableField("path")
+    private String path;
+
     @Schema(description = "时间戳")
     @TableField("timestamp")
     private LocalDateTime timestamp;

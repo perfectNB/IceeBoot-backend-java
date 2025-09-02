@@ -19,6 +19,7 @@ import com.zboot.framework.mapper.log.LogMapper;
 import com.zboot.framework.service.log.LogService;
 import com.zboot.framework.vo.log.LogVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -115,6 +116,33 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
         }
         
         this.remove(queryWrapper);
+    }
+
+    @Override
+    public void saveLog(LogDO logDO) {
+        if (logDO.getTimestamp() == null) {
+            logDO.setTimestamp(LocalDateTime.now());
+        }
+        if (logDO.getThread() == null) {
+            logDO.setThread(Thread.currentThread().getName());
+        }
+        this.save(logDO);
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void saveLogAsync(String level, String module, String message, String className, String summary, String path) {
+        LogDO logDO = new LogDO();
+        logDO.setLevel(level);
+        logDO.setModule(module);
+        logDO.setMessage(message);
+        logDO.setClassName(className);
+        logDO.setSummary(summary);
+        logDO.setPath(path);
+        logDO.setTimestamp(LocalDateTime.now());
+        logDO.setThread(Thread.currentThread().getName());
+        
+        this.save(logDO);
     }
 
     /**

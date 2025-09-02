@@ -52,4 +52,23 @@ public interface LogService extends IService<LogDO> {
      * @param clearDTO 清空参数
      */
     void clearLogs(LogClearDTO clearDTO);
+
+    /**
+     * 保存日志
+     * 
+     * @param logDO 日志实体
+     */
+    void saveLog(LogDO logDO);
+
+    /**
+     * 异步保存日志
+     * 
+     * @param level 日志级别
+     * @param module 模块
+     * @param message 消息
+     * @param className 类名
+     * @param summary 接口描述
+     * @param path 请求路径
+     */
+    void saveLogAsync(String level, String module, String message, String className, String summary, String path);
 }
