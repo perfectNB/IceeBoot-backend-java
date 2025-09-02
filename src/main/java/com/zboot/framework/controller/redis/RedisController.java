@@ -2,9 +2,12 @@ package com.zboot.framework.controller.redis;
 
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
+import com.zboot.framework.dto.redis.CreateRedisKeyDTO;
 import com.zboot.framework.query.redis.RedisQuery;
 import com.zboot.framework.service.redis.RedisService;
 import com.zboot.framework.vo.redis.RedisKeyVO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/redis")
 @RequiredArgsConstructor
+@Slf4j
 public class RedisController {
 
     private final RedisService redisService;
@@ -32,6 +36,7 @@ public class RedisController {
     @Operation(summary = "获取Redis键列表", description = "分页查询Redis键列表")
     @GetMapping("/keys")
     public R<PageResult<RedisKeyVO>> getRedisKeys(RedisQuery query) {
+        log.info("获取Redis键列表");
         PageResult<RedisKeyVO> result = redisService.getRedisKeys(query);
         return R.ok(result);
     }
@@ -44,6 +49,17 @@ public class RedisController {
     public R<RedisKeyVO> getRedisKeyDetail(@PathVariable String key) {
         RedisKeyVO result = redisService.getRedisKeyDetail(key);
         return R.ok(result);
+    }
+
+    /**
+     * 创建Redis键
+     */
+    @Operation(summary = "创建Redis键", description = "创建新的Redis键值对")
+    @PostMapping("/keys")
+    public R<Void> createRedisKey(@Validated @RequestBody CreateRedisKeyDTO createDTO) {
+
+        redisService.createRedisKey(createDTO);
+        return R.ok();
     }
 
     /**
