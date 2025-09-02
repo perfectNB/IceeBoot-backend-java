@@ -2,15 +2,17 @@ package com.zboot.framework.controller.log;
 
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.log.LogBatchDeleteDTO;
-import com.zboot.framework.dto.log.LogClearDTO;
+
 import com.zboot.framework.dto.log.LogQueryDTO;
+import com.zboot.framework.query.log.LogQuery;
 import com.zboot.framework.service.log.LogService;
 import com.zboot.framework.vo.log.LogVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 日志管理控制器
@@ -20,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "日志管理", description = "日志管理相关接口")
 @RestController
-@RequestMapping("/v1/log")
+@RequestMapping("/v1/logs")
 @RequiredArgsConstructor
 public class LogController {
 
@@ -30,39 +32,21 @@ public class LogController {
      * 获取日志列表
      */
     @Operation(summary = "获取日志列表", description = "分页查询日志列表")
-    @GetMapping("/list")
-    public R<PageResult<LogVO>> getLogList(LogQueryDTO queryDTO) {
-        PageResult<LogVO> result = logService.getLogList(queryDTO);
+    @GetMapping()
+    public R<PageResult<LogVO>> getLogList(LogQuery query) {
+        PageResult<LogVO> result = logService.getLogList(query);
         return R.ok(result);
     }
 
     /**
      * 删除日志
      */
-    @Operation(summary = "删除日志", description = "根据ID删除日志")
-    @DeleteMapping("/{id}")
-    public R<Void> deleteLog(@PathVariable String id) {
-        logService.deleteLog(id);
-        return R.ok();
+    @Operation(summary = "删除日志", description = "单个删除或批量删除日志")
+    @DeleteMapping
+    public R<Void> deleteLogs(@RequestBody List<String> ids) {
+        boolean success = logService.deleteLogs(ids);
+        return success ? R.ok("删除成功") : R.fail("删除失败");
     }
 
-    /**
-     * 批量删除日志
-     */
-    @Operation(summary = "批量删除日志", description = "根据ID列表批量删除日志")
-    @DeleteMapping("/batch")
-    public R<Void> batchDeleteLog(@RequestBody LogBatchDeleteDTO deleteDTO) {
-        logService.batchDeleteLogs(deleteDTO);
-        return R.ok();
-    }
 
-    /**
-     * 清空日志
-     */
-    @Operation(summary = "清空日志", description = "根据条件清空日志")
-    @DeleteMapping("/clear")
-    public R<Void> clearLog(@RequestBody LogClearDTO clearDTO) {
-        logService.clearLogs(clearDTO);
-        return R.ok();
-    }
 }

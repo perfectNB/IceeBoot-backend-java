@@ -8,10 +8,10 @@ package com.zboot.framework.service.log;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.log.LogBatchDeleteDTO;
 import com.zboot.framework.dto.log.LogClearDTO;
 import com.zboot.framework.dto.log.LogQueryDTO;
 import com.zboot.framework.entity.log.LogDO;
+import com.zboot.framework.query.log.LogQuery;
 import com.zboot.framework.vo.log.LogVO;
 
 import java.util.List;
@@ -27,10 +27,10 @@ public interface LogService extends IService<LogDO> {
     /**
      * 获取日志列表
      * 
-     * @param queryDTO 查询条件
+     * @param query 查询条件
      * @return 日志列表
      */
-    PageResult<LogVO> getLogList(LogQueryDTO queryDTO);
+    PageResult<LogVO> getLogList(LogQuery query);
 
     /**
      * 删除日志
@@ -39,12 +39,15 @@ public interface LogService extends IService<LogDO> {
      */
     void deleteLog(String id);
 
+
+
     /**
-     * 批量删除日志
+     * 删除日志（单个或批量）
      * 
-     * @param batchDeleteDTO 批量删除参数
+     * @param ids 日志ID列表
+     * @return 删除是否成功
      */
-    void batchDeleteLogs(LogBatchDeleteDTO batchDeleteDTO);
+    boolean deleteLogs(List<String> ids);
 
     /**
      * 清空日志

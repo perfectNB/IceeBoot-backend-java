@@ -11,11 +11,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.log.LogBatchDeleteDTO;
 import com.zboot.framework.dto.log.LogClearDTO;
 import com.zboot.framework.dto.log.LogQueryDTO;
 import com.zboot.framework.entity.log.LogDO;
 import com.zboot.framework.mapper.log.LogMapper;
+import com.zboot.framework.query.log.LogQuery;
 import com.zboot.framework.service.log.LogService;
 import com.zboot.framework.vo.log.LogVO;
 import org.springframework.beans.BeanUtils;
@@ -38,35 +38,35 @@ import java.util.stream.Collectors;
 public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements LogService {
 
     @Override
-    public PageResult<LogVO> getLogList(LogQueryDTO queryDTO) {
+    public PageResult<LogVO> getLogList(LogQuery query) {
         // 构建查询条件
         LambdaQueryWrapper<LogDO> queryWrapper = new LambdaQueryWrapper<>();
         
         // 日志级别筛选
-        if (StringUtils.hasText(queryDTO.getLevel())) {
-            queryWrapper.eq(LogDO::getLevel, queryDTO.getLevel());
+        if (StringUtils.hasText(query.getLevel())) {
+            queryWrapper.eq(LogDO::getLevel, query.getLevel());
         }
         
         // 模块筛选
-        if (StringUtils.hasText(queryDTO.getModule())) {
-            queryWrapper.eq(LogDO::getModule, queryDTO.getModule());
+        if (StringUtils.hasText(query.getModule())) {
+            queryWrapper.eq(LogDO::getModule, query.getModule());
         }
         
         // 关键词搜索
-        if (StringUtils.hasText(queryDTO.getKeyword())) {
-            queryWrapper.like(LogDO::getMessage, queryDTO.getKeyword())
-                    .or().like(LogDO::getClassName, queryDTO.getKeyword());
+        if (StringUtils.hasText(query.getKeyword())) {
+            queryWrapper.like(LogDO::getMessage, query.getKeyword())
+                    .or().like(LogDO::getClassName, query.getKeyword());
         }
         
         // 时间范围筛选
-        if (StringUtils.hasText(queryDTO.getStartTime())) {
-            LocalDateTime startTime = LocalDateTime.parse(queryDTO.getStartTime(), 
+        if (StringUtils.hasText(query.getStartTime())) {
+            LocalDateTime startTime = LocalDateTime.parse(query.getStartTime(),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             queryWrapper.ge(LogDO::getTimestamp, startTime);
         }
         
-        if (StringUtils.hasText(queryDTO.getEndTime())) {
-            LocalDateTime endTime = LocalDateTime.parse(queryDTO.getEndTime(), 
+        if (StringUtils.hasText(query.getEndTime())) {
+            LocalDateTime endTime = LocalDateTime.parse(query.getEndTime(),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             queryWrapper.le(LogDO::getTimestamp, endTime);
         }
@@ -75,7 +75,7 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
         queryWrapper.orderByDesc(LogDO::getTimestamp);
         
         // 分页查询
-        Page<LogDO> page = new Page<>(queryDTO.getPage(), queryDTO.getSize());
+        Page<LogDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         IPage<LogDO> pageResult = this.page(page, queryWrapper);
         
         // 转换为VO
@@ -83,7 +83,7 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
                 .map(this::convertToVO)
                 .collect(Collectors.toList());
         
-        return PageResult.of(logVOList, pageResult.getTotal(), (long) queryDTO.getPage(), (long) queryDTO.getSize());
+        return PageResult.of(logVOList, pageResult.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override
@@ -91,12 +91,20 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements Log
         this.removeById(Long.valueOf(id));
     }
 
+
     @Override
-    public void batchDeleteLogs(LogBatchDeleteDTO batchDeleteDTO) {
-        List<Long> ids = batchDeleteDTO.getIds().stream()
-                .map(Long::valueOf)
-                .collect(Collectors.toList());
-        this.removeByIds(ids);
+    public boolean deleteLogs(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return false;
+        }
+        try {
+            List<Long> longIds = ids.stream()
+                    .map(Long::valueOf)
+                    .collect(Collectors.toList());
+            return this.removeByIds(longIds);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
