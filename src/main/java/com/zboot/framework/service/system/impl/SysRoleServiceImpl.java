@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.framework.dto.system.RoleDTO;
@@ -84,7 +85,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     public List<SysRoleVO> getAllRoles() {
         List<RoleDO> roles = this.list(
                 new LambdaQueryWrapper<RoleDO>()
-                        .eq(RoleDO::getStatus, "active")
+                        .eq(RoleDO::getStatus, SystemConstants.Status.ACTIVE)
                         .orderByAsc(RoleDO::getSort)
         );
 

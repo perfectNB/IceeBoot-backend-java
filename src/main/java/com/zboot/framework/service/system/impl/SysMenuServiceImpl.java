@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.common.utils.TokenUtils;
@@ -166,7 +167,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     public List<SysMenuVO> getMenuTree() {
         List<MenuDO> menus = this.list(
                 new LambdaQueryWrapper<MenuDO>()
-                        .eq(MenuDO::getStatus, "active")
+                        .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
                         .orderByAsc(MenuDO::getSort)
         );
 
@@ -249,7 +250,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
         List<MenuDO> menus = this.list(
                 new LambdaQueryWrapper<MenuDO>()
                         .eq(MenuDO::getParentId, parentId)
-                        .eq(MenuDO::getStatus, "active")
+                        .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
                         .orderByAsc(MenuDO::getSort)
         );
 

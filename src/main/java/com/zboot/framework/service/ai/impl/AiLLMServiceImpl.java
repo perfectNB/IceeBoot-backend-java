@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.framework.dto.ai.AiLLMDTO;
 import com.zboot.framework.entity.ai.AiLLMDO;
 import com.zboot.framework.mapper.ai.AiLLMMapper;
@@ -90,7 +91,7 @@ public class AiLLMServiceImpl extends ServiceImpl<AiLLMMapper, AiLLMDO> implemen
     @Override
     public List<AiLLMVO> getActiveLLMList() {
         LambdaQueryWrapper<AiLLMDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiLLMDO::getStatus, "active")
+        wrapper.eq(AiLLMDO::getStatus, SystemConstants.Status.ACTIVE)
                .orderByDesc(AiLLMDO::getCreateTime);
         
         List<AiLLMDO> llms = this.list(wrapper);

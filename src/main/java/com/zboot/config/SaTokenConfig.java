@@ -21,6 +21,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * Sa-Token配置类
+ * @author CodeIcee
+ * @date 2025-08-11
  */
 @Configuration
 public class SaTokenConfig implements WebMvcConfigurer {

@@ -8,6 +8,7 @@ package com.zboot.framework.service.system.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.zboot.common.constant.ResponseMessage;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.common.utils.Md5Utils;
 import com.zboot.common.utils.PasswordUtil;
@@ -69,7 +70,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 检查用户状态
-        if (!"active".equals(user.getStatus())) {
+        if (!SystemConstants.Status.ACTIVE.equals(user.getStatus())) {
             throw new ZbootException("用户已被禁用");
         }
 
