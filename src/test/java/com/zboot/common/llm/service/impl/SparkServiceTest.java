@@ -28,7 +28,7 @@ public class SparkServiceTest {
     
     private SparkService sparkService;
     // HTTP协议的APIKey
-    private static final String API_KEY = " ";
+    private static final String API_KEY = "sk-OVOe37ceqfQoe6rR4e44F5BcCc2046D995C70824E7AbDb76";
     // WebSocket协议的认证信息（备用）
     private static final String APPID = "e3dbb357";
     private static final String WS_API_KEY = "008b5828e6edcaf41a011ad88dab999e";

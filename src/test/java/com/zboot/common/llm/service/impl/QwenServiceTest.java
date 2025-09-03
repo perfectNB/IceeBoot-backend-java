@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class QwenServiceTest {
     
     private QwenService qwenService;
-    private static final String API_KEY = " ";
+    private static final String API_KEY = "sk-4377bcaf115543758ffdcaa7aa7a3a98";
     private static final String BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
     
     @BeforeEach

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MoonshotServiceTest {
     
     private MoonshotService moonshotService;
-    private static final String API_KEY = " ";
+    private static final String API_KEY = "sk-4Au88kSIAlvASRt0mWRrK15epX00FOJkMViEgfIPSDCXYvjv";
     private static final String BASE_URL = "https://api.moonshot.cn/v1";
     
     @BeforeEach

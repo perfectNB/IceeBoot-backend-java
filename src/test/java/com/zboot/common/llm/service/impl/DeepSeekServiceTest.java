@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DeepSeekServiceTest {
     
     private DeepSeekService deepSeekService;
-    private static final String API_KEY = " ";
+    private static final String API_KEY = "sk-450bed5b747b41bc9e915d0040dc318b";
     private static final String BASE_URL = "https://api.deepseek.com";
     
     @BeforeEach
