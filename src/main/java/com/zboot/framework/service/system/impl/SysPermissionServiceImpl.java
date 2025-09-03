@@ -119,6 +119,34 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
     @Override
     public boolean deletePermissions(List<Long> ids) {
+        // 检查是否有子权限或角色关联
+        for (Long id : ids) {
+            // 检查是否有子权限
+            List<PermissionDO> children = this.list(
+                new LambdaQueryWrapper<PermissionDO>()
+                    .eq(PermissionDO::getParentId, id)
+            );
+            if (!children.isEmpty()) {
+                String childNames = children.stream()
+                    .map(PermissionDO::getName)
+                    .collect(Collectors.joining(", "));
+                throw new ZbootException("权限删除失败，存在子权限：" + childNames);
+            }
+            
+            // 检查是否有角色使用此权限
+            List<Long> roleIds = rolePermissionService.getRoleIdsByPermissionId(id);
+            if (!roleIds.isEmpty()) {
+                // 获取角色名称
+                List<String> roleNames = roleIds.stream()
+                    .map(roleId -> {
+                        // 这里需要调用角色服务获取角色名称，暂时返回ID
+                        return "角色ID:" + roleId;
+                    })
+                    .collect(Collectors.toList());
+                throw new ZbootException("权限删除失败，以下角色正在使用此权限：" + String.join(", ", roleNames));
+            }
+        }
+        
         return this.removeByIds(ids);
     }
 

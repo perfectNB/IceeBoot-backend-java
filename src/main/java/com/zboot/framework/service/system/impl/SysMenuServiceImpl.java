@@ -21,6 +21,7 @@ import com.zboot.framework.mapper.system.SysMenuMapper;
 import com.zboot.framework.dto.system.SysMenuQueryDTO;
 import com.zboot.framework.service.system.IAuthCacheService;
 import com.zboot.framework.service.system.ISysMenuService;
+import com.zboot.framework.service.system.ISysRoleMenuService;
 import com.zboot.framework.vo.system.SysMenuVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
 
     @Autowired
     private IAuthCacheService authCacheService;
+    
+    @Autowired
+    private ISysRoleMenuService roleMenuService;
     @Override
     public PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query) {
         // 构建查询条件
@@ -212,6 +216,30 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
 
     @Override
     public boolean deleteMenus(List<Long> ids) {
+        // 检查是否有子菜单或角色关联
+        for (Long id : ids) {
+            // 检查是否有子菜单
+            List<MenuDO> children = this.list(
+                new LambdaQueryWrapper<MenuDO>()
+                    .eq(MenuDO::getParentId, id)
+            );
+            if (!children.isEmpty()) {
+                String childNames = children.stream()
+                    .map(MenuDO::getName)
+                    .collect(Collectors.joining(", "));
+                throw new ZbootException("菜单删除失败，存在子菜单：" + childNames);
+            }
+            
+            // 检查是否有角色使用此菜单
+            List<Long> roleIds = roleMenuService.getRoleIdsByMenuId(id);
+            if (!roleIds.isEmpty()) {
+                String roleIdStr = roleIds.stream()
+                    .map(roleId -> "角色ID:" + roleId)
+                    .collect(Collectors.joining(", "));
+                throw new ZbootException("菜单删除失败，以下角色正在使用此菜单：" + roleIdStr);
+            }
+        }
+        
         return this.removeByIds(ids);
     }
 
