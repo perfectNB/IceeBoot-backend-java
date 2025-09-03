@@ -2,7 +2,7 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/zboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
+    url: ${DB_URL:jdbc:mysql://8.146.211.177:3306/zboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
     username: ${DB_USERNAME:zboot}
     password: ${DB_PASSWORD:123456}
     type: com.zaxxer.hikari.HikariDataSource
@@ -16,14 +16,14 @@ spring:
       connection-timeout: 30000
       connection-test-query: SELECT 1
 
-     
+
 
   # Redis配置
   data:
     redis:
-      host: ${REDIS_HOST:127.0.0.1}
+      host: ${REDIS_HOST:8.140.202.19}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
+      password: ${REDIS_PASSWORD:ehero000921}
       database: ${REDIS_DATABASE:0}
       timeout: 10000
       lettuce:
