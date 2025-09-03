@@ -3,7 +3,7 @@
  * 百度文心一言使用OAuth2.0认证方式，与其他厂商不同
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-03
  */
 package com.zboot.common.llm.service.impl;
 

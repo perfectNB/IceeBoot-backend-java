@@ -3,7 +3,7 @@
  * 支持流式输出、非流式输出和深度思考功能
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-03
  */
 package com.zboot.common.llm.service.impl;
 
@@ -85,15 +85,17 @@ public class DeepSeekService implements LLMService {
                             .retrieve()
                             .bodyToFlux(String.class)
                             .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .filter(line -> line.startsWith("data: ") && !line.equals("data: [DONE]"))
-                            .map(line -> line.substring(6)) // 移除 "data: " 前缀
-                            .filter(data -> !data.trim().isEmpty())
+                            .doOnNext(chunk -> log.debug("接收到原始数据块: {}", chunk))
+                            .filter(chunk -> !chunk.trim().isEmpty() && !"[DONE]".equals(chunk.trim()))
+                            .doOnNext(data -> log.debug("处理JSON数据: {}", data))
                             .map(this::parseStreamResponse)
                             .filter(Objects::nonNull)
                             .doOnError(error -> log.error("DeepSeek流式API调用失败: {}", error.getMessage()))
                             .onErrorReturn(createErrorResponse("流式API调用失败"));
                 });
     }
+    
+
     
     @Override
     public Mono<Boolean> validateApiKey(String apiKey, String baseUrl) {
