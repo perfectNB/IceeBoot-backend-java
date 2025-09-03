@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.framework.dto.ai.AiAgentDTO;
 import com.zboot.framework.entity.ai.AiAgentDO;
 import com.zboot.framework.mapper.ai.AiAgentMapper;
@@ -95,7 +96,7 @@ public class AiAgentServiceImpl extends ServiceImpl<AiAgentMapper, AiAgentDO> im
     public List<AiAgentVO> getAgentsByPlatform(String platform) {
         LambdaQueryWrapper<AiAgentDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiAgentDO::getPlatform, platform)
-               .eq(AiAgentDO::getStatus, "active")
+               .eq(AiAgentDO::getStatus, SystemConstants.Status.ACTIVE)
                .orderByDesc(AiAgentDO::getCreateTime);
         
         List<AiAgentDO> agents = this.list(wrapper);
@@ -106,7 +107,7 @@ public class AiAgentServiceImpl extends ServiceImpl<AiAgentMapper, AiAgentDO> im
     public List<AiAgentVO> getAgentsByType(String type) {
         LambdaQueryWrapper<AiAgentDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiAgentDO::getType, type)
-               .eq(AiAgentDO::getStatus, "active")
+               .eq(AiAgentDO::getStatus, SystemConstants.Status.ACTIVE)
                .orderByDesc(AiAgentDO::getCreateTime);
         
         List<AiAgentDO> agents = this.list(wrapper);

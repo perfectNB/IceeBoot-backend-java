@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.ResponseMessage;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.framework.dto.system.PermissionDTO;
@@ -73,7 +74,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     public List<SysPermissionVO> getPermissionTree() {
         List<PermissionDO> permissions = this.list(
                 new LambdaQueryWrapper<PermissionDO>()
-                        .eq(PermissionDO::getStatus, "active")
+                        .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
                         .orderByAsc(PermissionDO::getSort)
         );
 
@@ -164,7 +165,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
         List<PermissionDO> permissions = this.list(
                 new LambdaQueryWrapper<PermissionDO>()
                         .eq(PermissionDO::getParentId, parentId)
-                        .eq(PermissionDO::getStatus, "active")
+                        .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
                         .orderByAsc(PermissionDO::getSort)
         );
 
@@ -204,11 +205,22 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
                     return vo;
                 })
                 .sorted((a, b) -> {
-                    // 按照sort字段排序，如果sort为null则放到最后
-                    if (a.getSort() == null && b.getSort() == null) return 0;
-                    if (a.getSort() == null) return 1;
-                    if (b.getSort() == null) return -1;
-                    return a.getSort().compareTo(b.getSort());
+                    // 按照sort字段排序，如果sort为null则按照id排序
+                    if (a.getSort() == null && b.getSort() == null) {
+                        return a.getId().compareTo(b.getId());
+                    }
+                    if (a.getSort() == null) {
+                        return Long.compare(b.getId(), a.getId());
+                    }
+                    if (b.getSort() == null) {
+                        return Long.compare(a.getId(), b.getId());
+                    }
+                    // 如果sort相同，则按id排序
+                    int sortCompare = a.getSort().compareTo(b.getSort());
+                    if (sortCompare == 0) {
+                        return a.getId().compareTo(b.getId());
+                    }
+                    return sortCompare;
                 })
                 .collect(Collectors.toList());
     }
