@@ -3,7 +3,7 @@
  * 测试流式和非流式调用功能
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-03
  */
 package com.zboot.common.llm.service.impl;
 
@@ -96,7 +96,7 @@ public class DeepSeekServiceTest {
                     .setApiKey(API_KEY)
                     .setBaseUrl(BASE_URL)
                     .setModel("deepseek-chat")
-                    .setUserMessage("请用一句话介绍DeepSeek")
+                    .setUserMessage("火焰鸡是什么")
                     .setMaxTokens(50)
                     .setTemperature(0.7)
                     .setStream(true);
