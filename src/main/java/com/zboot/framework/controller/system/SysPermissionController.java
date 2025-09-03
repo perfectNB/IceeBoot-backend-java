@@ -100,13 +100,7 @@ public class SysPermissionController {
     }
 
 
-    @Operation(summary = "检查权限编码", description = "检查权限编码是否已存在")
-    @GetMapping("/check/code")
-    @RequirePermission(dynamic = true)
-    public R<Boolean> checkCode(@RequestParam String code, @RequestParam(required = false) Long excludeId) {
-        boolean exists = permissionService.existsCode(code, excludeId);
-        return R.ok(exists);
-    }
+
 
 
     @Operation(summary = "获取子权限", description = "根据父级ID获取子权限列表")

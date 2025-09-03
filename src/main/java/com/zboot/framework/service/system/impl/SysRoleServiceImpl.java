@@ -149,6 +149,17 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
     @Override
     public boolean deleteRoles(List<Long> ids) {
+        // 检查是否有用户使用这些角色
+        for (Long id : ids) {
+            List<Long> userIds = userRoleService.getUserIdsByRoleId(id);
+            if (!userIds.isEmpty()) {
+                String userIdStr = userIds.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
+                throw new ZbootException("角色删除失败，以下用户正在使用此角色，用户ID：" + userIdStr);
+            }
+        }
+        
         return this.removeByIds(ids);
     }
 
