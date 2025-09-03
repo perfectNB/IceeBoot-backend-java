@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeepSeekStreamTest {
     
     private DeepSeekService deepSeekService;
-    private static final String API_KEY = "";
+    private static final String API_KEY = " ";
     private static final String BASE_URL = "https://api.deepseek.com";
     
     @BeforeEach
