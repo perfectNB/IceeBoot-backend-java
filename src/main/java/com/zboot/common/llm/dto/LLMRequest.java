@@ -67,7 +67,12 @@ public class LLMRequest {
     private String apiKey;
     
     /**
-     * API基础URL
+     * 密钥（用于文心一言等需要双密钥认证的服务）
+     */
+    private String secretKey;
+    
+    /**
+     * 基础URL
      */
     private String baseUrl;
     
