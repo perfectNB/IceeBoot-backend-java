@@ -51,6 +51,9 @@ public class SysRoleVO {
     @Schema(description = "权限树")
     private List<SysPermissionVO> permissionTree;
 
+    @Schema(description = "菜单树")
+    private List<SysMenuVO> menuTree;
+
     @Schema(description = "用户数量")
     private Integer userCount;
 }

@@ -98,6 +98,14 @@ public class SysRoleController {
         return success ? R.ok("角色权限分配成功") : R.fail("角色权限分配失败");
     }
 
+    @Operation(summary = "保存角色菜单", description = "为角色分配菜单")
+    @PostMapping("/{roleId}/menus")
+    @RequirePermission(dynamic = true)
+    public R<Void> saveRoleMenus(@PathVariable Long roleId, @RequestBody List<Long> menuIds) {
+        boolean success = roleService.saveRoleMenus(roleId, menuIds);
+        return success ? R.ok("角色菜单分配成功") : R.fail("角色菜单分配失败");
+    }
+
     @Operation(summary = "获取全部角色", description = "获取全部角色")
     @GetMapping("/getAll")
     @RequirePermission(dynamic = true)

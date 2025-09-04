@@ -120,4 +120,12 @@ public interface ISysMenuService extends IService<MenuDO> {
      * @return 菜单列表
      */
     List<SysMenuVO> getChildrenByParentId(Long parentId);
+
+    /**
+     * 根据角色ID获取菜单树
+     *
+     * @param roleId 角色ID
+     * @return 菜单树列表
+     */
+    List<SysMenuVO> getMenuTreeByRoleId(Long roleId);
 }
