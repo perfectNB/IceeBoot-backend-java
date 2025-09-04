@@ -6,18 +6,18 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * AI大模型查询对象
+ * AI大模型密钥查询对象
  * 
  * @author CodeIcee
- * @date 2025-08-11
+ * @date 2025-01-27
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "AI大模型查询对象")
-public class AiLLMQuery extends BaseQuery {
+@Schema(description = "AI大模型密钥查询对象")
+public class AiLLMKeyQuery extends BaseQuery {
 
-    @Schema(description = "模型名称")
-    private String name;
+    @Schema(description = "大模型厂商")
+    private String llmProvider;
 
     @Schema(description = "状态（active-激活，inactive-禁用）")
     private String status;

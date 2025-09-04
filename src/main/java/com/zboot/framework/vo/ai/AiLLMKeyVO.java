@@ -19,11 +19,8 @@ public class AiLLMKeyVO {
     @Schema(description = "密钥ID")
     private Long id;
 
-    @Schema(description = "大模型ID")
-    private Long llmId;
-
-    @Schema(description = "密钥")
-    private String key;
+    @Schema(description = "大模型厂商")
+    private String llmProvider;
 
     @Schema(description = "备注")
     private String remark;

@@ -5,8 +5,7 @@
     <!-- 结果映射 -->
     <resultMap id="BaseResultMap" type="com.zboot.framework.entity.ai.AiLLMKeyDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="llm_id" property="llmId" jdbcType="BIGINT"/>
-        <result column="key" property="key" jdbcType="VARCHAR"/>
+        <result column="llm_provider" property="llmProvider" jdbcType="VARCHAR"/>
         <result column="remark" property="remark" jdbcType="VARCHAR"/>
         <result column="secret_key" property="secretKey" jdbcType="VARCHAR"/>
         <result column="api_key" property="apiKey" jdbcType="VARCHAR"/>
@@ -20,7 +19,7 @@
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, llm_id, `key`, remark, secret_key, api_key, status,
+        id, llm_provider, remark, secret_key, api_key, status,
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 

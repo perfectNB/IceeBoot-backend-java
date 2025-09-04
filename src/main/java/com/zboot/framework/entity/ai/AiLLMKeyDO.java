@@ -23,13 +23,11 @@ import lombok.EqualsAndHashCode;
 @TableName("t_ai_llm_key")
 public class AiLLMKeyDO extends ZbootDO {
 
-    @Schema(description = "大模型ID")
-    @TableField("llm_id")
-    private Long llmId;
+    @Schema(description = "大模型厂商")
+    @TableField("llm_provider")
+    private String llmProvider;
 
-    @Schema(description = "密钥")
-    @TableField("key")
-    private String key;
+
 
     @Schema(description = "备注")
     @TableField("remark")
