@@ -44,7 +44,7 @@ public class AiAgentVO {
     private String workFlowId;
 
     @Schema(description = "Dify平台密钥")
-    private String key;
+    private String apiKey;
 
     @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

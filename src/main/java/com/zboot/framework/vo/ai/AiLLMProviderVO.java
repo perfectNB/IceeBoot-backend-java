@@ -9,7 +9,7 @@ import java.util.List;
  * AI大模型厂商视图对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-04
  */
 @Data
 @Schema(description = "AI大模型厂商视图对象")

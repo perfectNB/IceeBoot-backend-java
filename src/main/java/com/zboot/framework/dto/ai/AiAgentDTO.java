@@ -46,5 +46,5 @@ public class AiAgentDTO {
     private String workFlowId;
 
     @Schema(description = "Dify平台密钥")
-    private String key;
+    private String apiKey;
 }

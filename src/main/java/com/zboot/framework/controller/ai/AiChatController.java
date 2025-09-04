@@ -1,6 +1,6 @@
 /*
  * @Description: AI对话管理控制器
- * @Date: 2025-01-27
+ * @Date: 2025-08-11
  * @Author: CodeIcee
  */
 package com.zboot.framework.controller.ai;

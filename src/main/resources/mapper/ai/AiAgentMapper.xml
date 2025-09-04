@@ -13,7 +13,7 @@
         <result column="token" property="token" jdbcType="VARCHAR"/>
         <result column="bot_id" property="botId" jdbcType="VARCHAR"/>
         <result column="work_flow_id" property="workFlowId" jdbcType="VARCHAR"/>
-        <result column="key" property="key" jdbcType="VARCHAR"/>
+        <result column="api_key" property="apiKey" jdbcType="VARCHAR"/>
         <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
         <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
@@ -23,7 +23,7 @@
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, name, type, remark, platform, status, token, bot_id, work_flow_id, `key`,
+        id, name, type, remark, platform, status, token, bot_id, work_flow_id, api_key,
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 
