@@ -7,8 +7,9 @@
  */
 package com.zboot.common.llm.service.impl;
 
-import com.zboot.common.llm.dto.LLMRequest;
-import com.zboot.common.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.dto.LLMRequest;
+import com.zboot.common.service.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.service.impl.DeepSeekService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeepSeekStreamTest {
     
     private DeepSeekService deepSeekService;
-    private static final String API_KEY = "sk-450bed5b747b41bc9e915d0040dc318b";
+    private static final String API_KEY = "sk-";
     private static final String BASE_URL = "https://api.deepseek.com";
     
     @BeforeEach

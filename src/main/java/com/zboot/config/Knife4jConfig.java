@@ -48,7 +48,7 @@ public class Knife4jConfig {
     public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
                 .group("认证模块")
-                .pathsToMatch("/zboot/auth/**")
+                .pathsToMatch("/zboot/api/v1/auth/**", "/v1/auth/**")
                 .build();
     }
     
@@ -59,7 +59,7 @@ public class Knife4jConfig {
     public GroupedOpenApi userApi() {
         return GroupedOpenApi.builder()
                 .group("用户模块")
-                .pathsToMatch("/zboot/user/**")
+                .pathsToMatch("/zboot/api/v1/users/**", "/v1/users/**")
                 .build();
     }
     
@@ -70,7 +70,9 @@ public class Knife4jConfig {
     public GroupedOpenApi systemApi() {
         return GroupedOpenApi.builder()
                 .group("系统模块")
-                .pathsToMatch("/zboot/system/**")
+                .pathsToMatch("/zboot/api/v1/permissions/**", "/v1/permissions/**", 
+                             "/zboot/api/v1/roles/**", "/v1/roles/**",
+                             "/zboot/api/v1/permission-test/**", "/v1/permission-test/**")
                 .build();
     }
     
@@ -81,7 +83,9 @@ public class Knife4jConfig {
     public GroupedOpenApi aiApi() {
         return GroupedOpenApi.builder()
                 .group("AI模块")
-                .pathsToMatch("/zboot/ai/**")
+                .pathsToMatch("/zboot/api/v1/agents/**", "/v1/agents/**",
+                             "/zboot/api/v1/chat/**", "/v1/chat/**",
+                             "/zboot/api/v1/llm/**", "/v1/llm/**")
                 .build();
     }
     
@@ -92,7 +96,40 @@ public class Knife4jConfig {
     public GroupedOpenApi workflowApi() {
         return GroupedOpenApi.builder()
                 .group("工作流模块")
-                .pathsToMatch("/zboot/workflow/**")
+                .pathsToMatch("/zboot/api/api/v1/workflow/**", "/api/v1/workflow/**")
+                .build();
+    }
+    
+    /**
+     * 任务模块API分组
+     */
+    @Bean
+    public GroupedOpenApi taskApi() {
+        return GroupedOpenApi.builder()
+                .group("任务模块")
+                .pathsToMatch("/zboot/api/v1/tasks/**", "/v1/tasks/**")
+                .build();
+    }
+    
+    /**
+     * 仪表盘模块API分组
+     */
+    @Bean
+    public GroupedOpenApi dashboardApi() {
+        return GroupedOpenApi.builder()
+                .group("仪表盘模块")
+                .pathsToMatch("/zboot/api/v1/dashboard/**", "/v1/dashboard/**")
+                .build();
+    }
+    
+    /**
+     * Redis模块API分组
+     */
+    @Bean
+    public GroupedOpenApi redisApi() {
+        return GroupedOpenApi.builder()
+                .group("Redis模块")
+                .pathsToMatch("/zboot/api/v1/redis/**", "/v1/redis/**")
                 .build();
     }
     
@@ -103,7 +140,8 @@ public class Knife4jConfig {
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
                 .group("全部接口")
-                .pathsToMatch("/zboot/**")
+                .pathsToMatch("/zboot/api/**", "/v1/**", "/api/v1/**")
+                .packagesToScan("com.zboot.framework.controller")
                 .build();
     }
 }

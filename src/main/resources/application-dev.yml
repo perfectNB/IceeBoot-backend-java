@@ -15,6 +15,10 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
+      # 应用关闭时的连接池关闭超时时间（毫秒）
+      initialization-fail-timeout: 1
+      # 连接泄漏检测阈值（毫秒），0表示禁用
+      leak-detection-threshold: 60000
 
 
 
@@ -127,3 +131,4 @@ knife4j:
     enable-group: true
   cors: false
   production: false
+
