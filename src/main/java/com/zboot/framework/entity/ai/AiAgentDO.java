@@ -56,6 +56,6 @@ public class AiAgentDO extends ZbootDO {
     private String workFlowId;
 
     @Schema(description = "Dify平台密钥")
-    @TableField("key")
-    private String key;
+    @TableField("api_key")
+    private String apiKey;
 }

@@ -24,7 +24,7 @@ import java.util.Map;
  * @author CodeIcee
  * @date 2025-08-11
  */
-@Tag(name = "AI代理管理", description = "AI代理管理相关接口")
+@Tag(name = "Ai Agent管理", description = "AI Agent管理相关接口")
 @RestController
 @RequestMapping("/v1/agents")
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class AiAgentController {
 
     private final IAiAgentService aiAgentService;
 
-    @Operation(summary = "获取AI代理列表")
+    @Operation(summary = "获取agents列表")
     @GetMapping
     @RequirePermission(dynamic = true)
     public R<IPage<AiAgentVO>> getAgentPage(AiAgentQuery query) {
@@ -40,7 +40,7 @@ public class AiAgentController {
         return R.ok(page);
     }
 
-    @Operation(summary = "根据ID获取AI代理")
+    @Operation(summary = "根据ID获取agents")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<AiAgentVO> getAgentById(@Parameter(description = "AI代理ID") @PathVariable Long id) {
@@ -48,7 +48,7 @@ public class AiAgentController {
         return R.ok(agent);
     }
 
-    @Operation(summary = "创建AI代理")
+    @Operation(summary = "创建agents")
     @PostMapping
     @RequirePermission(dynamic = true)
     public R<AiAgentVO> addAgent(@Validated @RequestBody AiAgentDTO dto) {
@@ -59,29 +59,20 @@ public class AiAgentController {
         return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
-    @Operation(summary = "更新AI代理")
-    @PutMapping("/{id}")
+    @Operation(summary = "更新agents", description = "更新agents信息")
+    @PutMapping
     @RequirePermission(dynamic = true)
-    public R<AiAgentVO> updateAgent(
-            @Parameter(description = "代理ID") @PathVariable Long id,
-            @Validated @RequestBody AiAgentDTO dto) {
-        dto.setId(id);
+    public R<Void> updateAgent(@Validated @RequestBody AiAgentDTO dto) {
         Boolean result = aiAgentService.updateAgent(dto);
-        if (result) {
-            return R.ok();
-        }
-        return R.fail(ResponseMessage.UPDATE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
-    @Operation(summary = "删除AI代理")
-    @DeleteMapping("/{id}")
+    @Operation(summary = "删除agents")
+    @DeleteMapping
     @RequirePermission(dynamic = true)
-    public R<Void> deleteAgent(@Parameter(description = "AI代理ID") @PathVariable Long id) {
-        Boolean result = aiAgentService.deleteAgent(List.of(id));
-        if (result) {
-            return R.ok();
-        }
-        return R.fail(ResponseMessage.DELETE_FAIL);
+    public R<Void> deleteAgent(@RequestBody List<Long> ids) {
+        Boolean result = aiAgentService.deleteAgent(ids);
+        return result ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "更新代理状态")
