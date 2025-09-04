@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.utils.PasswordUtil;
 import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysUserMapper;
@@ -92,6 +93,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     @Transactional
     public boolean addUser(UserDTO userDTO) {
         UserDO user = new UserDO();
+        user.setPassword(PasswordUtil.encrypt(userDTO.getPassword()));
         BeanUtils.copyProperties(userDTO, user);
         
         // 保存用户
@@ -131,7 +133,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     public boolean resetPassword(Long id, String newPassword) {
         UserDO user = new UserDO();
         user.setId(id);
-        user.setPassword(newPassword);
+        user.setPassword(PasswordUtil.encrypt(newPassword));
         return this.updateById(user);
     }
 
