@@ -36,6 +36,7 @@ public class DatabaseLogAppender extends AppenderBase<ILoggingEvent> {
     private static ApplicationContext applicationContext;
     private static LogService logService;
     private static LogConfig logConfig;
+    private static volatile boolean isShuttingDown = false;
     private static final ExecutorService executor = Executors.newFixedThreadPool(5, r -> {
         Thread thread = new Thread(r, "DatabaseLogAppender-Worker");
         thread.setDaemon(true);
@@ -59,6 +60,11 @@ public class DatabaseLogAppender extends AppenderBase<ILoggingEvent> {
 
     @Override
     protected void append(ILoggingEvent event) {
+        // 检查应用是否正在关闭
+        if (isShuttingDown) {
+            return;
+        }
+        
         // 检查是否已初始化
         if (logService == null || logConfig == null) {
             return;
@@ -83,10 +89,15 @@ public class DatabaseLogAppender extends AppenderBase<ILoggingEvent> {
         // 异步处理日志
         executor.submit(() -> {
             try {
-                saveLogToDatabase(event);
+                // 再次检查关闭状态
+                if (!isShuttingDown) {
+                    saveLogToDatabase(event);
+                }
             } catch (Exception e) {
                 // 避免日志记录异常导致的循环
-                System.err.println("保存日志到数据库时发生异常: " + e.getMessage());
+                if (!isShuttingDown) {
+                    System.err.println("保存日志到数据库时发生异常: " + e.getMessage());
+                }
             }
         });
     }
@@ -247,11 +258,42 @@ public class DatabaseLogAppender extends AppenderBase<ILoggingEvent> {
         }
     }
 
+    /**
+     * 标记应用正在关闭
+     */
+    public static void markShuttingDown() {
+        isShuttingDown = true;
+    }
+    
+    /**
+     * 优雅关闭线程池
+     */
+    public static void gracefulShutdown() {
+        markShuttingDown();
+        if (executor != null && !executor.isShutdown()) {
+            try {
+                // 停止接收新任务
+                executor.shutdown();
+                // 等待现有任务完成，最多等待5秒
+                if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    // 强制关闭
+                    executor.shutdownNow();
+                    // 再等待2秒
+                    if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                        System.err.println("DatabaseLogAppender线程池无法正常关闭");
+                    }
+                }
+            } catch (InterruptedException e) {
+                // 强制关闭
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
     @Override
     public void stop() {
         super.stop();
-        if (executor != null && !executor.isShutdown()) {
-            executor.shutdown();
-        }
+        gracefulShutdown();
     }
 }

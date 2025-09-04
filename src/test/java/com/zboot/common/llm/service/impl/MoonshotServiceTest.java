@@ -7,9 +7,10 @@
  */
 package com.zboot.common.llm.service.impl;
 
-import com.zboot.common.llm.dto.LLMMessage;
-import com.zboot.common.llm.dto.LLMRequest;
-import com.zboot.common.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.dto.LLMMessage;
+import com.zboot.common.service.llm.dto.LLMRequest;
+import com.zboot.common.service.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.service.impl.MoonshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MoonshotServiceTest {
     
     private MoonshotService moonshotService;
-    private static final String API_KEY = "sk-4Au88kSIAlvASRt0mWRrK15epX00FOJkMViEgfIPSDCXYvjv";
+    private static final String API_KEY = "sk-";
     private static final String BASE_URL = "https://api.moonshot.cn/v1";
     
     @BeforeEach

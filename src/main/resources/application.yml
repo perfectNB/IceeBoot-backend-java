@@ -12,6 +12,8 @@ server:
     uri-encoding: UTF-8
     max-threads: 1000
     min-spare-threads: 30
+  # 优雅关闭配置
+  shutdown: graceful
 
 spring:
   application:
@@ -20,6 +22,9 @@ spring:
     active: ${APP_PROFILE:dev}
   main:
     allow-bean-definition-overriding: true
+  # 优雅关闭超时时间
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   # 排除Spring Security、Elasticsearch、RabbitMQ自动配置
   autoconfigure:
     exclude:
@@ -115,31 +120,18 @@ management:
     elasticsearch:
       enabled: false
 
-# Knife4j配置
-knife4j:
-  enable: true
-  openapi:
-    title: ZBoot超级脚手架API文档
-    description: ZBoot超级脚手架后端接口文档
-    version: 1.0.0
-    concat: CodeIcee
-    url: https://github.com/CodeIcee
-    email: codeicee@example.com
-    license: Apache 2.0
-    license-url: https://www.apache.org/licenses/LICENSE-2.0
-  setting:
-    language: zh_cn
-    enable-version: true
-    enable-swagger-models: true
-    swagger-model-name: 实体类列表
-    enable-document-manage: true
-    enable-reload-cache-parameter: true
-    enable-after-script: true
-    enable-filter-multipart-api-method-type: POST
-    enable-filter-multipart-apis: false
-    enable-request-cache: true
-    enable-host: false
-    enable-host-text: 
+# SpringDoc OpenAPI配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  packages-to-scan: com.zboot.framework.controller
+  paths-to-match: /zboot/api/**, /v1/**, /api/v1/**
+
+
 
 # 自定义配置
 zboot:

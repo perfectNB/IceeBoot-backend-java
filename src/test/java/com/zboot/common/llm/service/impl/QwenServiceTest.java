@@ -7,9 +7,10 @@
  */
 package com.zboot.common.llm.service.impl;
 
-import com.zboot.common.llm.dto.LLMMessage;
-import com.zboot.common.llm.dto.LLMRequest;
-import com.zboot.common.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.dto.LLMMessage;
+import com.zboot.common.service.llm.dto.LLMRequest;
+import com.zboot.common.service.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.service.impl.QwenService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class QwenServiceTest {
     
     private QwenService qwenService;
-    private static final String API_KEY = "sk-4377bcaf115543758ffdcaa7aa7a3a98";
+    private static final String API_KEY = "sk-";
     private static final String BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
     
     @BeforeEach

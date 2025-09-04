@@ -15,6 +15,12 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
+      # 应用关闭时的连接池关闭超时时间（毫秒）
+      initialization-fail-timeout: 1
+      # 连接泄漏检测阈值（毫秒），0表示禁用
+      leak-detection-threshold: 60000
+
+
 
   # Redis配置
   data:
@@ -30,6 +36,14 @@ spring:
           max-idle: 16
           max-active: 16
           max-wait: -1ms
+    # MongoDB配置（默认关闭）
+    mongodb:
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DATABASE:zboot}
+      username: ${MONGODB_USERNAME:}
+      password: ${MONGODB_PASSWORD:}
+      auto-index-creation: false
 
   # Elasticsearch配置（默认关闭）
   elasticsearch:
@@ -40,6 +54,11 @@ spring:
     repositories:
       enabled: ${ELASTICSEARCH_REPOSITORIES_ENABLED:false}
 
+  # 自动配置排除（禁用MongoDB自动配置）
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
 
   # RabbitMQ配置（默认关闭）
   rabbitmq:
@@ -73,15 +92,7 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# Sa-Token配置
-sa-token:
-  token-name: Authorization
-  timeout: 7200
-  activity-timeout: 1800
-  is-concurrent: true
-  is-share: true
-  token-style: uuid
-  is-log: false
+
 
 # Knife4j配置
 knife4j:

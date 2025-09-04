@@ -7,9 +7,10 @@
  */
 package com.zboot.common.llm.service.impl;
 
-import com.zboot.common.llm.dto.LLMMessage;
-import com.zboot.common.llm.dto.LLMRequest;
-import com.zboot.common.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.dto.LLMMessage;
+import com.zboot.common.service.llm.dto.LLMRequest;
+import com.zboot.common.service.llm.dto.LLMResponse;
+import com.zboot.common.service.llm.service.impl.SparkService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ public class SparkServiceTest {
     
     private SparkService sparkService;
     // HTTP协议的APIKey
-    private static final String API_KEY = "sk-OVOe37ceqfQoe6rR4e44F5BcCc2046D995C70824E7AbDb76";
+    private static final String API_KEY = "sk-";
     // WebSocket协议的认证信息（备用）
     private static final String APPID = "e3dbb357";
     private static final String WS_API_KEY = "008b5828e6edcaf41a011ad88dab999e";
