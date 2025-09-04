@@ -19,9 +19,11 @@ import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
 import com.zboot.framework.query.system.SysRoleQuery;
-import com.zboot.framework.service.system.ISysRoleService;
-import com.zboot.framework.service.system.ISysRolePermissionService;
+import com.zboot.framework.service.system.ISysMenuService;
 import com.zboot.framework.service.system.ISysPermissionService;
+import com.zboot.framework.service.system.ISysRoleMenuService;
+import com.zboot.framework.service.system.ISysRolePermissionService;
+import com.zboot.framework.service.system.ISysRoleService;
 import com.zboot.framework.service.system.ISysUserRoleService;
 import com.zboot.framework.vo.system.SysRoleVO;
 import com.zboot.framework.vo.system.SysPermissionVO;
@@ -32,6 +34,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.zboot.framework.vo.system.SysMenuVO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,6 +59,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     
     @Autowired
     private ISysUserRoleService userRoleService;
+    
+    @Autowired
+    private ISysMenuService menuService;
+    
+    @Autowired
+    private ISysRoleMenuService roleMenuService;
     @Override
     public PageResult<SysRoleVO> getRolePage(SysRoleQuery query) {
         // 构建查询条件
@@ -109,6 +118,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         // 获取权限树（包含权限拥有状态）
         List<SysPermissionVO> permissionTree = permissionService.getPermissionTreeByRoleId(id);
         vo.setPermissionTree(permissionTree);
+        
+        // 获取菜单树（包含菜单拥有状态）
+        List<SysMenuVO> menuTree = menuService.getMenuTreeByRoleId(id);
+        vo.setMenuTree(menuTree);
         
         return vo;
     }
@@ -256,6 +269,27 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
             return true;
         } catch (Exception e) {
             throw new RuntimeException("保存角色权限失败", e);
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean saveRoleMenus(Long roleId, List<Long> menuIds) {
+        try {
+            // 1. 删除角色现有的所有菜单
+            roleMenuService.removeAllMenusByRoleId(roleId);
+            
+            // 2. 添加新的菜单
+            if (menuIds != null && !menuIds.isEmpty()) {
+                roleMenuService.assignMenusToRole(roleId, menuIds);
+            }
+            
+            // 3. 清空缓存
+            redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_MENUS_KEY);
+            
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("保存角色菜单失败", e);
         }
     }
 }

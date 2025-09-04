@@ -130,4 +130,13 @@ public interface ISysRoleService extends IService<RoleDO> {
      * @return 是否成功
      */
     boolean saveRolePermissions(Long roleId, List<Long> permissionIds);
+
+    /**
+     * 保存角色菜单
+     *
+     * @param roleId 角色ID
+     * @param menuIds 菜单ID列表
+     * @return 是否成功
+     */
+    boolean saveRoleMenus(Long roleId, List<Long> menuIds);
 }

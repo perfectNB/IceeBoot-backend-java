@@ -77,4 +77,7 @@ public class SysMenuVO {
 
     @Schema(description = "子菜单列表")
     private List<SysMenuVO> children;
+
+    @Schema(description = "是否拥有权限")
+    private Boolean hasPermission;
 }

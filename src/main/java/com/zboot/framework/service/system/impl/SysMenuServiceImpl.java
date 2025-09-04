@@ -274,6 +274,32 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     }
 
     @Override
+    public List<SysMenuVO> getMenuTreeByRoleId(Long roleId) {
+        // 获取角色拥有的菜单ID列表
+        List<Long> menuIds = roleMenuService.getMenuIdsByRoleId(roleId);
+
+        
+        // 获取所有菜单
+        List<MenuDO> allMenus = this.list(
+            new LambdaQueryWrapper<MenuDO>()
+                .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                .orderByAsc(MenuDO::getSort)
+        );
+        
+        // 转换为VO并标记角色是否拥有该菜单
+        List<SysMenuVO> menuVOs = allMenus.stream().map(menu -> {
+            SysMenuVO vo = new SysMenuVO();
+            BeanUtils.copyProperties(menu, vo);
+            // 标记该角色是否拥有此菜单
+            vo.setHasPermission(menuIds.contains(menu.getId()));
+            return vo;
+        }).collect(Collectors.toList());
+        
+        // 构建树形结构
+        return buildMenuVOTree(menuVOs, 0L);
+    }
+
+    @Override
     public List<SysMenuVO> getChildrenByParentId(Long parentId) {
         List<MenuDO> menus = this.list(
                 new LambdaQueryWrapper<MenuDO>()
@@ -316,6 +342,41 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
                     vo.setChildren(children);
                     
                     return vo;
+                })
+                .sorted((a, b) -> {
+                    // 按照sort字段排序，如果sort为null则放到最后
+                    if (a.getSort() == null && b.getSort() == null) return 0;
+                    if (a.getSort() == null) return 1;
+                    if (b.getSort() == null) return -1;
+                    return a.getSort().compareTo(b.getSort());
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 构建菜单VO树
+     * 将传入的全部菜单VO列表按照父子关系转换为菜单树返回
+     */
+    private List<SysMenuVO> buildMenuVOTree(List<SysMenuVO> menuVOs, Long parentId) {
+        if (menuVOs == null || menuVOs.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        return menuVOs.stream()
+                .filter(menu -> {
+                    // 如果parentId为null或0，则查找根节点（parentId为null或0的菜单）
+                    if (parentId == null || parentId.equals(0L)) {
+                        return menu.getParentId() == null || menu.getParentId().equals(0L);
+                    }
+                    // 否则查找指定父节点的子菜单
+                    return parentId.equals(menu.getParentId());
+                })
+                .map(menu -> {
+                    // 递归获取子菜单
+                    List<SysMenuVO> children = buildMenuVOTree(menuVOs, menu.getId());
+                    menu.setChildren(children);
+                    
+                    return menu;
                 })
                 .sorted((a, b) -> {
                     // 按照sort字段排序，如果sort为null则放到最后
