@@ -1,0 +1,25 @@
+package ${basePackage}.dto.update;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+
+/**
+ * ${entityName}更新数据传输对象
+ * 
+ * @author ${author}
+ * @date ${date}
+ */
+@Data
+@Schema(description = "${entityName}更新数据传输对象")
+public class ${entityName}UpdateDTO {
+
+    // TODO: 添加具体字段
+    // 示例字段：
+    // @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED)
+    // @NotBlank(message = "名称不能为空")
+    // private String name;
+    
+    // @Schema(description = "状态")
+    // private String status;
+}

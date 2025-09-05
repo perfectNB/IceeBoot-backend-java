@@ -3,13 +3,17 @@ package ${basePackage}.controller.${packageName};
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import ${basePackage}.entity.${packageName}.${entityName}DO;
-import ${basePackage}.dto.${packageName}.${entityName}DTO;
+import ${basePackage}.dto.create.${entityName}DTO;
+import ${basePackage}.dto.update.${entityName}UpdateDTO;
+import ${basePackage}.vo.${packageName}.${entityName}VO;
 import ${basePackage}.query.${packageName}.${entityName}Query;
 import ${basePackage}.service.${packageName}.I${entityName}Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "${entityName}管理", description = "${entityName}管理相关接口")
 @RestController
@@ -21,16 +25,9 @@ public class ${entityName}Controller {
 
     @Operation(summary = "分页查询${entityName}列表")
     @GetMapping
-    public R<PageResult<${entityName}DO>> get${entityName}Page(${entityName}Query query) {
-        PageResult<${entityName}DO> pageResult = ${lowerEntityName}Service.get${entityName}Page(query);
+    public R<PageResult<${entityName}VO>> get${entityName}Page(${entityName}Query query) {
+        PageResult<${entityName}VO> pageResult = ${lowerEntityName}Service.get${entityName}Page(query);
         return R.ok(pageResult);
-    }
-
-    @Operation(summary = "根据ID查询${entityName}详情")
-    @GetMapping("/{id}")
-    public R<${entityName}DO> get${entityName}ById(@PathVariable Long id) {
-        ${entityName}DO ${lowerEntityName} = ${lowerEntityName}Service.getById(id);
-        return R.ok(${lowerEntityName});
     }
 
     @Operation(summary = "创建${entityName}")
@@ -42,15 +39,22 @@ public class ${entityName}Controller {
 
     @Operation(summary = "更新${entityName}")
     @PutMapping
-    public R<${entityName}DO> update${entityName}(@RequestBody ${entityName}DTO ${lowerEntityName}DTO) {
-        ${entityName}DO result = ${lowerEntityName}Service.update${entityName}(${lowerEntityName}DTO);
+    public R<Boolean> update${entityName}(@RequestBody ${entityName}UpdateDTO ${lowerEntityName}UpdateDTO) {
+        Boolean result = ${lowerEntityName}Service.update${entityName}(${lowerEntityName}UpdateDTO);
         return R.ok(result);
     }
 
-    @Operation(summary = "删除${entityName}")
-    @DeleteMapping("/{id}")
-    public R<Void> delete${entityName}(@PathVariable Long id) {
-        ${lowerEntityName}Service.delete${entityName}(id);
-        return R.ok();
+    @Operation(summary = "根据ID查询${entityName}详情")
+    @GetMapping("/{id}")
+    public R<${entityName}VO> get${entityName}ById(@PathVariable Long id) {
+        ${entityName}VO ${lowerEntityName} = ${lowerEntityName}Service.get${entityName}ById(id);
+        return R.ok(${lowerEntityName});
+    }
+
+    @Operation(summary = "删除${entityName}", description = "批量删除${entityName}")
+    @DeleteMapping
+    public R<Void> delete${entityName}s(@RequestBody List<Long> ids) {
+        boolean success = ${lowerEntityName}Service.delete${entityName}s(ids);
+        return success ? R.ok() : R.fail("删除失败");
     }
 }
