@@ -1,23 +1,4 @@
-<div align="center">
-  <svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
-    <!-- Background -->
-    <rect width="200" height="80" rx="10" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
-    
-    <!-- Z Letter -->
-    <path d="M20 20 L45 20 L25 45 L45 45 L45 50 L20 50 L40 25 L20 25 Z" fill="#3b82f6"/>
-    
-    <!-- BOOT Text -->
-    <text x="55" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1e40af">BOOT</text>
-    
-    <!-- Decorative elements -->
-    <circle cx="170" cy="25" r="3" fill="#60a5fa"/>
-    <circle cx="180" cy="35" r="2" fill="#93c5fd"/>
-    <circle cx="175" cy="45" r="2.5" fill="#dbeafe"/>
-    
-    <!-- Subtitle -->
-    <text x="100" y="65" font-family="Arial, sans-serif" font-size="10" fill="#64748b">超级脚手架</text>
-  </svg>
-</div>
+
 
 # Zboot 超级脚手架后端版
 
