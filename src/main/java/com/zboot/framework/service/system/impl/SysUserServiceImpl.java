@@ -12,13 +12,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.utils.PasswordUtil;
+import com.zboot.framework.dto.update.system.UserUpdateDTO;
 import com.zboot.framework.entity.system.UserDO;
-import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.mapper.system.SysUserMapper;
 import com.zboot.framework.service.system.IAuthCacheService;
 import com.zboot.framework.service.system.ISysUserService;
 import com.zboot.framework.service.system.ISysRoleService;
-import com.zboot.framework.dto.system.UserDTO;
+import com.zboot.framework.dto.create.system.UserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +108,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
     @Override
     @Transactional
-    public boolean updateUser(UserDTO userDTO) {
+    public boolean updateUser(UserUpdateDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
         

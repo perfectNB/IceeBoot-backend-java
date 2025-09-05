@@ -6,10 +6,9 @@
  */
 package com.zboot.framework.service.system;
 
-import com.zboot.framework.dto.system.LoginDTO;
+import com.zboot.framework.dto.create.system.LoginDTO;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 认证服务接口

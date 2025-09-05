@@ -2,7 +2,8 @@ package com.zboot.framework.service.sms;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.sms.SmsKeyDTO;
+import com.zboot.framework.dto.create.sms.SmsKeyDTO;
+import com.zboot.framework.dto.update.sms.SmsKeyUpdateDTO;
 import com.zboot.framework.entity.sms.SmsKeyDO;
 import com.zboot.framework.query.sms.SmsKeyQuery;
 import com.zboot.framework.vo.sms.SmsKeyVO;
@@ -48,7 +49,7 @@ public interface ISmsKeyService extends IService<SmsKeyDO> {
      * @param dto 密钥信息
      * @return 是否成功
      */
-    Boolean updateSmsKey(SmsKeyDTO dto);
+    Boolean updateSmsKey(SmsKeyUpdateDTO dto);
 
     /**
      * 删除SMS密钥

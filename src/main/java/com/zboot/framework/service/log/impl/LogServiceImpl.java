@@ -11,8 +11,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.log.LogClearDTO;
-import com.zboot.framework.dto.log.LogQueryDTO;
+import com.zboot.framework.dto.create.log.LogClearDTO;
+
 import com.zboot.framework.entity.log.LogDO;
 import com.zboot.framework.mapper.log.LogMapper;
 import com.zboot.framework.query.log.LogQuery;

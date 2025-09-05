@@ -8,7 +8,8 @@ import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.service.email.dto.EmailRequest;
 import com.zboot.common.service.email.factory.EmailFactory;
 import com.zboot.common.service.email.service.EmailService;
-import com.zboot.framework.dto.email.EmailKeyDTO;
+import com.zboot.framework.dto.create.email.EmailKeyDTO;
+import com.zboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.zboot.framework.entity.email.EmailKeyDO;
 import com.zboot.framework.mapper.email.EmailKeyMapper;
 import com.zboot.framework.query.email.EmailKeyQuery;
@@ -98,7 +99,7 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
     }
 
     @Override
-    public Boolean updateEmailKey(EmailKeyDTO dto) {
+    public Boolean updateEmailKey(EmailKeyUpdateDTO dto) {
         EmailKeyDO emailKey = new EmailKeyDO();
         BeanUtils.copyProperties(dto, emailKey);
         return this.updateById(emailKey);

@@ -9,7 +9,7 @@ package com.zboot.framework.service.system;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserRoleDO;
-import com.zboot.framework.dto.system.UserRoleDTO;
+import com.zboot.framework.dto.create.system.UserRoleDTO;
 import com.zboot.framework.query.system.UserRoleQuery;
 import com.zboot.framework.vo.system.UserRoleVO;
 

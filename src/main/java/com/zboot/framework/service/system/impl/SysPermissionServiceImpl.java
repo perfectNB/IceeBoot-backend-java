@@ -14,10 +14,11 @@ import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
-import com.zboot.framework.dto.system.PermissionDTO;
+import com.zboot.framework.dto.create.system.PermissionDTO;
+import com.zboot.framework.dto.update.system.PermissionUpdateDTO;
 import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.mapper.system.SysPermissionMapper;
-import com.zboot.framework.dto.system.SysPermissionQueryDTO;
+import com.zboot.framework.dto.create.system.SysPermissionQueryDTO;
 import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.vo.system.SysPermissionVO;
@@ -106,14 +107,14 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     }
 
     @Override
-    public boolean updatePermission(PermissionDTO permissionDTO) {
+    public boolean updatePermission(PermissionUpdateDTO dto) {
         // 检查权限编码是否重复
-        if (existsCode(permissionDTO.getCode(), permissionDTO.getId())) {
+        if (existsCode(dto.getCode(), dto.getId())) {
             throw new ZbootException(ResponseMessage.PERMISSION_CODE_EXISTS);
         }
 
         PermissionDO permission = new PermissionDO();
-        BeanUtils.copyProperties(permissionDTO, permission);
+        BeanUtils.copyProperties(dto, permission);
         return this.updateById(permission);
     }
 

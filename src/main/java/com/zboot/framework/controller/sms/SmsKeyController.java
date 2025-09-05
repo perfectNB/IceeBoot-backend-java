@@ -8,7 +8,8 @@ package com.zboot.framework.controller.sms;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.sms.SmsKeyDTO;
+import com.zboot.framework.dto.create.sms.SmsKeyDTO;
+import com.zboot.framework.dto.update.sms.SmsKeyUpdateDTO;
 import com.zboot.framework.query.sms.SmsKeyQuery;
 import com.zboot.framework.service.sms.ISmsKeyService;
 import com.zboot.framework.vo.sms.SmsKeyVO;
@@ -73,7 +74,7 @@ public class SmsKeyController {
     @Operation(summary = "更新SMS密钥", description = "更新SMS密钥信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateSmsKey(@Validated @RequestBody SmsKeyDTO dto) {
+    public R<Void> updateSmsKey(@Validated @RequestBody SmsKeyUpdateDTO dto) {
         Boolean result = smsKeyService.updateSmsKey(dto);
         return result ? R.ok() : R.fail("更新失败");
     }

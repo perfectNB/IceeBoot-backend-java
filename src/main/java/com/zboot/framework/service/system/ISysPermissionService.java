@@ -8,9 +8,10 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.framework.dto.update.system.PermissionUpdateDTO;
 import com.zboot.framework.entity.system.PermissionDO;
-import com.zboot.framework.dto.system.PermissionDTO;
-import com.zboot.framework.dto.system.SysPermissionQueryDTO;
+import com.zboot.framework.dto.create.system.PermissionDTO;
+import com.zboot.framework.dto.create.system.SysPermissionQueryDTO;
 import com.zboot.framework.vo.system.SysPermissionVO;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public interface ISysPermissionService extends IService<PermissionDO> {
      * @param permissionDTO 权限信息
      * @return 是否成功
      */
-    boolean updatePermission(PermissionDTO permissionDTO);
+    boolean updatePermission(PermissionUpdateDTO dto);
 
     /**
      * 删除权限

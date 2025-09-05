@@ -14,7 +14,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.RolePermissionDO;
 import com.zboot.framework.mapper.system.SysRolePermissionMapper;
 import com.zboot.framework.service.system.ISysRolePermissionService;
-import com.zboot.framework.dto.system.RolePermissionDTO;
+import com.zboot.framework.dto.create.system.RolePermissionDTO;
 import com.zboot.framework.query.system.RolePermissionQuery;
 import com.zboot.framework.vo.system.RolePermissionVO;
 import org.springframework.beans.BeanUtils;

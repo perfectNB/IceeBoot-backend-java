@@ -10,22 +10,18 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.exception.ZbootException;
-import com.zboot.common.utils.Md5Utils;
 import com.zboot.common.utils.PasswordUtil;
 import com.zboot.common.utils.TokenUtils;
-import com.zboot.framework.dto.system.LoginDTO;
+import com.zboot.framework.dto.create.system.LoginDTO;
 import com.zboot.framework.entity.system.UserDO;
 import com.zboot.framework.service.system.*;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 认证服务实现类

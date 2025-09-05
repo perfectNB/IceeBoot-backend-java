@@ -8,8 +8,8 @@ package com.zboot.framework.service.log;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.log.LogClearDTO;
-import com.zboot.framework.dto.log.LogQueryDTO;
+import com.zboot.framework.dto.create.log.LogClearDTO;
+
 import com.zboot.framework.entity.log.LogDO;
 import com.zboot.framework.query.log.LogQuery;
 import com.zboot.framework.vo.log.LogVO;

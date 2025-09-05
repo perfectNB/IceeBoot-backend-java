@@ -10,11 +10,11 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.PermissionDTO;
-import com.zboot.framework.dto.system.SysPermissionQueryDTO;
+import com.zboot.framework.dto.create.system.PermissionDTO;
+import com.zboot.framework.dto.create.system.SysPermissionQueryDTO;
+import com.zboot.framework.dto.update.system.PermissionUpdateDTO;
 import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.vo.system.SysPermissionVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -68,8 +68,8 @@ public class SysPermissionController {
     @Operation(summary = "新增权限", description = "创建新权限")
     @PostMapping
     @RequirePermission(dynamic = true)
-    public R<Void> addPermission(@Validated @RequestBody PermissionDTO permissionDTO) {
-        boolean success = permissionService.addPermission(permissionDTO);
+    public R<Void> addPermission(@Validated @RequestBody PermissionDTO dto) {
+        boolean success = permissionService.addPermission(dto);
         return success ? R.ok(ResponseMessage.PERMISSION_CREATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_CREATE_FAIL);
     }
 
@@ -77,8 +77,8 @@ public class SysPermissionController {
     @Operation(summary = "更新权限", description = "更新权限信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updatePermission(@Validated @RequestBody PermissionDTO permissionDTO) {
-        boolean success = permissionService.updatePermission(permissionDTO);
+    public R<Void> updatePermission(@Validated @RequestBody PermissionUpdateDTO dto) {
+        boolean success = permissionService.updatePermission(dto);
         return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
     }
 

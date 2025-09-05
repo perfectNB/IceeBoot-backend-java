@@ -3,7 +3,7 @@ package com.zboot.framework.controller.log;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 
-import com.zboot.framework.dto.log.LogQueryDTO;
+
 import com.zboot.framework.query.log.LogQuery;
 import com.zboot.framework.service.log.LogService;
 import com.zboot.framework.vo.log.LogVO;

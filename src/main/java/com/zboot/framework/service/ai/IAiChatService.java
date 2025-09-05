@@ -2,8 +2,8 @@ package com.zboot.framework.service.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.ai.AiChatSessionDTO;
-import com.zboot.framework.dto.ai.AiChatMessageDTO;
+import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
+import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.zboot.framework.entity.ai.AiChatSessionDO;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
 import com.zboot.framework.vo.ai.AiChatSessionVO;

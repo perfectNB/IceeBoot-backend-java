@@ -2,7 +2,8 @@ package com.zboot.framework.service.oss;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.oss.OssKeyDTO;
+import com.zboot.framework.dto.create.oss.OssKeyDTO;
+import com.zboot.framework.dto.update.oss.OssKeyUpdateDTO;
 import com.zboot.framework.entity.oss.OssKeyDO;
 import com.zboot.framework.query.oss.OssKeyQuery;
 import com.zboot.framework.vo.oss.OssKeyVO;
@@ -48,7 +49,7 @@ public interface IOssKeyService extends IService<OssKeyDO> {
      * @param dto 密钥信息
      * @return 是否成功
      */
-    Boolean updateOssKey(OssKeyDTO dto);
+    Boolean updateOssKey(OssKeyUpdateDTO dto);
 
     /**
      * 删除OSS密钥

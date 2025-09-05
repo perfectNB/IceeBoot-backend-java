@@ -8,7 +8,8 @@ import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.service.sms.dto.SMSRequest;
 import com.zboot.common.service.sms.factory.SMSFactory;
 import com.zboot.common.service.sms.service.SMSService;
-import com.zboot.framework.dto.sms.SmsKeyDTO;
+import com.zboot.framework.dto.create.sms.SmsKeyDTO;
+import com.zboot.framework.dto.update.sms.SmsKeyUpdateDTO;
 import com.zboot.framework.entity.sms.SmsKeyDO;
 import com.zboot.framework.mapper.sms.SmsKeyMapper;
 import com.zboot.framework.query.sms.SmsKeyQuery;
@@ -98,7 +99,7 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
     }
 
     @Override
-    public Boolean updateSmsKey(SmsKeyDTO dto) {
+    public Boolean updateSmsKey(SmsKeyUpdateDTO dto) {
         SmsKeyDO smsKey = new SmsKeyDO();
         BeanUtils.copyProperties(dto, smsKey);
         return this.updateById(smsKey);

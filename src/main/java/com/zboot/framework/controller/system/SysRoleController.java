@@ -10,13 +10,11 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.RoleDTO;
+import com.zboot.framework.dto.create.system.RoleDTO;
+import com.zboot.framework.dto.update.system.RoleUpdateDTO;
 import com.zboot.framework.query.system.SysRoleQuery;
 import com.zboot.framework.service.system.ISysRoleService;
-import com.zboot.framework.service.system.ISysPermissionService;
 import com.zboot.framework.vo.system.SysRoleVO;
-import com.zboot.framework.vo.system.SysPermissionVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -66,9 +64,9 @@ public class SysRoleController {
     @Operation(summary = "更新角色", description = "更新角色信息")
     @PutMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<Void> updateRole(@PathVariable Long id, @Validated @RequestBody RoleDTO roleDTO) {
-        roleDTO.setId(id);
-        boolean success = roleService.updateRole(roleDTO);
+    public R<Void> updateRole(@PathVariable Long id, @Validated @RequestBody RoleUpdateDTO dto) {
+        dto.setId(id);
+        boolean success = roleService.updateRole(dto);
         return success ? R.ok(ResponseMessage.ROLE_UPDATE_SUCCESS) : R.fail(ResponseMessage.ROLE_UPDATE_FAIL);
     }
 

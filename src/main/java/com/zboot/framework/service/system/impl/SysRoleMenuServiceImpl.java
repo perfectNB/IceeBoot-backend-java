@@ -14,7 +14,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.RoleMenuDO;
 import com.zboot.framework.mapper.system.SysRoleMenuMapper;
 import com.zboot.framework.service.system.ISysRoleMenuService;
-import com.zboot.framework.dto.system.RoleMenuDTO;
+import com.zboot.framework.dto.create.system.RoleMenuDTO;
 import com.zboot.framework.query.system.RoleMenuQuery;
 import com.zboot.framework.vo.system.RoleMenuVO;
 import org.springframework.beans.BeanUtils;

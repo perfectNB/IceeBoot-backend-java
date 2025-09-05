@@ -8,7 +8,8 @@ package com.zboot.framework.controller.email;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.email.EmailKeyDTO;
+import com.zboot.framework.dto.create.email.EmailKeyDTO;
+import com.zboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.zboot.framework.query.email.EmailKeyQuery;
 import com.zboot.framework.service.email.IEmailKeyService;
 import com.zboot.framework.vo.email.EmailKeyVO;
@@ -73,7 +74,7 @@ public class EmailKeyController {
     @Operation(summary = "更新Email密钥", description = "更新Email密钥信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateEmailKey(@Validated @RequestBody EmailKeyDTO dto) {
+    public R<Void> updateEmailKey(@Validated @RequestBody EmailKeyUpdateDTO dto) {
         Boolean result = emailKeyService.updateEmailKey(dto);
         return result ? R.ok() : R.fail("更新失败");
     }

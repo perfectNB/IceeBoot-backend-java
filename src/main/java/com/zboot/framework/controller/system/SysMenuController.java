@@ -8,13 +8,11 @@ package com.zboot.framework.controller.system;
 
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
-import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.MenuDTO;
-import com.zboot.framework.dto.system.SysMenuQueryDTO;
+import com.zboot.framework.dto.create.system.MenuDTO;
+import com.zboot.framework.dto.update.system.MenuUpdateDTO;
 import com.zboot.framework.service.system.ISysMenuService;
 import com.zboot.framework.vo.system.SysMenuVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 菜单管理控制器
@@ -72,7 +69,7 @@ public class SysMenuController {
     @Operation(summary = "更新菜单", description = "更新菜单信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateMenu(@Validated @RequestBody MenuDTO menuDTO) {
+    public R<Void> updateMenu(@Validated @RequestBody MenuUpdateDTO menuDTO) {
         boolean success = menuService.updateMenu(menuDTO);
         return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
     }

@@ -8,8 +8,9 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.framework.dto.update.system.UserUpdateDTO;
 import com.zboot.framework.entity.system.UserDO;
-import com.zboot.framework.dto.system.UserDTO;
+import com.zboot.framework.dto.create.system.UserDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 
@@ -53,7 +54,7 @@ public interface ISysUserService extends IService<UserDO> {
      * @param userDTO 用户信息
      * @return 是否成功
      */
-    boolean updateUser(UserDTO userDTO);
+    boolean updateUser(UserUpdateDTO userDTO);
 
     /**
      * 删除用户
