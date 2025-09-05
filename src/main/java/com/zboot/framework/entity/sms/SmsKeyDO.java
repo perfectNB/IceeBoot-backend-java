@@ -2,7 +2,7 @@
  * SMS密钥实体类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-05
  */
 package com.zboot.framework.entity.sms;
 
@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
  * SMS密钥实体类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-05
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -14,7 +14,7 @@ import java.util.List;
  * SMS密钥服务接口
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-05
  */
 public interface ISmsKeyService extends IService<SmsKeyDO> {
 

@@ -9,7 +9,7 @@ import java.util.List;
  * OSS厂商视图对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-05
  */
 @Data
 @Schema(description = "OSS厂商视图对象")

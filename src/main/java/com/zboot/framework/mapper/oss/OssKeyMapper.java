@@ -1,6 +1,6 @@
 /*
  * @Description: OSS密钥Mapper接口
- * @Date: 2025-01-27
+ * @Date: 2025-09-05
  * @Author: CodeIcee
  */
 package com.zboot.framework.mapper.oss;
@@ -16,7 +16,7 @@ import java.util.List;
  * OSS密钥Mapper接口
  *
  * @author CodeIcee
- * @since 2025-01-27
+ * @since 2025-09-05
  */
 @Mapper
 public interface OssKeyMapper extends BaseMapper<OssKeyDO> {

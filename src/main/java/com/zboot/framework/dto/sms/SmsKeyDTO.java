@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * SMS密钥数据传输对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-05
  */
 @Data
 @Schema(description = "SMS密钥数据传输对象")
