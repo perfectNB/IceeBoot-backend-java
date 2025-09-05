@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import com.zboot.framework.vo.ai.AiLLMProviderVO;
 
 /**
  * AI大模型密钥服务实现类
@@ -238,8 +239,8 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
     }
 
     @Override
-    public List<com.zboot.framework.vo.ai.AiLLMProviderVO> getAllProviderKeys() {
-        List<com.zboot.framework.vo.ai.AiLLMProviderVO> result = new ArrayList<>();
+    public List<AiLLMProviderVO> getAllProviderKeys() {
+        List<AiLLMProviderVO> result = new ArrayList<>();
         
         // 获取所有支持的厂商
         List<String> providers = getSupportedProviders();
@@ -258,7 +259,7 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
                     .filter(key -> SystemConstants.Status.ACTIVE.equals(key.getStatus()))
                     .count();
             
-            com.zboot.framework.vo.ai.AiLLMProviderVO providerVO = new com.zboot.framework.vo.ai.AiLLMProviderVO();
+            AiLLMProviderVO providerVO = new AiLLMProviderVO();
             providerVO.setProviderName(provider);
             providerVO.setDisplayName(getProviderDisplayName(provider));
             providerVO.setKeys(keyVOs);
