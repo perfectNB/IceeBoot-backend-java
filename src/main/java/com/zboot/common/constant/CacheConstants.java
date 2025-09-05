@@ -50,6 +50,12 @@ public class CacheConstants {
         /** URL权限映射缓存键 */
         public static final String URL_PERMISSION_MAPPING_KEY = "auth:url:permission:mapping";
         
+        /** 角色菜单缓存键 */
+        public static final String ROLE_MENUS_KEY = "role:menus:";
+
+        /** 角色权限缓存键 */
+        public static final String ROLE_PERMISSIONSKEY = "role:permissions:";
+        
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;
     }
