@@ -4,7 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.ai.AiAgentDTO;
+import com.zboot.framework.dto.create.ai.AiAgentDTO;
+import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.query.ai.AiAgentQuery;
 import com.zboot.framework.service.ai.IAiAgentService;
 import com.zboot.framework.vo.ai.AiAgentVO;
@@ -62,7 +63,7 @@ public class AiAgentController {
     @Operation(summary = "更新agents", description = "更新agents信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateAgent(@Validated @RequestBody AiAgentDTO dto) {
+    public R<Void> updateAgent(@Validated @RequestBody AiAgentUpdateDTO dto) {
         Boolean result = aiAgentService.updateAgent(dto);
         return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
     }

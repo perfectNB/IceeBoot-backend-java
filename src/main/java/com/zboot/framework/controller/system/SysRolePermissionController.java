@@ -9,7 +9,7 @@ package com.zboot.framework.controller.system;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.RolePermissionDTO;
+import com.zboot.framework.dto.create.system.RolePermissionDTO;
 import com.zboot.framework.query.system.RolePermissionQuery;
 import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.vo.system.RolePermissionVO;

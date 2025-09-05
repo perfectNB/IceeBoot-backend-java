@@ -15,10 +15,11 @@ import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.common.utils.TokenUtils;
-import com.zboot.framework.dto.system.MenuDTO;
+import com.zboot.framework.dto.create.system.MenuDTO;
+import com.zboot.framework.dto.update.system.MenuUpdateDTO;
 import com.zboot.framework.entity.system.MenuDO;
 import com.zboot.framework.mapper.system.SysMenuMapper;
-import com.zboot.framework.dto.system.SysMenuQueryDTO;
+import com.zboot.framework.dto.create.system.SysMenuQueryDTO;
 import com.zboot.framework.service.system.IAuthCacheService;
 import com.zboot.framework.service.system.ISysMenuService;
 import com.zboot.framework.service.system.ISysRoleMenuService;
@@ -203,7 +204,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     }
 
     @Override
-    public boolean updateMenu(MenuDTO menuDTO) {
+    public boolean updateMenu(MenuUpdateDTO menuDTO) {
         // 检查菜单名称是否重复
         if (existsName(menuDTO.getName(), menuDTO.getId())) {
             throw new ZbootException(ResponseMessage.MENU_NAME_EXISTS);

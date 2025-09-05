@@ -8,13 +8,13 @@ package com.zboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.framework.dto.update.system.MenuUpdateDTO;
 import com.zboot.framework.entity.system.MenuDO;
-import com.zboot.framework.dto.system.MenuDTO;
-import com.zboot.framework.dto.system.SysMenuQueryDTO;
+import com.zboot.framework.dto.create.system.MenuDTO;
+import com.zboot.framework.dto.create.system.SysMenuQueryDTO;
 import com.zboot.framework.vo.system.SysMenuVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 菜单服务接口
@@ -69,7 +69,7 @@ public interface ISysMenuService extends IService<MenuDO> {
      * @param menuDTO 菜单信息
      * @return 是否成功
      */
-    boolean updateMenu(MenuDTO menuDTO);
+    boolean updateMenu(MenuUpdateDTO menuDTO);
 
     /**
      * 删除菜单

@@ -2,7 +2,8 @@ package com.zboot.framework.service.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.ai.AiAgentDTO;
+import com.zboot.framework.dto.create.ai.AiAgentDTO;
+import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.entity.ai.AiAgentDO;
 import com.zboot.framework.query.ai.AiAgentQuery;
 import com.zboot.framework.vo.ai.AiAgentVO;
@@ -47,7 +48,7 @@ public interface IAiAgentService extends IService<AiAgentDO> {
      * @param dto 代理信息
      * @return 是否成功
      */
-    Boolean updateAgent(AiAgentDTO dto);
+    Boolean updateAgent(AiAgentUpdateDTO dto);
 
     /**
      * 删除AI代理

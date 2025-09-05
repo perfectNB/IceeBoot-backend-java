@@ -5,7 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
-import com.zboot.framework.dto.ai.AiAgentDTO;
+import com.zboot.framework.dto.create.ai.AiAgentDTO;
+import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.entity.ai.AiAgentDO;
 import com.zboot.framework.mapper.ai.AiAgentMapper;
 import com.zboot.framework.query.ai.AiAgentQuery;
@@ -73,7 +74,7 @@ public class AiAgentServiceImpl extends ServiceImpl<AiAgentMapper, AiAgentDO> im
     }
 
     @Override
-    public Boolean updateAgent(AiAgentDTO dto) {
+    public Boolean updateAgent(AiAgentUpdateDTO dto) {
         AiAgentDO agent = new AiAgentDO();
         BeanUtils.copyProperties(dto, agent);
         return this.updateById(agent);

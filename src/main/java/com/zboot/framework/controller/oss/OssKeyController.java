@@ -8,7 +8,8 @@ package com.zboot.framework.controller.oss;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.oss.OssKeyDTO;
+import com.zboot.framework.dto.create.oss.OssKeyDTO;
+import com.zboot.framework.dto.update.oss.OssKeyUpdateDTO;
 import com.zboot.framework.query.oss.OssKeyQuery;
 import com.zboot.framework.service.oss.IOssKeyService;
 import com.zboot.framework.vo.oss.OssKeyVO;
@@ -73,7 +74,7 @@ public class OssKeyController {
     @Operation(summary = "更新OSS密钥", description = "更新OSS密钥信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateOssKey(@Validated @RequestBody OssKeyDTO dto) {
+    public R<Void> updateOssKey(@Validated @RequestBody OssKeyUpdateDTO dto) {
         Boolean result = ossKeyService.updateOssKey(dto);
         return result ? R.ok() : R.fail("更新失败");
     }

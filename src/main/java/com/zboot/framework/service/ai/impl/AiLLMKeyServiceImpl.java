@@ -7,7 +7,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.service.llm.factory.LLMFactory;
 import com.zboot.common.service.llm.service.LLMService;
-import com.zboot.framework.dto.ai.AiLLMKeyDTO;
+import com.zboot.framework.dto.create.ai.AiLLMKeyDTO;
+import com.zboot.framework.dto.update.ai.AiLLMKeyUpdateDTO;
 import com.zboot.framework.entity.ai.AiLLMKeyDO;
 import com.zboot.framework.mapper.ai.AiLLMKeyMapper;
 import com.zboot.framework.query.ai.AiLLMKeyQuery;
@@ -94,7 +95,7 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
     }
 
     @Override
-    public Boolean updateLLMKey(AiLLMKeyDTO dto) {
+    public Boolean updateLLMKey(AiLLMKeyUpdateDTO dto) {
         AiLLMKeyDO llmKey = new AiLLMKeyDO();
         BeanUtils.copyProperties(dto, llmKey);
         return this.updateById(llmKey);

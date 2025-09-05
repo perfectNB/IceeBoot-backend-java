@@ -7,7 +7,7 @@
 package com.zboot.framework.service.redis;
 
 import com.zboot.common.core.domain.PageResult;
-import com.zboot.framework.dto.redis.CreateRedisKeyDTO;
+import com.zboot.framework.dto.create.redis.CreateRedisKeyDTO;
 import com.zboot.framework.query.redis.RedisQuery;
 import com.zboot.framework.vo.redis.RedisKeyVO;
 

@@ -2,7 +2,8 @@ package com.zboot.framework.service.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.ai.AiLLMKeyDTO;
+import com.zboot.framework.dto.create.ai.AiLLMKeyDTO;
+import com.zboot.framework.dto.update.ai.AiLLMKeyUpdateDTO;
 import com.zboot.framework.entity.ai.AiLLMKeyDO;
 import com.zboot.framework.query.ai.AiLLMKeyQuery;
 import com.zboot.framework.vo.ai.AiLLMKeyVO;
@@ -49,7 +50,7 @@ public interface IAiLLMKeyService extends IService<AiLLMKeyDO> {
      * @param dto 密钥信息
      * @return 是否成功
      */
-    Boolean updateLLMKey(AiLLMKeyDTO dto);
+    Boolean updateLLMKey(AiLLMKeyUpdateDTO dto);
 
     /**
      * 删除AI大模型密钥

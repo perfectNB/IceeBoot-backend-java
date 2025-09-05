@@ -10,11 +10,11 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.UserDTO;
+import com.zboot.framework.dto.create.system.UserDTO;
+import com.zboot.framework.dto.update.system.UserUpdateDTO;
 import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.service.system.ISysUserService;
 import com.zboot.framework.vo.system.SysUserVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +69,8 @@ public class SysUserController {
     @Operation(summary = "更新用户", description = "更新用户信息")
     @PutMapping
 //    @RequirePermission(dynamic = true)
-    public R<Void> updateUser(@Validated @RequestBody UserDTO userDTO) {
-        boolean success = userService.updateUser(userDTO);
+    public R<Void> updateUser(@Validated @RequestBody UserUpdateDTO dto) {
+        boolean success = userService.updateUser(dto);
         return success ? R.ok(ResponseMessage.USER_UPDATE_SUCCESS) : R.fail(ResponseMessage.USER_UPDATE_FAIL);
     }
 

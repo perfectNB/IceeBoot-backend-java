@@ -5,13 +5,11 @@
  */
 package com.zboot.framework.controller.ai;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.ai.AiLLMKeyDTO;
-import com.zboot.framework.query.ai.AiLLMKeyQuery;
+import com.zboot.framework.dto.create.ai.AiLLMKeyDTO;
+import com.zboot.framework.dto.update.ai.AiLLMKeyUpdateDTO;
 import com.zboot.framework.service.ai.IAiLLMKeyService;
-import com.zboot.framework.vo.ai.AiLLMKeyVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,7 +57,7 @@ public class AiLLMKeyController {
     @Operation(summary = "更新大模型密钥", description = "更新大模型密钥信息")
     @PutMapping
     @RequirePermission(dynamic = true)
-    public R<Void> updateLLMKey(@Validated @RequestBody AiLLMKeyDTO dto) {
+    public R<Void> updateLLMKey(@Validated @RequestBody AiLLMKeyUpdateDTO dto) {
         Boolean result = aiLLMKeyService.updateLLMKey(dto);
         return result ? R.ok() : R.fail("更新失败");
     }

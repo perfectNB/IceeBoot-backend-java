@@ -3,7 +3,7 @@ package com.zboot.framework.controller.task;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.task.TaskDTO;
+import com.zboot.framework.dto.create.task.TaskDTO;
 import com.zboot.framework.entity.task.TaskDO;
 import com.zboot.framework.query.system.TaskQuery;
 import com.zboot.framework.service.task.ITaskService;

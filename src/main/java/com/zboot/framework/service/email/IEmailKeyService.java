@@ -2,7 +2,8 @@ package com.zboot.framework.service.email;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zboot.framework.dto.email.EmailKeyDTO;
+import com.zboot.framework.dto.create.email.EmailKeyDTO;
+import com.zboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.zboot.framework.entity.email.EmailKeyDO;
 import com.zboot.framework.query.email.EmailKeyQuery;
 import com.zboot.framework.vo.email.EmailKeyVO;
@@ -48,7 +49,7 @@ public interface IEmailKeyService extends IService<EmailKeyDO> {
      * @param dto 密钥信息
      * @return 是否成功
      */
-    Boolean updateEmailKey(EmailKeyDTO dto);
+    Boolean updateEmailKey(EmailKeyUpdateDTO dto);
 
     /**
      * 删除Email密钥

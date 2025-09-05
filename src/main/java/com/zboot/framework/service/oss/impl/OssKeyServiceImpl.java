@@ -8,7 +8,8 @@ import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.factory.OSSFactory;
 import com.zboot.common.service.oss.service.OSSService;
-import com.zboot.framework.dto.oss.OssKeyDTO;
+import com.zboot.framework.dto.create.oss.OssKeyDTO;
+import com.zboot.framework.dto.update.oss.OssKeyUpdateDTO;
 import com.zboot.framework.entity.oss.OssKeyDO;
 import com.zboot.framework.mapper.oss.OssKeyMapper;
 import com.zboot.framework.query.oss.OssKeyQuery;
@@ -98,7 +99,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
     }
 
     @Override
-    public Boolean updateOssKey(OssKeyDTO dto) {
+    public Boolean updateOssKey(OssKeyUpdateDTO dto) {
         OssKeyDO ossKey = new OssKeyDO();
         BeanUtils.copyProperties(dto, ossKey);
         return this.updateById(ossKey);

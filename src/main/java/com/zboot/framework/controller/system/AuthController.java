@@ -6,14 +6,12 @@
  */
 package com.zboot.framework.controller.system;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
-import com.zboot.framework.dto.system.LoginDTO;
+import com.zboot.framework.dto.create.system.LoginDTO;
 import com.zboot.framework.service.system.IAuthService;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

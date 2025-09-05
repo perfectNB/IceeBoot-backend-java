@@ -14,7 +14,7 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.mapper.system.SysUserRoleMapper;
 import com.zboot.framework.service.system.ISysUserRoleService;
-import com.zboot.framework.dto.system.UserRoleDTO;
+import com.zboot.framework.dto.create.system.UserRoleDTO;
 import com.zboot.framework.query.system.UserRoleQuery;
 import com.zboot.framework.vo.system.UserRoleVO;
 import org.springframework.beans.BeanUtils;
