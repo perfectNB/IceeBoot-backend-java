@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
 import ${basePackage}.entity.${packageName}.${entityName}DO;
-import ${basePackage}.dto.${packageName}.${entityName}DTO;
+import ${basePackage}.dto.create.${entityName}DTO;
+import ${basePackage}.dto.update.${entityName}UpdateDTO;
+import ${basePackage}.vo.${packageName}.${entityName}VO;
 import ${basePackage}.mapper.${packageName}.${entityName}Mapper;
 import ${basePackage}.query.${packageName}.${entityName}Query;
 import ${basePackage}.service.${packageName}.I${entityName}Service;
@@ -15,6 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import com.zboot.common.exception.ZbootException;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * ${entityName}服务实现类
@@ -28,20 +34,27 @@ import org.springframework.util.StringUtils;
 public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, ${entityName}DO> implements I${entityName}Service {
 
     @Override
-    public PageResult<${entityName}DO> get${entityName}Page(${entityName}Query query) {
+    public PageResult<${entityName}VO> get${entityName}Page(${entityName}Query query) {
+        // 构建查询条件
         LambdaQueryWrapper<${entityName}DO> wrapper = new LambdaQueryWrapper<>();
-        
         // TODO: 根据实际需求添加查询条件
-        // if (StringUtils.hasText(query.getName())) {
-        //     wrapper.like(${entityName}DO::getName, query.getName());
-        // }
-        
+        // wrapper.like(StringUtils.hasText(query.getName()), ${entityName}DO::getName, query.getName())
+        //        .eq(StringUtils.hasText(query.getStatus()), ${entityName}DO::getStatus, query.getStatus())
+        //        .ge(query.getStartTime() != null && !query.getStartTime().equals(""), ${entityName}DO::getCreateTime, query.getStartTime())
         wrapper.orderByDesc(${entityName}DO::getCreateTime);
-        
-        Page<${entityName}DO> page = new Page<>(query.getPageNum(), query.getPageSize());
-        IPage<${entityName}DO> pageResult = this.page(page, wrapper);
-        
-        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
+
+        // 分页查询
+        IPage<${entityName}DO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<${entityName}DO> result = this.page(page, wrapper);
+
+        // 转换为VO
+        List<${entityName}VO> voList = result.getRecords().stream().map(entity -> {
+            ${entityName}VO vo = new ${entityName}VO();
+            BeanUtils.copyProperties(entity, vo);
+            return vo;
+        }).collect(Collectors.toList());
+
+        return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override
@@ -61,38 +74,36 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
     }
 
     @Override
-    public ${entityName}DO update${entityName}(${entityName}DTO ${lowerEntityName}DTO) {
-        try {
-            ${entityName}DO ${lowerEntityName} = this.getById(${lowerEntityName}DTO.getId());
-            if (${lowerEntityName} == null) {
-                throw new ZbootException("${entityName}不存在");
-            }
-            
-            BeanUtils.copyProperties(${lowerEntityName}DTO, ${lowerEntityName});
-            
-            // TODO: 添加业务逻辑
-            
-            this.updateById(${lowerEntityName});
-            return ${lowerEntityName};
-        } catch (Exception e) {
-            log.error("更新${entityName}失败: {}", e.getMessage(), e);
-            throw new ZbootException("更新${entityName}失败", e);
-        }
+    public boolean update${entityName}(${entityName}UpdateDTO ${lowerEntityName}UpdateDTO) {
+        // TODO: 添加业务逻辑检查
+        // 例如：检查名称是否重复
+        // if (existsName(${lowerEntityName}UpdateDTO.getName(), ${lowerEntityName}UpdateDTO.getId())) {
+        //     throw new ZbootException("名称已存在");
+        // }
+
+        ${entityName}DO ${lowerEntityName} = new ${entityName}DO();
+        BeanUtils.copyProperties(${lowerEntityName}UpdateDTO, ${lowerEntityName});
+        return this.updateById(${lowerEntityName});
     }
 
     @Override
-    public void delete${entityName}(Long id) {
+    public ${entityName}VO get${entityName}ById(Long id) {
+        ${entityName}DO ${lowerEntityName} = this.getById(id);
+        if (${lowerEntityName} == null) {
+            return null;
+        }
+        ${entityName}VO vo = new ${entityName}VO();
+        BeanUtils.copyProperties(${lowerEntityName}, vo);
+        return vo;
+    }
+
+    @Override
+    public boolean delete${entityName}s(List<Long> ids) {
         try {
-            ${entityName}DO ${lowerEntityName} = this.getById(id);
-            if (${lowerEntityName} != null) {
-                // TODO: 添加删除前的业务逻辑检查
-                
-                this.removeById(id);
-                log.info("删除${entityName}成功: {}", id);
-            }
+            return this.removeByIds(ids);
         } catch (Exception e) {
-            log.error("删除${entityName}失败: {}", e.getMessage(), e);
-            throw new ZbootException("删除${entityName}失败", e);
+            log.error("批量删除${entityName}失败: {}", e.getMessage(), e);
+            throw new ZbootException("批量删除${entityName}失败", e);
         }
     }
 }

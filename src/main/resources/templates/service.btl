@@ -2,7 +2,9 @@ package ${basePackage}.service.${packageName};
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import ${basePackage}.entity.${packageName}.${entityName}DO;
-import ${basePackage}.dto.${packageName}.${entityName}DTO;
+import ${basePackage}.dto.create.${entityName}DTO;
+import ${basePackage}.dto.update.${entityName}UpdateDTO;
+import ${basePackage}.vo.${packageName}.${entityName}VO;
 import ${basePackage}.query.${packageName}.${entityName}Query;
 import com.zboot.common.core.domain.PageResult;
 
@@ -20,7 +22,7 @@ public interface I${entityName}Service extends IService<${entityName}DO> {
      * @param query 查询条件
      * @return 分页结果
      */
-    PageResult<${entityName}DO> get${entityName}Page(${entityName}Query query);
+    PageResult<${entityName}VO> get${entityName}Page(${entityName}Query query);
 
     /**
      * 创建${entityName}
@@ -33,15 +35,24 @@ public interface I${entityName}Service extends IService<${entityName}DO> {
     /**
      * 更新${entityName}
      * 
-     * @param ${lowerEntityName}DTO ${entityName}信息
-     * @return ${entityName}信息
+     * @param ${lowerEntityName}UpdateDTO ${entityName}信息
+     * @return 是否成功
      */
-    ${entityName}DO update${entityName}(${entityName}DTO ${lowerEntityName}DTO);
+    boolean update${entityName}(${entityName}UpdateDTO ${lowerEntityName}UpdateDTO);
 
     /**
-     * 删除${entityName}
+     * 根据ID查询${entityName}详情
      * 
      * @param id ${entityName}ID
+     * @return ${entityName}详情
      */
-    void delete${entityName}(Long id);
+    ${entityName}VO get${entityName}ById(Long id);
+
+    /**
+     * 批量删除${entityName}
+     * 
+     * @param ids ${entityName}ID列表
+     * @return 是否成功
+     */
+    boolean delete${entityName}s(java.util.List<Long> ids);
 }
