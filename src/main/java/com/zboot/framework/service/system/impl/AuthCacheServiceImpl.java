@@ -1,6 +1,6 @@
 /**
  * 认证缓存服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-13
  */
@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 /**
  * 认证缓存服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-13
  */
@@ -55,29 +55,76 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserMenus(Long userId) {
-        String key = CacheConstants.Auth.USER_MENUS_KEY + userId;
-        List<Map<String, Object>> menus = (List<Map<String, Object>>) redisTemplate.opsForValue().get(key);
-        
-        if (menus == null) {
-            menus = loadUserMenusFromDB(userId);
-            redisTemplate.opsForValue().set(key, menus, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+
+//        String key = CacheConstants.Auth.USER_MENUS_KEY + userId;
+//        List<Map<String, Object>> menus = (List<Map<String, Object>>) redisTemplate.opsForValue().get(key);
+//
+//        if (menus == null) {
+//            menus = loadUserMenusFromDB(userId);
+//            redisTemplate.opsForValue().set(key, menus, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+//        }
+
+        //    return menus;
+
+        // 通过用户ID获取角色列表
+        String userRoleKey = CacheConstants.Auth.USER_ROLE + userId;
+        List<Long> roleIds = (List<Long>) redisTemplate.opsForValue().get(userRoleKey);
+
+        if (roleIds == null || roleIds.isEmpty()) {
+            return new ArrayList<>();
         }
-        
-        return menus;
+
+        // 遍历角色列表，获取每个角色的菜单
+        Set<MenuDO> menuSet = new HashSet<>();
+        for (Long roleId : roleIds) {
+            String roleMenuKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
+            List<MenuDO> roleMenus = (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
+
+            if (roleMenus != null) {
+                menuSet.addAll(roleMenus);
+            }
+        }
+        // 将Set转换为List并按sort排序
+        List<MenuDO> menuList = new ArrayList<>(menuSet);
+        menuList.sort((m1, m2) -> {
+            Integer sort1 = m1.getSort();
+            Integer sort2 = m2.getSort();
+            if (sort1 == null) sort1 = 0;
+            if (sort2 == null) sort2 = 0;
+            return sort1.compareTo(sort2);
+        });
+        // 构建树形结构
+        return buildMenuTree(menuList);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserPermissions(Long userId) {
-        String key = CacheConstants.Auth.USER_PERMISSIONS_KEY + userId;
-        List<Map<String, Object>> permissions = (List<Map<String, Object>>) redisTemplate.opsForValue().get(key);
+        // 1. 通过用户ID获取角色列表
+        String userRoleKey = CacheConstants.Auth.USER_ROLE + userId;
+        List<Long> roleIds = (List<Long>) redisTemplate.opsForValue().get(userRoleKey);
         
-        if (permissions == null) {
-            permissions = loadUserPermissionsFromDB(userId);
-            redisTemplate.opsForValue().set(key, permissions, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+        if (roleIds == null || roleIds.isEmpty()) {
+            return new ArrayList<>();
         }
         
-        return permissions;
+        // 2. 遍历角色列表，获取每个角色的权限
+        Set<Map<String, Object>> permissionSet = new HashSet<>();
+        for (Long roleId : roleIds) {
+            String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            List<PermissionDO> rolePermissions = (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
+            
+            if (rolePermissions != null) {
+                // 将PermissionDO转换为Map<String, Object>
+                List<Map<String, Object>> permissionMaps = rolePermissions.stream()
+                        .map(this::convertPermissionToMap)
+                        .collect(Collectors.toList());
+                permissionSet.addAll(permissionMaps);
+            }
+        }
+        
+        // 3. 返回去重后的权限列表
+        return new ArrayList<>(permissionSet);
     }
 
     @Override
@@ -85,12 +132,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     public List<Map<String, Object>> getUserRoles(Long userId) {
         String key = CacheConstants.Auth.USER_ROLES_KEY + userId;
         List<Map<String, Object>> roles = (List<Map<String, Object>>) redisTemplate.opsForValue().get(key);
-        
+
         if (roles == null) {
             roles = loadUserRolesFromDB(userId);
             redisTemplate.opsForValue().set(key, roles, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
         }
-        
+
         return roles;
     }
 
@@ -98,12 +145,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getAllMenus() {
         List<Map<String, Object>> menus = (List<Map<String, Object>>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_MENUS_KEY);
-        
+
         if (menus == null) {
             menus = loadAllMenusFromDB();
             redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_MENUS_KEY, menus, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
         }
-        
+
         return menus;
     }
 
@@ -111,12 +158,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getAllPermissions() {
         List<Map<String, Object>> permissions = (List<Map<String, Object>>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_PERMISSIONS_KEY);
-        
+
         if (permissions == null) {
             permissions = loadAllPermissionsFromDB();
             redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_PERMISSIONS_KEY, permissions, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
         }
-        
+
         return permissions;
     }
 
@@ -128,12 +175,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<RoleDO> getAllRoles() {
         List<RoleDO> roles = (List<RoleDO>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_ROLES_KEY);
-        
+
         if (roles == null) {
             roles = loadAllRolesFromDB();
             redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_ROLES_KEY, roles, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
         }
-        
+
         return roles != null ? roles : new ArrayList<>();
     }
 
@@ -145,12 +192,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<UserRoleDO> getAllUserRoles() {
         List<UserRoleDO> userRoles = (List<UserRoleDO>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_USER_ROLES_KEY);
-        
+
         if (userRoles == null) {
             userRoles = loadAllUserRolesFromDB();
-            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_USER_ROLES_KEY, userRoles, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_USER_ROLES_KEY, userRoles);
         }
-        
+
         return userRoles != null ? userRoles : new ArrayList<>();
     }
 
@@ -162,12 +209,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<RoleMenuDO> getAllRoleMenus() {
         List<RoleMenuDO> roleMenus = (List<RoleMenuDO>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_ROLE_MENUS_KEY);
-        
+
         if (roleMenus == null) {
             roleMenus = loadAllRoleMenusFromDB();
-            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_ROLE_MENUS_KEY, roleMenus, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_ROLE_MENUS_KEY, roleMenus);
         }
-        
+
         return roleMenus != null ? roleMenus : new ArrayList<>();
     }
 
@@ -179,12 +226,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @SuppressWarnings("unchecked")
     public List<RolePermissionDO> getAllRolePermissions() {
         List<RolePermissionDO> rolePermissions = (List<RolePermissionDO>) redisTemplate.opsForValue().get(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY);
-        
+
         if (rolePermissions == null) {
             rolePermissions = loadAllRolePermissionsFromDB();
-            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY, rolePermissions, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY, rolePermissions);
         }
-        
+
         return rolePermissions != null ? rolePermissions : new ArrayList<>();
     }
 
@@ -204,12 +251,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         redisTemplate.delete(CacheConstants.Auth.ALL_USER_ROLES_KEY);
         redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_MENUS_KEY);
         redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY);
-        
+
         // 清除所有用户缓存
         Set<String> userMenuKeys = redisTemplate.keys(CacheConstants.Auth.USER_MENUS_KEY + "*");
         Set<String> userPermissionKeys = redisTemplate.keys(CacheConstants.Auth.USER_PERMISSIONS_KEY + "*");
         Set<String> userRoleKeys = redisTemplate.keys(CacheConstants.Auth.USER_ROLES_KEY + "*");
-        
+
         if (userMenuKeys != null && !userMenuKeys.isEmpty()) {
             redisTemplate.delete(userMenuKeys);
         }
@@ -236,7 +283,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (userId == null) {
             return new ArrayList<>();
         }
-        
+
         // 获取用户角色
         List<Long> roleIds = getUserRoleIds(userId);
         if (roleIds == null || roleIds.isEmpty()) {
@@ -254,7 +301,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (allMenus == null || allMenus.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         // 直接从已构建的菜单树中过滤用户有权限的菜单，保持树形结构
         return filterMenusByPermission(allMenus, menuIds);
     }
@@ -266,7 +313,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (userId == null) {
             return new ArrayList<>();
         }
-        
+
         // 获取用户角色
         List<Long> roleIds = getUserRoleIds(userId);
         if (roleIds == null || roleIds.isEmpty()) {
@@ -284,7 +331,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (allPermissions == null || allPermissions.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return allPermissions.stream()
                 .filter(permissionMap -> {
                     Object idObj = permissionMap.get("id");
@@ -308,7 +355,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (userId == null) {
             return new ArrayList<>();
         }
-        
+
         List<Long> roleIds = getUserRoleIds(userId);
         if (roleIds == null || roleIds.isEmpty()) {
             return new ArrayList<>();
@@ -319,7 +366,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (allRoles == null || allRoles.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return allRoles.stream()
                 .filter(role -> role != null && role.getId() != null && roleIds.contains(role.getId()))
                 .map(this::convertRoleToMap)
@@ -384,12 +431,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (userId == null) {
             return new ArrayList<>();
         }
-        
+
         List<UserRoleDO> allUserRoles = getAllUserRoles();
         if (allUserRoles == null || allUserRoles.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return allUserRoles.stream()
                 .filter(userRole -> userRole != null && userId.equals(userRole.getUserId()))
                 .map(UserRoleDO::getRoleId)
@@ -404,12 +451,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (roleIds == null || roleIds.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         List<RoleMenuDO> allRoleMenus = getAllRoleMenus();
         if (allRoleMenus == null || allRoleMenus.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return allRoleMenus.stream()
                 .filter(roleMenu -> roleMenu != null && roleMenu.getRoleId() != null && roleIds.contains(roleMenu.getRoleId()))
                 .map(RoleMenuDO::getMenuId)
@@ -425,12 +472,12 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (roleIds == null || roleIds.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         List<RolePermissionDO> allRolePermissions = getAllRolePermissions();
         if (allRolePermissions == null || allRolePermissions.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return allRolePermissions.stream()
                 .filter(rolePermission -> rolePermission != null && rolePermission.getRoleId() != null && roleIds.contains(rolePermission.getRoleId()))
                 .map(RolePermissionDO::getPermissionId)
@@ -454,7 +501,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         for (Map<String, Object> menu : menuMaps) {
             Long id = (Long) menu.get("id");
             menuMap.put(id, menu);
-            
+
             Long parentId = (Long) menu.get("parentId");
             if (parentId == null || parentId == 0) {
                 rootMenus.add(menu);
@@ -481,24 +528,91 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     }
 
     /**
+     * 从Map列表构建菜单树形结构
+     */
+    private List<Map<String, Object>> buildMenuTreeFromMaps(List<Map<String, Object>> menuMaps) {
+        // 构建树形结构
+        Map<Long, Map<String, Object>> menuMap = new HashMap<>();
+        List<Map<String, Object>> rootMenus = new ArrayList<>();
+
+        for (Map<String, Object> menu : menuMaps) {
+            Long id = (Long) menu.get("id");
+            menuMap.put(id, menu);
+
+            Long parentId = (Long) menu.get("parentId");
+            if (parentId == null || parentId == 0) {
+                rootMenus.add(menu);
+            }
+        }
+
+        for (Map<String, Object> menu : menuMaps) {
+            Long parentId = (Long) menu.get("parentId");
+            if (parentId != null && parentId != 0) {
+                Map<String, Object> parent = menuMap.get(parentId);
+                if (parent != null) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> children = (List<Map<String, Object>>) parent.get("children");
+                    if (children == null) {
+                        children = new ArrayList<>();
+                        parent.put("children", children);
+                    }
+                    children.add(menu);
+                }
+            }
+        }
+
+        // 对每个层级的菜单按sort排序
+        sortMenuChildren(rootMenus);
+
+        return rootMenus;
+    }
+
+    /**
+     * 递归对菜单子项按sort排序
+     */
+    private void sortMenuChildren(List<Map<String, Object>> menus) {
+        if (menus == null || menus.isEmpty()) {
+            return;
+        }
+
+        // 对当前层级排序
+        menus.sort((m1, m2) -> {
+            Integer sort1 = (Integer) m1.get("sort");
+            Integer sort2 = (Integer) m2.get("sort");
+            if (sort1 == null) sort1 = 0;
+            if (sort2 == null) sort2 = 0;
+            return sort1.compareTo(sort2);
+        });
+
+        // 递归对子菜单排序
+        for (Map<String, Object> menu : menus) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> children = (List<Map<String, Object>>) menu.get("children");
+            if (children != null && !children.isEmpty()) {
+                sortMenuChildren(children);
+            }
+        }
+    }
+
+    /**
      * 从菜单树中过滤用户有权限的菜单，保持树形结构
      */
     private List<Map<String, Object>> filterMenusByPermission(List<Map<String, Object>> menus, List<Long> menuIds) {
         if (menus == null || menus.isEmpty() || menuIds == null || menuIds.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         List<Map<String, Object>> filteredMenus = new ArrayList<>();
-        
+
         for (Map<String, Object> menu : menus) {
             Object idObj = menu.get("id");
             if (idObj != null) {
                 Long menuId = Long.valueOf(idObj.toString());
-                
+
                 // 检查当前菜单是否有权限
                 if (menuIds.contains(menuId)) {
                     Map<String, Object> filteredMenu = new HashMap<>(menu);
-                    
+
                     // 递归处理子菜单
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> children = (List<Map<String, Object>>) menu.get("children");
@@ -506,7 +620,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                         List<Map<String, Object>> filteredChildren = filterMenusByPermission(children, menuIds);
                         filteredMenu.put("children", filteredChildren);
                     }
-                    
+
                     filteredMenus.add(filteredMenu);
                 } else {
                     // 即使当前菜单没有权限，也要检查子菜单是否有权限
@@ -524,10 +638,10 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                 }
             }
         }
-        
+
         return filteredMenus;
     }
-    
+
     /**
      * 转换菜单为Map
      */
@@ -544,7 +658,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         map.put("sort", menu.getSort());
         map.put("link", menu.getLink());
         map.put("requiresAuth", menu.getRequiresAuth());
-        
+
         // 处理permissions字段，将逗号分隔的字符串转换为字符串数组
         String permissionsStr = menu.getPermissions();
         if (permissionsStr != null && !permissionsStr.trim().isEmpty()) {
@@ -557,7 +671,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         } else {
             map.put("permissions", new ArrayList<>());
         }
-        
+
         return map;
     }
 
@@ -592,25 +706,25 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         map.put("sort", role.getSort());
         return map;
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public List<String> getUrlPermissions(String url) {
         if (url == null || url.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         Map<String, List<String>> allMappings = getAllUrlPermissions();
         if (allMappings == null || allMappings.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         // 精确匹配
         List<String> permissions = allMappings.get(url);
         if (permissions != null) {
             return new ArrayList<>(permissions);
         }
-        
+
         // 模糊匹配（支持通配符）
         for (Map.Entry<String, List<String>> entry : allMappings.entrySet()) {
             String pattern = entry.getKey();
@@ -618,72 +732,71 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                 return new ArrayList<>(entry.getValue());
             }
         }
-        
+
         return new ArrayList<>();
     }
-    
+
     @Override
     public void setUrlPermissions(String url, List<String> permissions) {
         if (url == null || url.isEmpty()) {
             return;
         }
-        
+
         Map<String, List<String>> allMappings = getAllUrlPermissions();
         if (allMappings == null) {
             allMappings = new HashMap<>();
         }
-        
+
         if (permissions == null || permissions.isEmpty()) {
             allMappings.remove(url);
         } else {
             allMappings.put(url, new ArrayList<>(permissions));
         }
-        
-        redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, allMappings, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+
+        redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, allMappings);
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, List<String>> getAllUrlPermissions() {
         Map<String, List<String>> mappings = (Map<String, List<String>>) redisTemplate.opsForValue().get(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
-        
+
         if (mappings == null) {
             mappings = loadUrlPermissionsFromDB();
-            redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, mappings, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, mappings);
         }
-        
+
         return mappings != null ? mappings : new HashMap<>();
     }
-    
+
     @Override
     public void clearUrlPermissionCache() {
         redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
     }
-    
+
     /**
      * 从数据库加载URL权限映射
      * 从权限表中获取所有权限，根据权限的path字段构建URL权限映射
      */
     private Map<String, List<String>> loadUrlPermissionsFromDB() {
         Map<String, List<String>> mappings = new HashMap<>();
-        
+
         try {
             // 从数据库获取所有权限
             List<PermissionDO> permissions = permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
                     .eq(PermissionDO::getDelFlag, 0)
                     .isNotNull(PermissionDO::getPath)
                     .ne(PermissionDO::getPath, ""));
-            
+
             // 根据权限的path字段构建URL权限映射
             for (PermissionDO permission : permissions) {
                 String path = permission.getPath();
                 String code = permission.getCode();
-                
+
                 if (path != null && !path.isEmpty() && code != null && !code.isEmpty()) {
                     mappings.computeIfAbsent(path, k -> new ArrayList<>()).add(code);
                 }
             }
-            
 
 
         } catch (Exception e) {
@@ -692,13 +805,13 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             mappings.put("/v1/users/**", Arrays.asList("user:view"));
             mappings.put("/v1/system/**", Arrays.asList("system:admin"));
         }
-        
+
         return mappings;
     }
-    
+
     /**
      * URL匹配检查（支持通配符）
-     * 
+     *
      * @param url 实际请求URL
      * @param pattern 匹配模式
      * @return 是否匹配
@@ -707,23 +820,23 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         if (url == null || pattern == null) {
             return false;
         }
-        
+
         // 精确匹配
         if (url.equals(pattern)) {
             return true;
         }
-        
+
         // 通配符匹配
         if (pattern.endsWith("/**")) {
             String prefix = pattern.substring(0, pattern.length() - 3);
             return url.startsWith(prefix);
         }
-        
+
         if (pattern.endsWith("/*")) {
             String prefix = pattern.substring(0, pattern.length() - 2);
             return url.startsWith(prefix) && url.indexOf('/', prefix.length()) == -1;
         }
-        
+
         return false;
     }
 }

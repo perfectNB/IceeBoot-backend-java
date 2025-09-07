@@ -132,9 +132,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
             redisTemplate.opsForValue().set(
                 cacheKey, 
-                permissions, 
-                CacheConstants.Auth.CACHE_EXPIRE_TIME, 
-                TimeUnit.MINUTES
+                permissions
             );
             
             log.debug("角色 [{}] 权限缓存已更新，共 {} 个权限", roleId, permissions.size());
@@ -144,9 +142,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             List<PermissionDO> emptyPermissions = new ArrayList<>();
             redisTemplate.opsForValue().set(
                 cacheKey, 
-                emptyPermissions, 
-                CacheConstants.Auth.CACHE_EXPIRE_TIME, 
-                TimeUnit.MINUTES
+                emptyPermissions
             );
             
             log.debug("角色 [{}] 没有分配权限，已缓存空列表", roleId);
@@ -180,9 +176,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             String cacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
             redisTemplate.opsForValue().set(
                 cacheKey, 
-                menus, 
-                CacheConstants.Auth.CACHE_EXPIRE_TIME, 
-                TimeUnit.MINUTES
+                menus
             );
             
             log.debug("角色 [{}] 菜单缓存已更新，共 {} 个菜单", roleId, menus.size());
@@ -192,9 +186,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             List<MenuDO> emptyMenus = new ArrayList<>();
             redisTemplate.opsForValue().set(
                 cacheKey, 
-                emptyMenus, 
-                CacheConstants.Auth.CACHE_EXPIRE_TIME, 
-                TimeUnit.MINUTES
+                emptyMenus
             );
             
             log.debug("角色 [{}] 没有分配菜单，已缓存空列表", roleId);

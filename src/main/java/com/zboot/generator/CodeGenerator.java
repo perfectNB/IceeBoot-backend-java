@@ -503,9 +503,9 @@ public class CodeGenerator {
         CodeGenerator generator = new CodeGenerator();
         
 //         生成代码示例
-//         generator.generateCode("user", "User");
+         generator.generateCode("user", "User");
         
         // 删除代码示例
-         generator.deleteCode("user", "User");
+//         generator.deleteCode("user", "User");
     }
 }

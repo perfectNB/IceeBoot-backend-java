@@ -1,6 +1,6 @@
 /**
  * 系统用户服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.CacheConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.utils.PasswordUtil;
 import com.zboot.framework.dto.update.system.UserUpdateDTO;
@@ -23,16 +24,18 @@ import com.zboot.framework.query.system.SysUserQuery;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * 系统用户服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -41,19 +44,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
     @Autowired
     private SysUserMapper sysUserMapper;
-    
+
     @Autowired
     private ISysRoleService roleService;
 
     @Autowired
     private IAuthCacheService authCacheService;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     @Override
     public PageResult<SysUserVO> getUserPage(SysUserQuery query) {
         LambdaQueryWrapper<UserDO> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(query.getUsername())) {
             wrapper.like(UserDO::getUsername, query.getUsername());
         }
@@ -70,12 +75,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
             wrapper.eq(UserDO::getStatus, query.getStatus());
         }
         wrapper.orderByDesc(UserDO::getCreateTime);
-        
+
         Page<UserDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         IPage<UserDO> pageResult = this.page(page, wrapper);
-        
+
         List<SysUserVO> voList = pageResult.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
-        
+
         return new PageResult<>(voList, pageResult.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
@@ -94,15 +99,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         UserDO user = new UserDO();
         user.setPassword(PasswordUtil.encrypt(userDTO.getPassword()));
         BeanUtils.copyProperties(userDTO, user);
-        
+
         // 保存用户
         boolean saveResult = this.save(user);
-        
+
         // 如果用户保存成功且有角色ID列表，则分配角色
         if (saveResult && userDTO.getRoleIds() != null && !userDTO.getRoleIds().isEmpty()) {
             roleService.assignRolesToUser(user.getId(), userDTO.getRoleIds());
         }
-        
+
         return saveResult;
     }
 
@@ -111,15 +116,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     public boolean updateUser(UserUpdateDTO userDTO) {
         UserDO user = new UserDO();
         BeanUtils.copyProperties(userDTO, user);
-        
+
         // 更新用户信息
         boolean updateResult = this.updateById(user);
-        
+
         // 如果用户更新成功，重新分配角色（先删除现有角色，再添加新角色）
         if (updateResult && userDTO.getRoleIds() != null) {
             roleService.assignRolesToUser(user.getId(), userDTO.getRoleIds());
+            String userRoleCacheKey = CacheConstants.Auth.USER_ROLE + user.getId();
+            redisTemplate.opsForValue().set(userRoleCacheKey, userDTO.getRoleIds());
         }
-        
+
         return updateResult;
     }
 
@@ -217,12 +224,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
     private SysUserVO convertToVO(UserDO user) {
         SysUserVO vo = new SysUserVO();
         BeanUtils.copyProperties(user, vo);
-        
 
-        vo.setPermissions(getUserPermissions(user.getId()));
-        
+        // 获取用户角色并提取code字段
+        List<Map<String, Object>> userPermissions = authCacheService.getUserPermissions(user.getId());
+        List<String> roleCodes = userPermissions.stream()
+                .map(role -> (String) role.get("code"))
+                .collect(Collectors.toList());
+        vo.setPermissions(roleCodes);
+
         // 获取用户角色对象列表
-        vo.setRoleList(roleService.getRolesByUserId(user.getId()));
+//        vo.setRoleList(roleService.getRolesByUserId(user.getId()));
 
         // 获取用户菜单
         vo.setMenus(authCacheService.getUserMenus(user.getId()));

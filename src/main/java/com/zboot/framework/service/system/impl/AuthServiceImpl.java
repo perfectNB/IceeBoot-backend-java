@@ -7,6 +7,7 @@
 package com.zboot.framework.service.system.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.zboot.common.constant.CacheConstants;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.exception.ZbootException;
@@ -18,10 +19,12 @@ import com.zboot.framework.service.system.*;
 import com.zboot.framework.vo.system.LoginVO;
 import com.zboot.framework.vo.system.SysUserVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 认证服务实现类
@@ -39,7 +42,7 @@ public class AuthServiceImpl implements IAuthService {
     private ISysRoleMenuService iSysRoleMenuService;
 
     @Autowired
-    private ISysRolePermissionService iSysRolePermissionService;
+    private ISysUserRoleService iSysUserRoleService;
 
     @Autowired
     private ISysPermissionService iSysPermissionService;
@@ -49,6 +52,9 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private IAuthCacheService authCacheService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     @Override
@@ -89,6 +95,11 @@ public class AuthServiceImpl implements IAuthService {
         
         // 获取用户信息
         SysUserVO userVO = userService.getUserById(user.getId());
+        
+        // 缓存用户角色ID列表
+        List<Long> roleIds = iSysUserRoleService.getRoleIdsByUserId(user.getId());
+        String userRoleCacheKey = CacheConstants.Auth.USER_ROLE + user.getId();
+        redisTemplate.opsForValue().set(userRoleCacheKey, roleIds);
 //
 //        // 获取用户菜单和权限
 //        List<Map<String, Object>> userMenus = authCacheService.getUserMenus(user.getId());

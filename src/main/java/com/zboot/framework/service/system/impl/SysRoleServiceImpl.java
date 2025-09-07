@@ -1,6 +1,6 @@
 /**
  * 系统角色服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -16,6 +16,8 @@ import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.exception.ZbootException;
 import com.zboot.framework.dto.create.system.RoleDTO;
 import com.zboot.framework.dto.update.system.RoleUpdateDTO;
+import com.zboot.framework.entity.system.MenuDO;
+import com.zboot.framework.entity.system.PermissionDO;
 import com.zboot.framework.entity.system.RoleDO;
 import com.zboot.framework.entity.system.UserRoleDO;
 import com.zboot.framework.mapper.system.SysRoleMapper;
@@ -37,12 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import com.zboot.framework.vo.system.SysMenuVO;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 系统角色服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -51,21 +54,23 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
     @Autowired
     private ISysRolePermissionService rolePermissionService;
-    
+
     @Autowired
     private ISysPermissionService permissionService;
-    
+
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
-    
+
     @Autowired
     private ISysUserRoleService userRoleService;
-    
+
     @Autowired
     private ISysMenuService menuService;
-    
+
     @Autowired
     private ISysRoleMenuService roleMenuService;
+
+
     @Override
     public PageResult<SysRoleVO> getRolePage(SysRoleQuery query) {
         // 构建查询条件
@@ -73,7 +78,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         wrapper.like(StringUtils.hasText(query.getName()), RoleDO::getName, query.getName())
                 .like(StringUtils.hasText(query.getCode()), RoleDO::getCode, query.getCode())
                 .eq(StringUtils.hasText(query.getStatus()), RoleDO::getStatus, query.getStatus())
-                .ge(query.getStartTime() != null&&!query.getStartTime().equals(""), RoleDO::getCreateTime, query.getStartTime())
+                .ge(query.getStartTime() != null && !query.getStartTime().equals(""), RoleDO::getCreateTime, query.getStartTime())
                 .orderByAsc(RoleDO::getSort)
                 .orderByDesc(RoleDO::getCreateTime);
 
@@ -119,11 +124,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         // 获取权限树（包含权限拥有状态）
         List<SysPermissionVO> permissionTree = permissionService.getPermissionTreeByRoleId(id);
         vo.setPermissionTree(permissionTree);
-        
+
         // 获取菜单树（包含菜单拥有状态）
         List<SysMenuVO> menuTree = menuService.getMenuTreeByRoleId(id);
         vo.setMenuTree(menuTree);
-        
+
         return vo;
     }
 
@@ -168,12 +173,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
             List<Long> userIds = userRoleService.getUserIdsByRoleId(id);
             if (!userIds.isEmpty()) {
                 String userIdStr = userIds.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(", "));
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(", "));
                 throw new ZbootException("角色删除失败，以下用户正在使用此角色，用户ID：" + userIdStr);
             }
         }
-        
+
         return this.removeByIds(ids);
     }
 
@@ -220,7 +225,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();
         }
-        
+
         // 根据角色ID列表查询角色详细信息
         return this.listByIds(roleIds);
     }
@@ -233,7 +238,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
             LambdaQueryWrapper<UserRoleDO> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(UserRoleDO::getUserId, userId);
             userRoleService.remove(deleteWrapper);
-            
+
             // 添加新的角色关联
             if (roleIds != null && !roleIds.isEmpty()) {
                 List<UserRoleDO> userRoles = roleIds.stream().map(roleId -> {
@@ -242,10 +247,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
                     userRole.setRoleId(roleId);
                     return userRole;
                 }).collect(Collectors.toList());
-                
+
                 userRoleService.saveBatch(userRoles);
             }
-            
+
             return true;
         } catch (Exception e) {
             throw new RuntimeException("分配用户角色失败", e);
@@ -258,36 +263,68 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         try {
             // 1. 删除角色现有的所有权限
             rolePermissionService.removeAllPermissionsByRoleId(roleId);
-            
+
             // 2. 添加新的权限
             if (permissionIds != null && !permissionIds.isEmpty()) {
                 rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
             }
-            
-            // 3. 清空缓存
-            redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_PERMISSIONS_KEY);
-            
+
+            // 3. 重置缓存
+            List<PermissionDO> permissions;
+            if (permissionIds == null || permissionIds.isEmpty()) {
+                permissions = Collections.emptyList(); // 直接返回空列表
+            } else {
+                permissions = permissionService.list(
+                        new LambdaQueryWrapper<PermissionDO>()
+                                .in(PermissionDO::getId, permissionIds)
+                                .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
+                                .eq(PermissionDO::getDelFlag, 0)
+                                .orderByAsc(PermissionDO::getSort)
+                );
+            }
+
+
+            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            redisTemplate.opsForValue().set(
+                    cacheKey,
+                    permissions
+            );
+
             return true;
         } catch (Exception e) {
             throw new RuntimeException("保存角色权限失败", e);
         }
     }
-    
+
     @Override
     @Transactional
     public boolean saveRoleMenus(Long roleId, List<Long> menuIds) {
         try {
             // 1. 删除角色现有的所有菜单
             roleMenuService.removeAllMenusByRoleId(roleId);
-            
+
             // 2. 添加新的菜单
             if (menuIds != null && !menuIds.isEmpty()) {
                 roleMenuService.assignMenusToRole(roleId, menuIds);
             }
-            
-            // 3. 清空缓存
-            redisTemplate.delete(CacheConstants.Auth.ALL_ROLE_MENUS_KEY);
-            
+            // 3. 重置缓存
+            List<MenuDO> menus;
+            if (menuIds == null || menuIds.isEmpty()) {
+                menus = Collections.emptyList(); // 直接返回空列表
+            } else {
+                menus = menuService.list(
+                        new LambdaQueryWrapper<MenuDO>()
+                                .in(MenuDO::getId, menuIds)
+                                .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                                .eq(MenuDO::getDelFlag, 0)
+                                .orderByAsc(MenuDO::getSort)
+                );
+            }
+            String cacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
+            redisTemplate.opsForValue().set(
+                    cacheKey,
+                    menus
+            );
             return true;
         } catch (Exception e) {
             throw new RuntimeException("保存角色菜单失败", e);
