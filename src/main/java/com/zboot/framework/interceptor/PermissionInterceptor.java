@@ -137,10 +137,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
         String requestURI = request.getRequestURI();
         String contextPath = request.getContextPath();
         
-        // 移除上下文路径
-        if (StringUtils.hasText(contextPath) && requestURI.startsWith(contextPath)) {
-            requestURI = requestURI.substring(contextPath.length());
-        }
+//        // 移除上下文路径
+//        if (StringUtils.hasText(contextPath) && requestURI.startsWith(contextPath)) {
+//            requestURI = requestURI.substring(contextPath.length());
+//        }
         
         return requestURI;
     }

@@ -55,6 +55,9 @@ public class CacheConstants {
 
         /** 角色权限缓存键 */
         public static final String ROLE_PERMISSIONSKEY = "role:permissions:";
+
+         /** 用户角色缓存键 */
+        public static final String USER_ROLE = "user:role:";
         
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;

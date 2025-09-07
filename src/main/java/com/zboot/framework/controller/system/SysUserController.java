@@ -41,7 +41,7 @@ public class SysUserController {
 
     @Operation(summary = "分页查询用户列表", description = "根据条件分页查询用户列表")
     @GetMapping()
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<PageResult<SysUserVO>> getUserPage(SysUserQuery query) {
         PageResult<SysUserVO> pageResult = userService.getUserPage(query);
         return R.ok(pageResult);
