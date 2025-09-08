@@ -8,6 +8,7 @@ package com.zboot.framework.controller.oss;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.oss.OssKeyDTO;
 import com.zboot.framework.dto.update.oss.OssKeyUpdateDTO;
 import com.zboot.framework.query.oss.OssKeyQuery;
@@ -49,8 +50,8 @@ public class OssKeyController {
     @Operation(summary = "分页查询OSS密钥列表")
     @GetMapping("/page")
     @RequirePermission(dynamic = true)
-    public R<IPage<OssKeyVO>> getOssKeyPage(OssKeyQuery query) {
-        IPage<OssKeyVO> result = ossKeyService.getOssKeyPage(query);
+    public R<PageResult<OssKeyVO>> getOssKeyPage(OssKeyQuery query) {
+        PageResult<OssKeyVO> result = ossKeyService.getOssKeyPage(query);
         return R.ok(result);
     }
 

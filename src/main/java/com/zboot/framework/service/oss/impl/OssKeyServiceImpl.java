@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.factory.OSSFactory;
 import com.zboot.common.service.oss.service.OSSService;
@@ -41,7 +42,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
     private final Map<String, AtomicInteger> providerCounters = new HashMap<>();
 
     @Override
-    public IPage<OssKeyVO> getOssKeyPage(OssKeyQuery query) {
+    public PageResult<OssKeyVO> getOssKeyPage(OssKeyQuery query) {
         Page<OssKeyDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<OssKeyDO> wrapper = new LambdaQueryWrapper<>();
         
@@ -62,11 +63,9 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
         IPage<OssKeyDO> result = this.page(page, wrapper);
         
         // 转换为VO
-        Page<OssKeyVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<OssKeyVO> voList = result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
-        voPage.setRecords(voList);
         
-        return voPage;
+        return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override

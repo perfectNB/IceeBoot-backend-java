@@ -8,6 +8,7 @@ package com.zboot.framework.controller.sms;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.sms.SmsKeyDTO;
 import com.zboot.framework.dto.update.sms.SmsKeyUpdateDTO;
 import com.zboot.framework.query.sms.SmsKeyQuery;
@@ -46,13 +47,13 @@ public class SmsKeyController {
         return R.ok(result);
     }
 
-    @Operation(summary = "分页查询SMS密钥列表")
-    @GetMapping("/page")
-    @RequirePermission(dynamic = true)
-    public R<IPage<SmsKeyVO>> getSmsKeyPage(SmsKeyQuery query) {
-        IPage<SmsKeyVO> result = smsKeyService.getSmsKeyPage(query);
-        return R.ok(result);
-    }
+   @Operation(summary = "分页查询SMS密钥列表")
+   @GetMapping("/page")
+   @RequirePermission(dynamic = true)
+   public R<PageResult<SmsKeyVO>> getSmsKeyPage(SmsKeyQuery query) {
+       PageResult<SmsKeyVO> result = smsKeyService.getSmsKeyPage(query);
+       return R.ok(result);
+   }
 
     @Operation(summary = "根据ID获取SMS密钥详情")
     @GetMapping("/{id}")

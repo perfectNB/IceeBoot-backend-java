@@ -2,10 +2,12 @@ package com.zboot.framework.service.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.zboot.framework.entity.ai.AiChatSessionDO;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
+import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
 
@@ -90,4 +92,12 @@ public interface IAiChatService extends IService<AiChatSessionDO> {
      * @return 是否成功
      */
     Boolean clearSessionMessages(Long sessionId);
+    
+    /**
+     * 获取会话消息（分页）
+     * 
+     * @param query 查询条件
+     * @return 分页结果
+     */
+    PageResult<AiChatMessageVO> getMessage(AiChatMessageQuery query);
 }

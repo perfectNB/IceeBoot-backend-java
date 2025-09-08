@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiAgentDTO;
 import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.entity.ai.AiAgentDO;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 public class AiAgentServiceImpl extends ServiceImpl<AiAgentMapper, AiAgentDO> implements IAiAgentService {
 
     @Override
-    public IPage<AiAgentVO> getAgentPage(AiAgentQuery query) {
+    public PageResult<AiAgentVO> getAgentPage(AiAgentQuery query) {
         Page<AiAgentDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<AiAgentDO> wrapper = new LambdaQueryWrapper<>();
         
@@ -53,11 +54,9 @@ public class AiAgentServiceImpl extends ServiceImpl<AiAgentMapper, AiAgentDO> im
         IPage<AiAgentDO> result = this.page(page, wrapper);
         
         // 转换为VO
-        Page<AiAgentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<AiAgentVO> voList = result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
-        voPage.setRecords(voList);
         
-        return voPage;
+        return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override

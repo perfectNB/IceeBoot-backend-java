@@ -8,6 +8,7 @@ package com.zboot.framework.controller.email;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.email.EmailKeyDTO;
 import com.zboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.zboot.framework.query.email.EmailKeyQuery;
@@ -46,13 +47,13 @@ public class EmailKeyController {
         return R.ok(result);
     }
 
-    @Operation(summary = "分页查询Email密钥列表")
-    @GetMapping("/page")
-    @RequirePermission(dynamic = true)
-    public R<IPage<EmailKeyVO>> getEmailKeyPage(EmailKeyQuery query) {
-        IPage<EmailKeyVO> result = emailKeyService.getEmailKeyPage(query);
-        return R.ok(result);
-    }
+   @Operation(summary = "分页查询Email密钥列表")
+   @GetMapping("/page")
+   @RequirePermission(dynamic = true)
+   public R<PageResult<EmailKeyVO>> getEmailKeyPage(EmailKeyQuery query) {
+       PageResult<EmailKeyVO> result = emailKeyService.getEmailKeyPage(query);
+       return R.ok(result);
+   }
 
     @Operation(summary = "根据ID获取Email密钥详情")
     @GetMapping("/{id}")

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiAgentDTO;
 import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.query.ai.AiAgentQuery;
@@ -36,9 +37,9 @@ public class AiAgentController {
     @Operation(summary = "获取agents列表")
     @GetMapping
     @RequirePermission(dynamic = true)
-    public R<IPage<AiAgentVO>> getAgentPage(AiAgentQuery query) {
-        IPage<AiAgentVO> page = aiAgentService.getAgentPage(query);
-        return R.ok(page);
+    public R<PageResult<AiAgentVO>> getAgentPage(AiAgentQuery query) {
+        PageResult<AiAgentVO> result = aiAgentService.getAgentPage(query);
+        return R.ok(result);
     }
 
     @Operation(summary = "根据ID获取agents")

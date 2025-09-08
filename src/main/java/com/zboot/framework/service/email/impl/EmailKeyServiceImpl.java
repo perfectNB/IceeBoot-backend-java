@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.service.email.dto.EmailRequest;
 import com.zboot.common.service.email.factory.EmailFactory;
 import com.zboot.common.service.email.service.EmailService;
@@ -41,7 +42,7 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
     private final Map<String, AtomicInteger> providerCounters = new HashMap<>();
 
     @Override
-    public IPage<EmailKeyVO> getEmailKeyPage(EmailKeyQuery query) {
+    public PageResult<EmailKeyVO> getEmailKeyPage(EmailKeyQuery query) {
         Page<EmailKeyDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<EmailKeyDO> wrapper = new LambdaQueryWrapper<>();
         
@@ -64,11 +65,9 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
         IPage<EmailKeyDO> result = this.page(page, wrapper);
         
         // 转换为VO
-        Page<EmailKeyVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<EmailKeyVO> voList = result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
-        voPage.setRecords(voList);
         
-        return voPage;
+        return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     @Override

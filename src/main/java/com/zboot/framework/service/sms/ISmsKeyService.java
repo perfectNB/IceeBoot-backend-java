@@ -2,6 +2,7 @@ package com.zboot.framework.service.sms;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.sms.SmsKeyDTO;
 import com.zboot.framework.dto.update.sms.SmsKeyUpdateDTO;
 import com.zboot.framework.entity.sms.SmsKeyDO;
@@ -25,7 +26,7 @@ public interface ISmsKeyService extends IService<SmsKeyDO> {
      * @param query 查询条件
      * @return 分页结果
      */
-    IPage<SmsKeyVO> getSmsKeyPage(SmsKeyQuery query);
+    PageResult<SmsKeyVO> getSmsKeyPage(SmsKeyQuery query);
 
     /**
      * 根据ID获取SMS密钥详情

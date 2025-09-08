@@ -9,9 +9,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
-import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
+import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.service.ai.IAiChatService;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
@@ -39,6 +40,7 @@ public class AiChatController {
 
     private final IAiChatService aiChatService;
 
+
     @Operation(summary = "获取对话会话列表")
     @GetMapping("/sessions")
     @RequirePermission(dynamic = true)
@@ -47,13 +49,6 @@ public class AiChatController {
         return R.ok(page);
     }
 
-    @Operation(summary = "获取对话会话详情")
-    @GetMapping("/sessions/{id}")
-    @RequirePermission(dynamic = true)
-    public R<AiChatSessionVO> getSessionById(@Parameter(description = "会话ID") @PathVariable Long id) {
-        AiChatSessionVO session = aiChatService.getSessionById(id);
-        return R.ok(session);
-    }
 
     @Operation(summary = "创建对话会话")
     @PostMapping("/sessions")
@@ -77,34 +72,6 @@ public class AiChatController {
         return R.fail(ResponseMessage.DELETE_FAIL);
     }
 
-    @Operation(summary = "发送消息")
-    @PostMapping("/sessions/{sessionId}/messages")
-    @RequirePermission(dynamic = true)
-    public R<AiChatMessageVO> sendMessage(
-            @Parameter(description = "会话ID") @PathVariable Long sessionId,
-            @RequestBody Map<String, String> request) {
-        AiChatMessageDTO dto = new AiChatMessageDTO();
-        dto.setSessionId(sessionId);
-        dto.setContent(request.get("content"));
-        AiChatMessageVO message = aiChatService.sendMessage(dto);
-        return R.ok(message);
-    }
-
-    @Operation(summary = "获取可用的大模型列表")
-    @GetMapping("/models")
-    @RequirePermission(dynamic = true)
-    public R<List<Object>> getAvailableModels() {
-        // TODO: 实现获取可用模型列表
-        return R.ok(List.of());
-    }
-
-    @Operation(summary = "获取模型API配置")
-    @GetMapping("/models/{modelName}/config")
-    @RequirePermission(dynamic = true)
-    public R<Map<String, String>> getModelConfig(@Parameter(description = "模型名称") @PathVariable String modelName) {
-        // TODO: 实现获取模型配置
-        return R.ok(Map.of());
-    }
 
     @Operation(summary = "流式对话")
     @PostMapping("/stream")
@@ -113,4 +80,14 @@ public class AiChatController {
         // TODO: 实现流式对话
         return R.ok();
     }
+
+    @Operation(summary = "获取对话里的消息")
+    @GetMapping("/message")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<AiChatMessageVO>> getMessage(AiChatMessageQuery query) {
+        PageResult<AiChatMessageVO> result = aiChatService.getMessage(query);
+        return R.ok(result);
+    }
+
+
 }
