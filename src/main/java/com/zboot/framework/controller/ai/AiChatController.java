@@ -50,7 +50,7 @@ public class AiChatController {
 
     @Operation(summary = "获取对话会话列表")
     @GetMapping("/sessions")
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public R<IPage<AiChatSessionVO>> getSessionPage(AiChatSessionQuery query) {
         IPage<AiChatSessionVO> page = aiChatService.getSessionPage(query);
         return R.ok(page);
@@ -59,7 +59,7 @@ public class AiChatController {
 
     @Operation(summary = "创建对话会话")
     @PostMapping("/sessions")
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public R<AiChatSessionVO> addSession(@Validated @RequestBody AiChatSessionDTO dto) {
         Boolean result = aiChatService.addSession(dto);
         if (result) {
@@ -68,21 +68,17 @@ public class AiChatController {
         return R.fail(ResponseMessage.CREATE_FAIL);
     }
 
-    @Operation(summary = "删除对话会话")
-    @DeleteMapping("/sessions/{id}")
-    @RequirePermission(dynamic = true)
-    public R<Void> deleteSession(@Parameter(description = "会话ID") @PathVariable Long id) {
-        Boolean result = aiChatService.deleteSession(List.of(id));
-        if (result) {
-            return R.ok();
-        }
-        return R.fail(ResponseMessage.DELETE_FAIL);
-    }
 
+    @Operation(summary = "删除对话会话", description = "单个删除或批量删除对话")
+    @DeleteMapping
+    public R<Void> deleteLogs(@RequestBody List<Long> ids) {
+        boolean success = aiChatService.deleteSession(ids);
+        return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+    }
 
     @Operation(summary = "流式对话")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public Flux<String> streamChat(@Validated @RequestBody StreamChatRequest request) {
         return streamChatService.streamChat(request)
                 .map(response -> {
@@ -91,7 +87,7 @@ public class AiChatController {
                         if (response.getError() != null) {
                             return "data: {\"error\":\"" + response.getError() + "\",\"finished\":true}\n\n";
                         }
-                        
+
                         if (response.getChoices() != null && !response.getChoices().isEmpty()) {
                             var choice = response.getChoices().get(0);
                             if (choice.getDelta() != null && choice.getDelta().getContent() != null) {
@@ -99,11 +95,11 @@ public class AiChatController {
                                 return "data: {\"content\":\"" + content + "\",\"finished\":false}\n\n";
                             }
                         }
-                        
+
                         if (Boolean.TRUE.equals(response.getFinished())) {
                             return "data: {\"finished\":true}\n\n";
                         }
-                        
+
                         return "data: {\"heartbeat\":true}\n\n";
                     } catch (Exception e) {
                         return "data: {\"error\":\"数据处理异常\",\"finished\":true}\n\n";
@@ -114,7 +110,7 @@ public class AiChatController {
 
     @Operation(summary = "获取对话里的消息")
     @GetMapping("/message")
-    @RequirePermission(dynamic = true)
+//    @RequirePermission(dynamic = true)
     public R<PageResult<AiChatMessageVO>> getMessage(AiChatMessageQuery query) {
         PageResult<AiChatMessageVO> result = aiChatService.getMessage(query);
         return R.ok(result);

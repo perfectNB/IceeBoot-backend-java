@@ -31,10 +31,6 @@ public class AiChatSessionDO extends ZbootDO {
     @TableField("model_name")
     private String modelName;
 
-    @Schema(description = "用户ID")
-    @TableField("user_id")
-    private Long userId;
-
     @Schema(description = "密钥ID")
     @TableField("key_id")
     private Long keyId;
