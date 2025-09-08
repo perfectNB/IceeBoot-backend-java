@@ -8,6 +8,7 @@ package com.zboot.framework.service.system.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zboot.common.constant.CacheConstants;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.framework.entity.system.*;
 import com.zboot.framework.mapper.system.*;
 import com.zboot.framework.service.system.IAuthCacheService;
@@ -52,6 +53,8 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     @Autowired
     private SysRolePermissionMapper rolePermissionMapper;
 
+
+
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserMenus(Long userId) {
@@ -71,17 +74,40 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         List<Long> roleIds = (List<Long>) redisTemplate.opsForValue().get(userRoleKey);
 
         if (roleIds == null || roleIds.isEmpty()) {
-            return new ArrayList<>();
+            roleIds = userRoleMapper.selectList(
+                    new LambdaQueryWrapper<UserRoleDO>()
+                            .eq(UserRoleDO::getUserId, userId)
+                            .eq(UserRoleDO::getDelFlag, 0)
+            ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
+            redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
 
         // 遍历角色列表，获取每个角色的菜单
         Set<MenuDO> menuSet = new HashSet<>();
         for (Long roleId : roleIds) {
             String roleMenuKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
-            List<MenuDO> roleMenus = (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
+            List<MenuDO> roleMenus ;
+            roleMenus= (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
 
             if (roleMenus != null) {
                 menuSet.addAll(roleMenus);
+            }else {
+                List<Long> menuIds = roleMenuMapper.selectList(
+                        new LambdaQueryWrapper<RoleMenuDO>()
+                                .eq(RoleMenuDO::getRoleId, roleId)
+                                .eq(RoleMenuDO::getDelFlag, 0)
+                ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
+                roleMenus = menuMapper.selectList(
+                        new LambdaQueryWrapper<MenuDO>()
+                                .in(MenuDO::getId, menuIds)
+                                .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                                .eq(MenuDO::getDelFlag, 0)
+                                .orderByAsc(MenuDO::getSort));
+                menuSet.addAll(roleMenus);
+                redisTemplate.opsForValue().set(
+                        roleMenuKey,
+                        roleMenus
+                );
             }
         }
         // 将Set转换为List并按sort排序
@@ -105,21 +131,44 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         List<Long> roleIds = (List<Long>) redisTemplate.opsForValue().get(userRoleKey);
         
         if (roleIds == null || roleIds.isEmpty()) {
-            return new ArrayList<>();
+            roleIds = userRoleMapper.selectList(
+                    new LambdaQueryWrapper<UserRoleDO>()
+                            .eq(UserRoleDO::getUserId, userId)
+                            .eq(UserRoleDO::getDelFlag, 0)
+            ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
+            redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
         
         // 2. 遍历角色列表，获取每个角色的权限
         Set<Map<String, Object>> permissionSet = new HashSet<>();
         for (Long roleId : roleIds) {
             String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
-            List<PermissionDO> rolePermissions = (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
-            
+            List<PermissionDO> rolePermissions;
+            List<Map<String, Object>> permissionMaps;
+            rolePermissions= (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
             if (rolePermissions != null) {
                 // 将PermissionDO转换为Map<String, Object>
-                List<Map<String, Object>> permissionMaps = rolePermissions.stream()
+                permissionMaps= rolePermissions.stream()
                         .map(this::convertPermissionToMap)
                         .collect(Collectors.toList());
                 permissionSet.addAll(permissionMaps);
+            }else {
+                List<Long> permissionIds = rolePermissionMapper.selectList(
+                        new LambdaQueryWrapper<RolePermissionDO>()
+                                .eq(RolePermissionDO::getRoleId, roleId)
+                                .eq(RolePermissionDO::getDelFlag, 0)
+                ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
+                rolePermissions = permissionMapper.selectList(
+                        new LambdaQueryWrapper<PermissionDO>()
+                                .in(PermissionDO::getId, permissionIds)
+                                .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
+                                .eq(PermissionDO::getDelFlag, 0)
+                                .orderByAsc(PermissionDO::getSort));
+                permissionMaps= rolePermissions.stream()
+                        .map(this::convertPermissionToMap)
+                        .collect(Collectors.toList());
+                permissionSet.addAll(permissionMaps);
+                redisTemplate.opsForValue().set(rolePermissionKey, rolePermissions);
             }
         }
         

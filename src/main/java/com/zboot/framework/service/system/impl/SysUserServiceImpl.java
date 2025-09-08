@@ -233,7 +233,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         vo.setPermissions(roleCodes);
 
         // 获取用户角色对象列表
-//        vo.setRoleList(roleService.getRolesByUserId(user.getId()));
+        vo.setRoleList(roleService.getRolesByUserId(user.getId()));
 
         // 获取用户菜单
         vo.setMenus(authCacheService.getUserMenus(user.getId()));
