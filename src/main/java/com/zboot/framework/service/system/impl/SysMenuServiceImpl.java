@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.CacheConstants;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
@@ -26,6 +27,7 @@ import com.zboot.framework.service.system.ISysRoleMenuService;
 import com.zboot.framework.vo.system.SysMenuVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -48,6 +50,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     
     @Autowired
     private ISysRoleMenuService roleMenuService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+
     @Override
     public PageResult<SysMenuVO> getMenuPage(SysMenuQueryDTO query) {
         // 构建查询条件
@@ -212,6 +219,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
 
         MenuDO menu = new MenuDO();
         BeanUtils.copyProperties(menuDTO, menu);
+        List<Long> roleIds = roleMenuService.getRoleIdsByMenuId(menuDTO.getId());
+        roleIds.forEach(roleId -> {
+            redisTemplate.delete(CacheConstants.Auth.ROLE_MENUS_KEY + roleId);
+        });
+
         return this.updateById(menu);
     }
 

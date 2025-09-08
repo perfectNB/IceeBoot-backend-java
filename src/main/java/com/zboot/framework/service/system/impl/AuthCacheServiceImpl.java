@@ -97,17 +97,19 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                                 .eq(RoleMenuDO::getRoleId, roleId)
                                 .eq(RoleMenuDO::getDelFlag, 0)
                 ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
-                roleMenus = menuMapper.selectList(
-                        new LambdaQueryWrapper<MenuDO>()
-                                .in(MenuDO::getId, menuIds)
-                                .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(MenuDO::getDelFlag, 0)
-                                .orderByAsc(MenuDO::getSort));
-                menuSet.addAll(roleMenus);
-                redisTemplate.opsForValue().set(
-                        roleMenuKey,
-                        roleMenus
-                );
+                if (menuIds.size()!=0){
+                    roleMenus = menuMapper.selectList(
+                            new LambdaQueryWrapper<MenuDO>()
+                                    .in(MenuDO::getId, menuIds)
+                                    .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                                    .eq(MenuDO::getDelFlag, 0)
+                                    .orderByAsc(MenuDO::getSort));
+                    menuSet.addAll(roleMenus);
+                    redisTemplate.opsForValue().set(
+                            roleMenuKey,
+                            roleMenus
+                    );
+                }
             }
         }
         // 将Set转换为List并按sort排序
@@ -142,7 +144,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         // 2. 遍历角色列表，获取每个角色的权限
         Set<Map<String, Object>> permissionSet = new HashSet<>();
         for (Long roleId : roleIds) {
-            String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
             List<PermissionDO> rolePermissions;
             List<Map<String, Object>> permissionMaps;
             rolePermissions= (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
@@ -158,17 +160,19 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                                 .eq(RolePermissionDO::getRoleId, roleId)
                                 .eq(RolePermissionDO::getDelFlag, 0)
                 ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
-                rolePermissions = permissionMapper.selectList(
-                        new LambdaQueryWrapper<PermissionDO>()
-                                .in(PermissionDO::getId, permissionIds)
-                                .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(PermissionDO::getDelFlag, 0)
-                                .orderByAsc(PermissionDO::getSort));
-                permissionMaps= rolePermissions.stream()
-                        .map(this::convertPermissionToMap)
-                        .collect(Collectors.toList());
-                permissionSet.addAll(permissionMaps);
-                redisTemplate.opsForValue().set(rolePermissionKey, rolePermissions);
+                if (permissionIds.size()!=0){
+                    rolePermissions = permissionMapper.selectList(
+                            new LambdaQueryWrapper<PermissionDO>()
+                                    .in(PermissionDO::getId, permissionIds)
+                                    .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
+                                    .eq(PermissionDO::getDelFlag, 0)
+                                    .orderByAsc(PermissionDO::getSort));
+                    permissionMaps= rolePermissions.stream()
+                            .map(this::convertPermissionToMap)
+                            .collect(Collectors.toList());
+                    permissionSet.addAll(permissionMaps);
+                    redisTemplate.opsForValue().set(rolePermissionKey, rolePermissions);
+                }
             }
         }
         

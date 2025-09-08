@@ -284,7 +284,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
             }
 
 
-            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
             redisTemplate.opsForValue().set(
                     cacheKey,
                     permissions
