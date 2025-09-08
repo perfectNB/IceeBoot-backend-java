@@ -2,6 +2,7 @@ package com.zboot.framework.service.email;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.email.EmailKeyDTO;
 import com.zboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.zboot.framework.entity.email.EmailKeyDO;
@@ -25,7 +26,7 @@ public interface IEmailKeyService extends IService<EmailKeyDO> {
      * @param query 查询条件
      * @return 分页结果
      */
-    IPage<EmailKeyVO> getEmailKeyPage(EmailKeyQuery query);
+    PageResult<EmailKeyVO> getEmailKeyPage(EmailKeyQuery query);
 
     /**
      * 根据ID获取Email密钥详情

@@ -2,6 +2,7 @@ package com.zboot.framework.service.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiAgentDTO;
 import com.zboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.zboot.framework.entity.ai.AiAgentDO;
@@ -24,7 +25,7 @@ public interface IAiAgentService extends IService<AiAgentDO> {
      * @param query 查询条件
      * @return 分页结果
      */
-    IPage<AiAgentVO> getAgentPage(AiAgentQuery query);
+    PageResult<AiAgentVO> getAgentPage(AiAgentQuery query);
 
     /**
      * 根据ID获取AI代理详情

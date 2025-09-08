@@ -2,6 +2,7 @@ package com.zboot.framework.service.oss;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.oss.OssKeyDTO;
 import com.zboot.framework.dto.update.oss.OssKeyUpdateDTO;
 import com.zboot.framework.entity.oss.OssKeyDO;
@@ -25,7 +26,7 @@ public interface IOssKeyService extends IService<OssKeyDO> {
      * @param query 查询条件
      * @return 分页结果
      */
-    IPage<OssKeyVO> getOssKeyPage(OssKeyQuery query);
+    PageResult<OssKeyVO> getOssKeyPage(OssKeyQuery query);
 
     /**
      * 根据ID获取OSS密钥详情

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.zboot.framework.entity.ai.AiChatSessionDO;
@@ -12,6 +14,7 @@ import com.zboot.framework.entity.ai.AiChatMessageDO;
 import com.zboot.framework.mapper.ai.AiChatSessionMapper;
 import com.zboot.framework.mapper.ai.AiChatMessageMapper;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
+import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.service.ai.IAiChatService;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
@@ -26,7 +29,7 @@ import java.util.stream.Collectors;
 
 /**
  * AI对话服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -40,28 +43,27 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public IPage<AiChatSessionVO> getSessionPage(AiChatSessionQuery query) {
         Page<AiChatSessionDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<AiChatSessionDO> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.like(AiChatSessionDO::getTitle, query.getKeyword())
-                   .or()
-                   .like(AiChatSessionDO::getModelName, query.getKeyword());
+                    .or()
+                    .like(AiChatSessionDO::getModelName, query.getKeyword());
         }
-        if (query.getUserId() != null) {
+        Long userId = TokenUtils.getCurrentUserId();
+        if (userId != null) {
             wrapper.eq(AiChatSessionDO::getUserId, query.getUserId());
         }
-        if (query.getModelId() != null) {
-            wrapper.eq(AiChatSessionDO::getModelId, query.getModelId());
-        }
-        
+
+
         wrapper.orderByDesc(AiChatSessionDO::getCreateTime);
-        
+
         IPage<AiChatSessionDO> result = this.page(page, wrapper);
-        
+
         // 转换为VO
         Page<AiChatSessionVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<AiChatSessionVO> voList = result.getRecords().stream().map(this::convertSessionToVO).collect(Collectors.toList());
         voPage.setRecords(voList);
-        
+
         return voPage;
     }
 
@@ -71,13 +73,13 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         if (session == null) {
             return null;
         }
-        
+
         AiChatSessionVO vo = convertSessionToVO(session);
-        
+
         // 获取会话消息列表
         List<AiChatMessageVO> messages = getSessionMessages(id);
         vo.setMessages(messages);
-        
+
         return vo;
     }
 
@@ -108,8 +110,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public List<AiChatSessionVO> getSessionsByUserId(Long userId) {
         QueryWrapper<AiChatSessionDO> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId)
-               .orderByDesc("update_time");
-        
+                .orderByDesc("update_time");
+
         List<AiChatSessionDO> sessions = this.list(wrapper);
         return sessions.stream().map(this::convertSessionToVO).collect(Collectors.toList());
     }
@@ -118,10 +120,13 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public AiChatMessageVO sendMessage(AiChatMessageDTO dto) {
         AiChatMessageDO message = new AiChatMessageDO();
         BeanUtils.copyProperties(dto, message);
-        message.setTimestamp(LocalDateTime.now());
-        
+        // 设置用户ID
+        if (message.getUserId() == null) {
+            message.setUserId(TokenUtils.getCurrentUserId());
+        }
+
         aiChatMessageMapper.insert(message);
-        
+
         return convertMessageToVO(message);
     }
 
@@ -129,8 +134,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public List<AiChatMessageVO> getSessionMessages(Long sessionId) {
         QueryWrapper<AiChatMessageDO> wrapper = new QueryWrapper<>();
         wrapper.eq("session_id", sessionId)
-               .orderByAsc("timestamp");
-        
+                .orderByAsc("timestamp");
+
         List<AiChatMessageDO> messages = aiChatMessageMapper.selectList(wrapper);
         return messages.stream().map(this::convertMessageToVO).collect(Collectors.toList());
     }
@@ -139,8 +144,39 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public Boolean clearSessionMessages(Long sessionId) {
         QueryWrapper<AiChatMessageDO> wrapper = new QueryWrapper<>();
         wrapper.eq("session_id", sessionId);
-        
+
         return aiChatMessageMapper.delete(wrapper) >= 0;
+    }
+
+    @Override
+    public PageResult<AiChatMessageVO> getMessage(AiChatMessageQuery query) {
+        // 获取当前用户ID
+        Long userId = TokenUtils.getCurrentUserId();
+
+        // 构建查询条件
+        LambdaQueryWrapper<AiChatMessageDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiChatMessageDO::getSessionId, query.getSessionId())
+               .eq(AiChatMessageDO::getUserId, userId);
+        
+        // 添加关键词搜索
+        if (StringUtils.hasText(query.getKeyword())) {
+            wrapper.like(AiChatMessageDO::getContent, query.getKeyword());
+        }
+
+        // 排序
+        wrapper.orderByDesc(AiChatMessageDO::getCreateTime);
+
+        // 分页查询
+        Page<AiChatMessageDO> page = new Page<>(query.getPageNum(), query.getPageSize());
+        IPage<AiChatMessageDO> result = aiChatMessageMapper.selectPage(page, wrapper);
+
+        // 转换为VO列表
+        List<AiChatMessageVO> voList = result.getRecords().stream()
+                .map(this::convertMessageToVO)
+                .collect(Collectors.toList());
+
+        // 返回分页结果
+        return new PageResult<>(voList, result.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }
 
     /**
@@ -158,6 +194,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     private AiChatMessageVO convertMessageToVO(AiChatMessageDO message) {
         AiChatMessageVO vo = new AiChatMessageVO();
         BeanUtils.copyProperties(message, vo);
+        // 设置时间戳，使用创建时间
+        vo.setTimestamp(message.getCreateTime());
         return vo;
     }
 }

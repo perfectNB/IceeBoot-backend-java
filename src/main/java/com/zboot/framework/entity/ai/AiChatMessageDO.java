@@ -38,10 +38,6 @@ public class AiChatMessageDO extends ZbootDO {
     @TableField("content")
     private String content;
 
-    @Schema(description = "时间戳")
-    @TableField("timestamp")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime timestamp;
 
     @Schema(description = "用户ID")
     @TableField("user_id")
