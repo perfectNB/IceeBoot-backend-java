@@ -38,8 +38,4 @@ public class AiChatMessageDO extends ZbootDO {
     @TableField("content")
     private String content;
 
-
-    @Schema(description = "用户ID")
-    @TableField("user_id")
-    private Long userId;
 }
