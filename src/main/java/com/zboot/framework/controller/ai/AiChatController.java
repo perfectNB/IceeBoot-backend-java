@@ -11,11 +11,17 @@ import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
+import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
+import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
 import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.service.ai.IAiChatService;
+import com.zboot.framework.service.ai.IStreamChatService;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
+import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
+import reactor.core.publisher.Flux;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +45,7 @@ import java.util.Map;
 public class AiChatController {
 
     private final IAiChatService aiChatService;
+    private final IStreamChatService streamChatService;
 
 
     @Operation(summary = "获取对话会话列表")
@@ -74,11 +81,35 @@ public class AiChatController {
 
 
     @Operation(summary = "流式对话")
-    @PostMapping("/stream")
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @RequirePermission(dynamic = true)
-    public R<Void> streamChat(@RequestBody Map<String, Object> request) {
-        // TODO: 实现流式对话
-        return R.ok();
+    public Flux<String> streamChat(@Validated @RequestBody StreamChatRequest request) {
+        return streamChatService.streamChat(request)
+                .map(response -> {
+                    try {
+                        // 将LLMResponse转换为SSE格式
+                        if (response.getError() != null) {
+                            return "data: {\"error\":\"" + response.getError() + "\",\"finished\":true}\n\n";
+                        }
+                        
+                        if (response.getChoices() != null && !response.getChoices().isEmpty()) {
+                            var choice = response.getChoices().get(0);
+                            if (choice.getDelta() != null && choice.getDelta().getContent() != null) {
+                                String content = choice.getDelta().getContent().replace("\"", "\\\"").replace("\n", "\\n");
+                                return "data: {\"content\":\"" + content + "\",\"finished\":false}\n\n";
+                            }
+                        }
+                        
+                        if (Boolean.TRUE.equals(response.getFinished())) {
+                            return "data: {\"finished\":true}\n\n";
+                        }
+                        
+                        return "data: {\"heartbeat\":true}\n\n";
+                    } catch (Exception e) {
+                        return "data: {\"error\":\"数据处理异常\",\"finished\":true}\n\n";
+                    }
+                })
+                .onErrorReturn("data: {\"error\":\"流式对话异常\",\"finished\":true}\n\n");
     }
 
     @Operation(summary = "获取对话里的消息")
