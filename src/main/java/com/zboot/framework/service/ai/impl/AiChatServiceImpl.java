@@ -53,7 +53,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         }
 
         Long userId = TokenUtils.getCurrentUserId();
-        wrapper.eq(AiChatSessionDO::getUserId, userId);
+        wrapper.eq(AiChatSessionDO::getCreateBy, userId);
 
         wrapper.orderByDesc(AiChatSessionDO::getCreateTime);
 
@@ -120,10 +120,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public AiChatMessageVO sendMessage(AiChatMessageDTO dto) {
         AiChatMessageDO message = new AiChatMessageDO();
         BeanUtils.copyProperties(dto, message);
-        // 设置用户ID
-        if (message.getUserId() == null) {
-            message.setUserId(TokenUtils.getCurrentUserId());
-        }
+
 
         aiChatMessageMapper.insert(message);
 
@@ -156,7 +153,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         // 构建查询条件
         LambdaQueryWrapper<AiChatMessageDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiChatMessageDO::getSessionId, query.getSessionId())
-                .eq(AiChatMessageDO::getUserId, userId);
+                .eq(AiChatMessageDO::getCreateBy, userId);
 
         // 添加关键词搜索
         if (StringUtils.hasText(query.getKeyword())) {

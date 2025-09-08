@@ -23,7 +23,7 @@ public class AiChatSessionDTO {
 
     @Schema(description = "密钥id")
     @NotNull(message = "密钥id不可为空")
-    private Long ekyId;
+    private Long keyId;
 
     @Schema(description = "模型名称")
     private String modelName;
