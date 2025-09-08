@@ -44,16 +44,16 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         Page<AiChatSessionDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<AiChatSessionDO> wrapper = new LambdaQueryWrapper<>();
 
-        if (StringUtils.hasText(query.getKeyword())) {
-            wrapper.like(AiChatSessionDO::getTitle, query.getKeyword())
-                    .or()
-                    .like(AiChatSessionDO::getModelName, query.getKeyword());
-        }
-        Long userId = TokenUtils.getCurrentUserId();
-        if (userId != null) {
-            wrapper.eq(AiChatSessionDO::getUserId, query.getUserId());
+        if (StringUtils.hasText(query.getTitle())) {
+            wrapper.like(AiChatSessionDO::getTitle, query.getKeyword());
         }
 
+        if (StringUtils.hasText(query.getModelName())) {
+            wrapper.like(AiChatSessionDO::getModelName, query.getModelName());
+        }
+
+        Long userId = TokenUtils.getCurrentUserId();
+        wrapper.eq(AiChatSessionDO::getUserId, userId);
 
         wrapper.orderByDesc(AiChatSessionDO::getCreateTime);
 
@@ -156,8 +156,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         // 构建查询条件
         LambdaQueryWrapper<AiChatMessageDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiChatMessageDO::getSessionId, query.getSessionId())
-               .eq(AiChatMessageDO::getUserId, userId);
-        
+                .eq(AiChatMessageDO::getUserId, userId);
+
         // 添加关键词搜索
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.like(AiChatMessageDO::getContent, query.getKeyword());

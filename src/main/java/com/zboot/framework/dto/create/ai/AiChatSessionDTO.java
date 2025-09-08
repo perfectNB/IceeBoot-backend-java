@@ -21,16 +21,13 @@ public class AiChatSessionDTO {
     @NotBlank(message = "会话标题不能为空")
     private String title;
 
-    @Schema(description = "模型ID")
-    @NotNull(message = "模型ID不能为空")
-    private Long modelId;
+    @Schema(description = "密钥id")
+    @NotNull(message = "密钥id不可为空")
+    private Long ekyId;
 
     @Schema(description = "模型名称")
     private String modelName;
 
-    @Schema(description = "用户ID")
-    private Long userId;
 
-    @Schema(description = "消息列表")
-    private List<AiChatMessageDTO> messages;
+
 }
