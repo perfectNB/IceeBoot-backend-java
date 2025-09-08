@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.CacheConstants;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
@@ -24,6 +25,7 @@ import com.zboot.framework.service.system.ISysRolePermissionService;
 import com.zboot.framework.vo.system.SysPermissionVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,6 +44,10 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
     @Autowired
     private ISysRolePermissionService rolePermissionService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
 
     @Override
     public PageResult<SysPermissionVO> getPermissionPage(SysPermissionQueryDTO query) {
@@ -115,6 +121,10 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
         PermissionDO permission = new PermissionDO();
         BeanUtils.copyProperties(dto, permission);
+        List<Long> roleIds = rolePermissionService.getRoleIdsByPermissionId(dto.getId());
+        roleIds.forEach(roleId -> {
+            redisTemplate.delete(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId);
+        });
         return this.updateById(permission);
     }
 

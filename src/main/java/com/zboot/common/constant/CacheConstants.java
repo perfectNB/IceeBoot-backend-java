@@ -54,7 +54,7 @@ public class CacheConstants {
         public static final String ROLE_MENUS_KEY = "role:menus:";
 
         /** 角色权限缓存键 */
-        public static final String ROLE_PERMISSIONSKEY = "role:permissions:";
+        public static final String ROLE_PERMISSIONS_KEY = "role:permissions:";
 
          /** 用户角色缓存键 */
         public static final String USER_ROLE = "user:role:";

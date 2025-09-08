@@ -129,7 +129,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             );
             
             // 存储完整的权限对象列表
-            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
             redisTemplate.opsForValue().set(
                 cacheKey, 
                 permissions
@@ -138,7 +138,7 @@ public class RoleCacheInitService implements ApplicationRunner {
             log.debug("角色 [{}] 权限缓存已更新，共 {} 个权限", roleId, permissions.size());
         } else {
             // 如果没有权限，存储具体类型的空列表
-            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
             List<PermissionDO> emptyPermissions = new ArrayList<>();
             redisTemplate.opsForValue().set(
                 cacheKey, 
@@ -230,7 +230,7 @@ public class RoleCacheInitService implements ApplicationRunner {
      * @param roleId 角色ID
      */
     public void clearRoleCache(Long roleId) {
-        String permissionCacheKey = CacheConstants.Auth.ROLE_PERMISSIONSKEY + roleId;
+        String permissionCacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
         String menuCacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
         
         redisTemplate.delete(permissionCacheKey);
