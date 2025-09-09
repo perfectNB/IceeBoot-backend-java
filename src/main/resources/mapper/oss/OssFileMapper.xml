@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zboot.framework.mapper.oss.OssFileMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.oss.OssFileDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="file_name" property="fileName" jdbcType="VARCHAR"/>
+        <result column="original_name" property="originalName" jdbcType="VARCHAR"/>
+        <result column="file_size" property="fileSize" jdbcType="BIGINT"/>
+        <result column="file_url" property="fileUrl" jdbcType="VARCHAR"/>
+        <result column="file_type" property="fileType" jdbcType="VARCHAR"/>
+        <result column="provider" property="provider" jdbcType="VARCHAR"/>
+        <result column="bucket_name" property="bucketName" jdbcType="VARCHAR"/>
+        <result column="file_md5" property="fileMd5" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="del_flag" property="delFlag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, file_name, original_name, file_size, file_url, file_type, provider, bucket_name, file_md5, status,
+        create_by, create_time, update_by, update_time, del_flag
+    </sql>
+
+    <!-- 根据桶名统计文件数量 -->
+    <select id="countByBucketName" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_oss_file
+        WHERE bucket_name = #{bucketName}
+        AND status = 'active'
+        AND del_flag = 0
+    </select>
+
+    <!-- 根据文件名和桶名查询文件 -->
+    <select id="selectByFileNameAndBucketName" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_oss_file
+        WHERE file_name = #{fileName}
+        AND bucket_name = #{bucketName}
+        AND del_flag = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据MD5值查询文件 -->
+    <select id="selectByFileMd5" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_oss_file
+        WHERE file_md5 = #{fileMd5}
+        AND status = 'active'
+        AND del_flag = 0
+        LIMIT 1
+    </select>
+
+</mapper>
