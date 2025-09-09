@@ -61,6 +61,12 @@ public class CacheConstants {
         
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;
+
+        /** 会话缓存键前缀 */
+        public static final String SESSION_CACHE_KEY = "chat:session:";
+
+        /** 密钥缓存键前缀 */
+        public static final String KEY_CACHE_KEY = "chat:key:";
     }
     
     /**

@@ -8,7 +8,7 @@ import reactor.core.publisher.Flux;
  * 流式对话服务接口
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-08
  */
 public interface IStreamChatService {
 
