@@ -326,7 +326,19 @@ public class WenxinService implements LLMService {
      */
     private LLMResponse parseResponse(String responseBody) {
         try {
+            log.debug("文心一言原始响应: {}", responseBody);
             JsonNode jsonNode = objectMapper.readTree(responseBody);
+            
+            // 检查是否有错误信息
+            if (jsonNode.has("error_code")) {
+                String errorMessage = "API调用失败";
+                if (jsonNode.has("error_msg")) {
+                    errorMessage = jsonNode.get("error_msg").asText();
+                }
+                String errorCode = jsonNode.get("error_code").asText();
+                log.error("文心一言API返回错误，错误代码: {}, 错误信息: {}", errorCode, errorMessage);
+                return createErrorResponse(errorCode + ": " + errorMessage);
+            }
             
             LLMResponse response = new LLMResponse()
                     .setProvider(getProvider())
@@ -344,16 +356,22 @@ public class WenxinService implements LLMService {
             if (jsonNode.has("result")) {
                 String content = jsonNode.get("result").asText();
                 
-                LLMChoice choice = new LLMChoice();
-                choice.setIndex(0);
-                choice.setFinishReason("stop");
-                
-                LLMMessage message = new LLMMessage();
-                message.setRole("assistant");
-                message.setContent(content);
-                choice.setMessage(message);
-                
-                response.setChoices(Arrays.asList(choice));
+                if (content != null && !content.trim().isEmpty()) {
+                    LLMChoice choice = new LLMChoice();
+                    choice.setIndex(0);
+                    choice.setFinishReason("stop");
+                    
+                    LLMMessage message = new LLMMessage();
+                    message.setRole("assistant");
+                    message.setContent(content);
+                    choice.setMessage(message);
+                    
+                    response.setChoices(Arrays.asList(choice));
+                } else {
+                    log.warn("文心一言响应中result字段为空");
+                }
+            } else {
+                log.warn("文心一言响应中缺少result字段，响应结构: {}", jsonNode.toString());
             }
             
             // 解析使用情况
@@ -374,10 +392,15 @@ public class WenxinService implements LLMService {
                 response.setUsage(usage);
             }
             
+            // 验证响应完整性
+            if (response.getChoices() == null || response.getChoices().isEmpty()) {
+                log.warn("文心一言响应解析完成但choices为空，可能是响应格式异常");
+            }
+            
             return response;
             
         } catch (Exception e) {
-            log.error("解析文心一言响应失败: {}", e.getMessage());
+            log.error("解析文心一言响应失败，原始响应: {}, 错误: {}", responseBody, e.getMessage(), e);
             return createErrorResponse("响应解析失败: " + e.getMessage());
         }
     }
@@ -387,12 +410,25 @@ public class WenxinService implements LLMService {
      */
     private LLMResponse parseStreamResponse(String data) {
         try {
+            log.debug("文心一言流式响应片段: {}", data);
+            
             // 处理SSE格式数据
             if (data.startsWith("data: ")) {
                 data = data.substring(6).trim();
             }
             
             JsonNode jsonNode = objectMapper.readTree(data);
+            
+            // 检查是否有错误信息
+            if (jsonNode.has("error_code")) {
+                String errorMessage = "流式API调用失败";
+                if (jsonNode.has("error_msg")) {
+                    errorMessage = jsonNode.get("error_msg").asText();
+                }
+                String errorCode = jsonNode.get("error_code").asText();
+                log.error("文心一言流式API返回错误，错误代码: {}, 错误信息: {}", errorCode, errorMessage);
+                return createErrorResponse(errorCode + ": " + errorMessage);
+            }
             
             LLMResponse response = new LLMResponse()
                     .setProvider(getProvider())
@@ -410,27 +446,33 @@ public class WenxinService implements LLMService {
             if (jsonNode.has("result")) {
                 String content = jsonNode.get("result").asText();
                 
-                LLMChoice choice = new LLMChoice();
-                choice.setIndex(0);
-                
-                // 检查是否完成
-                if (jsonNode.has("is_end") && jsonNode.get("is_end").asBoolean()) {
-                    choice.setFinishReason("stop");
-                    response.setFinished(true);
+                if (content != null && !content.trim().isEmpty()) {
+                    LLMChoice choice = new LLMChoice();
+                    choice.setIndex(0);
+                    
+                    // 检查是否完成
+                    if (jsonNode.has("is_end") && jsonNode.get("is_end").asBoolean()) {
+                        choice.setFinishReason("stop");
+                        response.setFinished(true);
+                    }
+                    
+                    LLMMessage delta = new LLMMessage();
+                    delta.setRole("assistant");
+                    delta.setContent(content);
+                    choice.setDelta(delta);
+                    
+                    response.setChoices(Arrays.asList(choice));
+                } else {
+                    log.debug("文心一言流式响应中result字段为空，可能是心跳包");
                 }
-                
-                LLMMessage delta = new LLMMessage();
-                delta.setRole("assistant");
-                delta.setContent(content);
-                choice.setDelta(delta);
-                
-                response.setChoices(Arrays.asList(choice));
+            } else {
+                log.debug("文心一言流式响应中缺少result字段，可能是心跳包: {}", data);
             }
             
             return response;
             
         } catch (Exception e) {
-            log.error("解析文心一言流式响应失败: {}", e.getMessage());
+            log.error("解析文心一言流式响应失败，原始数据: {}, 错误: {}", data, e.getMessage(), e);
             return null; // 流式响应解析失败时返回null，会被过滤掉
         }
     }
