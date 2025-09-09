@@ -78,7 +78,6 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         // 获取会话消息列表
         List<AiChatMessageVO> messages = getSessionMessages(id);
-        vo.setMessages(messages);
 
         return vo;
     }

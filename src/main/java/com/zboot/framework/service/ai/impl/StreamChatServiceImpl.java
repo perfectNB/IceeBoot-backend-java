@@ -213,6 +213,8 @@ public class StreamChatServiceImpl implements IStreamChatService {
             assistantMessage.setSessionId(sessionId);
             assistantMessage.setRole("assistant");
             assistantMessage.setContent(content);
+            assistantMessage.setCreateBy(String.valueOf(userId));
+            assistantMessage.setUpdateBy(String.valueOf(userId));
             aiChatMessageMapper.insert(assistantMessage);
             log.debug("保存助手消息成功，sessionId: {}", sessionId);
         } catch (Exception e) {

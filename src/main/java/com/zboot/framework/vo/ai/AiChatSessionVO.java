@@ -23,14 +23,9 @@ public class AiChatSessionVO {
     @Schema(description = "会话标题")
     private String title;
 
-    @Schema(description = "模型ID")
-    private Long modelId;
-
     @Schema(description = "模型名称")
     private String modelName;
 
-    @Schema(description = "用户ID")
-    private Long userId;
 
     @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -40,6 +35,4 @@ public class AiChatSessionVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    @Schema(description = "消息列表")
-    private List<AiChatMessageVO> messages;
 }
