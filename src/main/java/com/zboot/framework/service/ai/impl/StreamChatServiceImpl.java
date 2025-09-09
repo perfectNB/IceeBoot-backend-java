@@ -1,5 +1,6 @@
 package com.zboot.framework.service.ai.impl;
 
+import com.zboot.common.constant.CacheConstants;
 import com.zboot.common.service.llm.dto.LLMRequest;
 import com.zboot.common.service.llm.dto.LLMResponse;
 import com.zboot.common.service.llm.factory.LLMFactory;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 流式对话服务实现类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-08
  */
 @Slf4j
 @Service
@@ -40,8 +41,7 @@ public class StreamChatServiceImpl implements IStreamChatService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final AiChatMessageMapper aiChatMessageMapper;
 
-    private static final String SESSION_CACHE_KEY = "chat:session:";
-    private static final String KEY_CACHE_KEY = "chat:key:";
+   
     private static final int CACHE_EXPIRE_MINUTES = 30;
 
     @Override
@@ -128,8 +128,8 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 从缓存获取会话信息
      */
-    private AiChatSessionDO getSessionFromCache(Long sessionId) {
-        String cacheKey = SESSION_CACHE_KEY + sessionId;
+    public AiChatSessionDO getSessionFromCache(Long sessionId) {
+        String cacheKey = CacheConstants.Auth.SESSION_CACHE_KEY + sessionId;
         
         // 先从缓存获取
         AiChatSessionDO session = (AiChatSessionDO) redisTemplate.opsForValue().get(cacheKey);
@@ -152,8 +152,8 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 从缓存获取密钥信息
      */
-    private AiLLMKeyDO getKeyFromCache(Long keyId) {
-        String cacheKey = KEY_CACHE_KEY + keyId;
+    public AiLLMKeyDO getKeyFromCache(Long keyId) {
+        String cacheKey = CacheConstants.Auth.KEY_CACHE_KEY + keyId;
         
         // 先从缓存获取
         AiLLMKeyDO llmKey = (AiLLMKeyDO) redisTemplate.opsForValue().get(cacheKey);
@@ -176,7 +176,7 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 构建LLM请求
      */
-    private LLMRequest buildLLMRequest(StreamChatRequest request, AiChatSessionDO session, AiLLMKeyDO llmKey) {
+    public LLMRequest buildLLMRequest(StreamChatRequest request, AiChatSessionDO session, AiLLMKeyDO llmKey) {
         return new LLMRequest()
                 .setApiKey(llmKey.getApiKey())
                 .setSecretKey(llmKey.getSecretKey())
@@ -191,7 +191,7 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 保存用户消息
      */
-    private void saveUserMessage(Long sessionId, String content, Long userId) {
+    public void saveUserMessage(Long sessionId, String content, Long userId) {
         try {
             AiChatMessageDO userMessage = new AiChatMessageDO();
             userMessage.setSessionId(sessionId);
@@ -207,7 +207,7 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 保存助手消息
      */
-    private void saveAssistantMessage(Long sessionId, String content, Long userId) {
+    public void saveAssistantMessage(Long sessionId, String content, Long userId) {
         try {
             AiChatMessageDO assistantMessage = new AiChatMessageDO();
             assistantMessage.setSessionId(sessionId);
@@ -223,7 +223,7 @@ public class StreamChatServiceImpl implements IStreamChatService {
     /**
      * 创建错误响应
      */
-    private LLMResponse createErrorResponse(String errorMessage) {
+    public LLMResponse createErrorResponse(String errorMessage) {
         return new LLMResponse()
                 .setError(errorMessage)
                 .setFinished(true)

@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * 流式对话请求实体类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-08
  */
 @Data
 @Accessors(chain = true)

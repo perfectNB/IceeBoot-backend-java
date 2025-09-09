@@ -200,7 +200,21 @@ public class MoonshotService implements LLMService {
      */
     private LLMResponse parseResponse(String responseBody) {
         try {
+            log.debug("Kimi原始响应: {}", responseBody);
             JsonNode jsonNode = objectMapper.readTree(responseBody);
+            
+            // 检查是否有错误信息
+            if (jsonNode.has("error")) {
+                JsonNode errorNode = jsonNode.get("error");
+                String errorMessage = "API调用失败";
+                if (errorNode.has("message")) {
+                    errorMessage = errorNode.get("message").asText();
+                } else if (errorNode.has("code")) {
+                    errorMessage = "错误代码: " + errorNode.get("code").asText();
+                }
+                log.error("Kimi API返回错误: {}", errorMessage);
+                return createErrorResponse(errorMessage);
+            }
             
             LLMResponse response = new LLMResponse()
                     .setProvider(getProvider())
@@ -252,6 +266,8 @@ public class MoonshotService implements LLMService {
                 }
                 
                 response.setChoices(choices);
+            } else {
+                log.warn("Kimi响应中缺少choices字段，响应结构: {}", jsonNode.toString());
             }
             
             // 解析使用情况
@@ -272,10 +288,15 @@ public class MoonshotService implements LLMService {
                 response.setUsage(usage);
             }
             
+            // 验证响应完整性
+            if (response.getChoices() == null || response.getChoices().isEmpty()) {
+                log.warn("Kimi响应解析完成但choices为空，可能是响应格式异常");
+            }
+            
             return response;
             
         } catch (Exception e) {
-            log.error("解析Kimi响应失败: {}", e.getMessage());
+            log.error("解析Kimi响应失败，原始响应: {}, 错误: {}", responseBody, e.getMessage(), e);
             return createErrorResponse("响应解析失败: " + e.getMessage());
         }
     }
@@ -285,7 +306,19 @@ public class MoonshotService implements LLMService {
      */
     private LLMResponse parseStreamResponse(String data) {
         try {
+            log.debug("Kimi流式响应片段: {}", data);
             JsonNode jsonNode = objectMapper.readTree(data);
+            
+            // 检查是否有错误信息
+            if (jsonNode.has("error")) {
+                JsonNode errorNode = jsonNode.get("error");
+                String errorMessage = "流式API调用失败";
+                if (errorNode.has("message")) {
+                    errorMessage = errorNode.get("message").asText();
+                }
+                log.error("Kimi流式API返回错误: {}", errorMessage);
+                return createErrorResponse(errorMessage);
+            }
             
             LLMResponse response = new LLMResponse()
                     .setProvider(getProvider())
@@ -341,12 +374,14 @@ public class MoonshotService implements LLMService {
                 }
                 
                 response.setChoices(choices);
+            } else {
+                log.debug("Kimi流式响应中缺少choices字段，可能是心跳包: {}", data);
             }
             
             return response;
             
         } catch (Exception e) {
-            log.error("解析Kimi流式响应失败: {}", e.getMessage());
+            log.error("解析Kimi流式响应失败，原始数据: {}, 错误: {}", data, e.getMessage(), e);
             return null; // 流式响应解析失败时返回null，会被过滤掉
         }
     }
