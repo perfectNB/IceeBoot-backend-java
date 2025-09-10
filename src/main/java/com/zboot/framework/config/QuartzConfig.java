@@ -3,6 +3,7 @@ package com.zboot.framework.config;
 import org.quartz.Scheduler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 import javax.sql.DataSource;
@@ -31,6 +32,7 @@ public class QuartzConfig {
     }
 
     @Bean
+    @Primary
     public Scheduler scheduler(SchedulerFactoryBean schedulerFactoryBean) {
         return schedulerFactoryBean.getScheduler();
     }
