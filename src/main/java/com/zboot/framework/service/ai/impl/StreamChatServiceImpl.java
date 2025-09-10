@@ -1,10 +1,10 @@
 package com.zboot.framework.service.ai.impl;
 
 import com.zboot.common.constant.CacheConstants;
-import com.zboot.common.service.llm.dto.LLMRequest;
-import com.zboot.common.service.llm.dto.LLMResponse;
-import com.zboot.common.service.llm.factory.LLMFactory;
-import com.zboot.common.service.llm.service.LLMService;
+import com.zboot.common.service.ai.llm.dto.LLMRequest;
+import com.zboot.common.service.ai.llm.dto.LLMResponse;
+import com.zboot.common.service.ai.llm.factory.LLMFactory;
+import com.zboot.common.service.ai.llm.service.LLMService;
 import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import com.zboot.framework.entity.ai.AiChatSessionDO;
