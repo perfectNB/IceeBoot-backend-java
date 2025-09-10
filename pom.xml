@@ -21,7 +21,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.1.5</spring-boot.version>
+        <spring-boot.version>3.3.4</spring-boot.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <sa-token.version>1.37.0</sa-token.version>
         <mysql.version>8.0.33</mysql.version>
@@ -46,6 +46,17 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+      <repository>
+        <id>spring-milestones</id>
+        <name>Spring Milestones</name>
+        <url>https://repo.spring.io/milestone</url>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
 
     <dependencies>
         <!-- Spring Boot Starter -->
@@ -100,11 +111,18 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-        <!-- MyBatis Plus -->
+        <!-- MyBatis Plus for Spring Boot 3.x -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.8</version>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.9</version>
+        </dependency>
+
+        <!-- MyBatis Plus JSQLParser for JDK 11+ -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.9</version>
         </dependency>
 
         <!-- MySQL Driver -->
@@ -227,6 +245,13 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- Spring AI Alibaba (DashScope / Tongyi Qianwen) -->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-starter</artifactId>
+            <version>1.0.0-M5.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -234,7 +259,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.1.5</version>
+                <version>3.3.4</version>
                 <configuration>
                     <excludes>
                         <exclude>

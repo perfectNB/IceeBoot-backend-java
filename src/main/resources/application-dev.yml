@@ -25,10 +25,10 @@ spring:
   # Redis配置
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:1}
+      password: ${REDIS_PASSWORD:111111}
+      database: ${REDIS_DATABASE:0}
       timeout: 10000
       lettuce:
         pool:
@@ -67,6 +67,10 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+  
+  ai:
+    dashscope:
+      api-key: sk-11
 
 # 日志配置
 logging:
@@ -131,3 +135,4 @@ knife4j:
     enable-group: true
   cors: false
   production: false
+
