@@ -1,6 +1,6 @@
 package com.zboot.framework.service.ai;
 
-import com.zboot.common.service.llm.dto.LLMResponse;
+import com.zboot.common.service.ai.llm.dto.LLMResponse;
 import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import reactor.core.publisher.Flux;
 
