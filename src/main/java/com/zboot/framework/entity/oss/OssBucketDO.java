@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_oss_bucket")
+@Schema(description = "oss桶")
 public class OssBucketDO extends ZbootDO {
 
     @Schema(description = "桶名")

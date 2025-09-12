@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_sms_key")
+@Schema(description = "短信密钥")
 public class SmsKeyDO extends ZbootDO {
 
     @Schema(description = "SMS厂商")

@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_ai_agent")
+@Schema(description = "Agent")
 public class AiAgentDO extends ZbootDO {
 
     @Schema(description = "代理名称")

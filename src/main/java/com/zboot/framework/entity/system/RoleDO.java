@@ -23,6 +23,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_role")
+@Schema(description = "角色")
 public class RoleDO extends ZbootDO {
 
     @Schema(description = "角色名称")

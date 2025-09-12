@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_ai_llm_key")
+@Schema(description = "大模型密钥")
 public class AiLLMKeyDO extends ZbootDO {
 
     @Schema(description = "大模型厂商")

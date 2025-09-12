@@ -44,9 +44,7 @@ public class DatabaseInitService implements ApplicationRunner {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    
-    @Autowired
-    private ApplicationContext applicationContext;
+
 
     private static final String ENTITY_PACKAGE = "com.zboot.framework.entity";
     private static final String RESOURCE_PATTERN = "classpath*:com/zboot/**/*.class";
