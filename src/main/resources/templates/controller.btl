@@ -46,7 +46,7 @@ public class ${entityName}Controller {
 
     @Operation(summary = "根据ID查询${entityName}详情")
     @GetMapping("/{id}")
-    public R<${entityName}VO> get${entityName}ById(@PathVariable Long id) {
+    public R<${entityName}VO> get${entityName}ById(@PathVariable("id") Long id) {
         ${entityName}VO ${lowerEntityName} = ${lowerEntityName}Service.get${entityName}ById(id);
         return R.ok(${lowerEntityName});
     }

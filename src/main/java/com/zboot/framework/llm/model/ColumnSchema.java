@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.zboot.framework.ai.model;
+package com.zboot.framework.llm.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

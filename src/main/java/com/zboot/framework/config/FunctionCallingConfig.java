@@ -7,9 +7,9 @@
  */
 package com.zboot.framework.config;
 
-import com.zboot.framework.ai.model.DatabaseQueryRequest;
-import com.zboot.framework.ai.model.DatabaseQueryResponse;
-import com.zboot.framework.ai.service.DatabaseQueryFunction;
+import com.zboot.framework.llm.model.DatabaseQueryRequest;
+import com.zboot.framework.llm.model.DatabaseQueryResponse;
+import com.zboot.framework.llm.service.DatabaseQueryFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;

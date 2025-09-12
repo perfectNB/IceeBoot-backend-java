@@ -85,7 +85,7 @@ public class SysMenuController {
 
     @Operation(summary = "修改菜单状态", description = "启用或禁用菜单")
     @PutMapping("/{id}/status")
-    public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = menuService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
     }
@@ -101,7 +101,7 @@ public class SysMenuController {
 
     @Operation(summary = "获取子菜单", description = "根据父级ID获取子菜单列表")
     @GetMapping("/children/{parentId}")
-    public R<List<SysMenuVO>> getChildrenByParentId(@PathVariable Long parentId) {
+    public R<List<SysMenuVO>> getChildrenByParentId(@PathVariable("parentId") Long parentId) {
         List<SysMenuVO> children = menuService.getChildrenByParentId(parentId);
         return R.ok(children);
     }

@@ -48,7 +48,7 @@ public class SysRoleMenuController {
     @Operation(summary = "获取角色菜单关联详情", description = "根据ID获取角色菜单关联详细信息")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<RoleMenuVO> getRoleMenuById(@PathVariable Long id) {
+    public R<RoleMenuVO> getRoleMenuById(@PathVariable("id") Long id) {
         RoleMenuVO roleMenu = roleMenuService.getRoleMenuById(id);
         return R.ok(roleMenu);
     }
@@ -84,7 +84,7 @@ public class SysRoleMenuController {
     @Operation(summary = "获取角色的菜单列表", description = "根据角色ID获取该角色的所有菜单ID")
     @GetMapping("/role/{roleId}/menus")
     @RequirePermission(dynamic = true)
-    public R<List<Long>> getMenuIdsByRoleId(@PathVariable Long roleId) {
+    public R<List<Long>> getMenuIdsByRoleId(@PathVariable("roleId") Long roleId) {
         List<Long> menuIds = roleMenuService.getMenuIdsByRoleId(roleId);
         return R.ok(menuIds);
     }
@@ -92,7 +92,7 @@ public class SysRoleMenuController {
     @Operation(summary = "获取菜单的角色列表", description = "根据菜单ID获取该菜单的所有角色ID")
     @GetMapping("/menu/{menuId}/roles")
     @RequirePermission(dynamic = true)
-    public R<List<Long>> getRoleIdsByMenuId(@PathVariable Long menuId) {
+    public R<List<Long>> getRoleIdsByMenuId(@PathVariable("menuId") Long menuId) {
         List<Long> roleIds = roleMenuService.getRoleIdsByMenuId(menuId);
         return R.ok(roleIds);
     }
@@ -101,7 +101,7 @@ public class SysRoleMenuController {
     @Operation(summary = "为角色分配菜单", description = "为指定角色分配菜单列表")
     @PostMapping("/role/{roleId}/assign-menus")
     @RequirePermission(dynamic = true)
-    public R<Void> assignMenusToRole(@PathVariable Long roleId, @RequestBody List<Long> menuIds) {
+    public R<Void> assignMenusToRole(@PathVariable("roleId") Long roleId, @RequestBody List<Long> menuIds) {
         boolean success = roleMenuService.assignMenusToRole(roleId, menuIds);
         return success ? R.ok() : R.fail("分配菜单失败");
     }
@@ -110,7 +110,7 @@ public class SysRoleMenuController {
     @Operation(summary = "移除角色的所有菜单", description = "移除指定角色的所有菜单")
     @DeleteMapping("/role/{roleId}/menus")
     @RequirePermission(dynamic = true)
-    public R<Void> removeAllMenusByRoleId(@PathVariable Long roleId) {
+    public R<Void> removeAllMenusByRoleId(@PathVariable("id") Long roleId) {
         boolean success = roleMenuService.removeAllMenusByRoleId(roleId);
         return success ? R.ok() : R.fail("移除角色菜单失败");
     }

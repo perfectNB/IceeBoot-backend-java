@@ -59,7 +59,7 @@ public class SysPermissionController {
     @Operation(summary = "获取权限详情", description = "根据权限ID获取权限详细信息")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<SysPermissionVO> getPermissionById(@PathVariable Long id) {
+    public R<SysPermissionVO> getPermissionById(@PathVariable("id") Long id) {
         SysPermissionVO permissionVO = permissionService.getPermissionById(id);
         return R.ok(permissionVO);
     }
@@ -94,7 +94,7 @@ public class SysPermissionController {
 
     @Operation(summary = "修改权限状态", description = "启用或禁用权限")
     @PutMapping("/{id}/status")
-    public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = permissionService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
     }
@@ -106,7 +106,7 @@ public class SysPermissionController {
     @Operation(summary = "获取子权限", description = "根据父级ID获取子权限列表")
     @GetMapping("/children/{parentId}")
     @RequirePermission(dynamic = true)
-    public R<List<SysPermissionVO>> getChildrenByParentId(@PathVariable Long parentId) {
+    public R<List<SysPermissionVO>> getChildrenByParentId(@PathVariable("parentId") Long parentId) {
         List<SysPermissionVO> children = permissionService.getChildrenByParentId(parentId);
         return R.ok(children);
     }

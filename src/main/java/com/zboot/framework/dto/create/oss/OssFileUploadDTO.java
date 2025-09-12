@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * OSS文件上传数据传输对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Data
 @Schema(description = "OSS文件上传数据传输对象")

@@ -59,7 +59,7 @@ public class SmsKeyController {
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<SmsKeyVO> getSmsKeyById(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         SmsKeyVO result = smsKeyService.getSmsKeyById(id);
         return R.ok(result);
     }
@@ -92,7 +92,7 @@ public class SmsKeyController {
     @PutMapping("/{id}/status")
     @RequirePermission(dynamic = true)
     public R<Void> updateSmsKeyStatus(
-            @Parameter(description = "密钥ID") @PathVariable Long id,
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = smsKeyService.updateSmsKeyStatus(id, status);
@@ -103,7 +103,7 @@ public class SmsKeyController {
     @GetMapping("/provider/{provider}")
     @RequirePermission(dynamic = true)
     public R<List<SmsKeyVO>> getActiveSmsKeysByProvider(
-            @Parameter(description = "SMS厂商") @PathVariable String provider) {
+            @Parameter(description = "SMS厂商") @PathVariable("provider") String provider) {
         List<SmsKeyVO> result = smsKeyService.getActiveSmsKeysByProvider(provider);
         return R.ok(result);
     }
@@ -120,7 +120,7 @@ public class SmsKeyController {
     @GetMapping("/provider/{provider}/available")
     @RequirePermission(dynamic = true)
     public R<SmsKeyVO> getAvailableKeyByProvider(
-            @Parameter(description = "SMS厂商") @PathVariable String provider) {
+            @Parameter(description = "SMS厂商") @PathVariable("provider") String provider) {
         SmsKeyVO result = smsKeyService.getAvailableKeyByProvider(provider);
         return R.ok(result);
     }
@@ -129,7 +129,7 @@ public class SmsKeyController {
     @PostMapping("/{id}/validate")
     @RequirePermission(dynamic = true)
     public R<Boolean> validateSmsKey(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         Boolean result = smsKeyService.validateSmsKey(id);
         return R.ok(result);
     }
@@ -155,7 +155,7 @@ public class SmsKeyController {
     @GetMapping("/provider/{provider}/config")
     @RequirePermission(dynamic = true)
     public R<Map<String, Object>> getProviderConfig(
-            @Parameter(description = "SMS厂商") @PathVariable String provider) {
+            @Parameter(description = "SMS厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
             "provider", provider,
             "displayName", getProviderDisplayName(provider),
