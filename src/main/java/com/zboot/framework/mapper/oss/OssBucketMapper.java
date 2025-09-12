@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
  * OSS存储桶Mapper接口
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Mapper
 public interface OssBucketMapper extends BaseMapper<OssBucketDO> {

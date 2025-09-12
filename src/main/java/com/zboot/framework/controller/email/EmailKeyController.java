@@ -59,7 +59,7 @@ public class EmailKeyController {
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<EmailKeyVO> getEmailKeyById(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         EmailKeyVO result = emailKeyService.getEmailKeyById(id);
         return R.ok(result);
     }
@@ -92,7 +92,7 @@ public class EmailKeyController {
     @PutMapping("/{id}/status")
     @RequirePermission(dynamic = true)
     public R<Void> updateEmailKeyStatus(
-            @Parameter(description = "密钥ID") @PathVariable Long id,
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = emailKeyService.updateEmailKeyStatus(id, status);
@@ -103,7 +103,7 @@ public class EmailKeyController {
     @GetMapping("/provider/{provider}")
     @RequirePermission(dynamic = true)
     public R<List<EmailKeyVO>> getActiveEmailKeysByProvider(
-            @Parameter(description = "Email厂商") @PathVariable String provider) {
+            @Parameter(description = "Email厂商") @PathVariable("provider") String provider) {
         List<EmailKeyVO> result = emailKeyService.getActiveEmailKeysByProvider(provider);
         return R.ok(result);
     }
@@ -120,7 +120,7 @@ public class EmailKeyController {
     @GetMapping("/provider/{provider}/available")
     @RequirePermission(dynamic = true)
     public R<EmailKeyVO> getAvailableKeyByProvider(
-            @Parameter(description = "Email厂商") @PathVariable String provider) {
+            @Parameter(description = "Email厂商") @PathVariable("provider") String provider) {
         EmailKeyVO result = emailKeyService.getAvailableKeyByProvider(provider);
         return R.ok(result);
     }
@@ -129,7 +129,7 @@ public class EmailKeyController {
     @PostMapping("/{id}/validate")
     @RequirePermission(dynamic = true)
     public R<Boolean> validateEmailKey(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         Boolean result = emailKeyService.validateEmailKey(id);
         return R.ok(result);
     }
@@ -155,7 +155,7 @@ public class EmailKeyController {
     @GetMapping("/provider/{provider}/config")
     @RequirePermission(dynamic = true)
     public R<Map<String, Object>> getProviderConfig(
-            @Parameter(description = "Email厂商") @PathVariable String provider) {
+            @Parameter(description = "Email厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
             "provider", provider,
             "displayName", getProviderDisplayName(provider),

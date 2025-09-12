@@ -74,7 +74,7 @@ public class AiLLMKeyController {
     @PutMapping("/{id}/status")
     @RequirePermission(dynamic = true)
     public R<Void> updateLLMKeyStatus(
-            @Parameter(description = "密钥ID") @PathVariable Long id,
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = aiLLMKeyService.updateLLMKeyStatus(id, status);

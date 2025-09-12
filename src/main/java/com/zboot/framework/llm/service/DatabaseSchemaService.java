@@ -5,12 +5,12 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.zboot.framework.ai.service;
+package com.zboot.framework.llm.service;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.zboot.framework.ai.model.TableSchema;
-import com.zboot.framework.ai.model.ColumnSchema;
+import com.zboot.framework.llm.model.TableSchema;
+import com.zboot.framework.llm.model.ColumnSchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

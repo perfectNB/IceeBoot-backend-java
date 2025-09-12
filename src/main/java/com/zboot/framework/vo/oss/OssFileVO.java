@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * OSS文件视图对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Data
 @Schema(description = "OSS文件视图对象")
