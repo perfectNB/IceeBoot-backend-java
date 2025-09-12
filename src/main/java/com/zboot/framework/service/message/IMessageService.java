@@ -9,6 +9,7 @@ package com.zboot.framework.service.message;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.message.MessageDTO;
+import com.zboot.framework.dto.update.message.MessageUpdateDTO;
 import com.zboot.framework.entity.message.MessageDO;
 import com.zboot.framework.query.message.MessageQuery;
 import com.zboot.framework.vo.message.MessageVO;
@@ -40,6 +41,15 @@ public interface IMessageService extends IService<MessageDO> {
      * @return 是否成功
      */
     boolean addMessage(MessageDTO messageDTO);
+
+
+    /**
+     * 更新消息
+     *
+     * @param ids 消息信息
+     * @return 是否成功
+     */
+    boolean updateMessage(List<Long> ids);
 
 
     /**
