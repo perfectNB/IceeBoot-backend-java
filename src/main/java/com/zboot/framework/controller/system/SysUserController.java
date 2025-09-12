@@ -51,7 +51,7 @@ public class SysUserController {
     @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详细信息")
     @GetMapping("/{id}")
 //    @RequirePermission(dynamic = true)
-    public R<SysUserVO> getUserById(@PathVariable Long id) {
+    public R<SysUserVO> getUserById(@PathVariable("id") Long id) {
         SysUserVO userVO = userService.getUserById(id);
         return R.ok(userVO);
     }
@@ -86,7 +86,7 @@ public class SysUserController {
     @Operation(summary = "重置密码", description = "重置用户密码")
     @PutMapping("/{id}/password")
 //    @RequirePermission(dynamic = true)
-    public R<Void> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
+    public R<Void> resetPassword(@PathVariable("id") Long id, @RequestParam String newPassword) {
         boolean success = userService.resetPassword(id, newPassword);
         return success ? R.ok(ResponseMessage.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.PASSWORD_RESET_FAIL);
     }
@@ -95,7 +95,7 @@ public class SysUserController {
     @Operation(summary = "修改用户状态", description = "启用或禁用用户")
     @PutMapping("/{id}/status")
 //    @RequirePermission(dynamic = true)
-    public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = userService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }

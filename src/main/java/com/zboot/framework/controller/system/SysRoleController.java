@@ -48,7 +48,7 @@ public class SysRoleController {
     @Operation(summary = "根据ID获取角色", description = "根据角色ID获取角色详细信息")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<SysRoleVO> getRoleById(@PathVariable Long id) {
+    public R<SysRoleVO> getRoleById(@PathVariable("id") Long id) {
         SysRoleVO roleVO = roleService.getRoleById(id);
         return R.ok(roleVO);
     }
@@ -64,7 +64,7 @@ public class SysRoleController {
     @Operation(summary = "更新角色", description = "更新角色信息")
     @PutMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<Void> updateRole(@PathVariable Long id, @Validated @RequestBody RoleUpdateDTO dto) {
+    public R<Void> updateRole(@PathVariable("id") Long id, @Validated @RequestBody RoleUpdateDTO dto) {
         dto.setId(id);
         boolean success = roleService.updateRole(dto);
         return success ? R.ok(ResponseMessage.ROLE_UPDATE_SUCCESS) : R.fail(ResponseMessage.ROLE_UPDATE_FAIL);
@@ -81,7 +81,7 @@ public class SysRoleController {
     @Operation(summary = "修改角色状态", description = "启用或禁用角色")
     @PutMapping("/{id}/status")
     @RequirePermission(dynamic = true)
-    public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = roleService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
@@ -91,7 +91,7 @@ public class SysRoleController {
     @Operation(summary = "保存角色权限", description = "为角色分配权限")
     @PostMapping("/{roleId}/permissions")
     @RequirePermission(dynamic = true)
-    public R<Void> saveRolePermissions(@PathVariable Long roleId, @RequestBody List<Long> permissionIds) {
+    public R<Void> saveRolePermissions(@PathVariable("roleId") Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = roleService.saveRolePermissions(roleId, permissionIds);
         return success ? R.ok("角色权限分配成功") : R.fail("角色权限分配失败");
     }
@@ -99,7 +99,7 @@ public class SysRoleController {
     @Operation(summary = "保存角色菜单", description = "为角色分配菜单")
     @PostMapping("/{roleId}/menus")
     @RequirePermission(dynamic = true)
-    public R<Void> saveRoleMenus(@PathVariable Long roleId, @RequestBody List<Long> menuIds) {
+    public R<Void> saveRoleMenus(@PathVariable("roleId") Long roleId, @RequestBody List<Long> menuIds) {
         boolean success = roleService.saveRoleMenus(roleId, menuIds);
         return success ? R.ok("角色菜单分配成功") : R.fail("角色菜单分配失败");
     }

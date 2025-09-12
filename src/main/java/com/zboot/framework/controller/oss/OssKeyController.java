@@ -59,7 +59,7 @@ public class OssKeyController {
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<OssKeyVO> getOssKeyById(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         OssKeyVO result = ossKeyService.getOssKeyById(id);
         return R.ok(result);
     }
@@ -92,7 +92,7 @@ public class OssKeyController {
     @PutMapping("/{id}/status")
     @RequirePermission(dynamic = true)
     public R<Void> updateOssKeyStatus(
-            @Parameter(description = "密钥ID") @PathVariable Long id,
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = ossKeyService.updateOssKeyStatus(id, status);
@@ -103,7 +103,7 @@ public class OssKeyController {
     @GetMapping("/provider/{provider}")
     @RequirePermission(dynamic = true)
     public R<List<OssKeyVO>> getActiveOssKeysByProvider(
-            @Parameter(description = "OSS厂商") @PathVariable String provider) {
+            @Parameter(description = "OSS厂商") @PathVariable("provider") String provider) {
         List<OssKeyVO> result = ossKeyService.getActiveOssKeysByProvider(provider);
         return R.ok(result);
     }
@@ -120,7 +120,7 @@ public class OssKeyController {
     @GetMapping("/provider/{provider}/available")
     @RequirePermission(dynamic = true)
     public R<OssKeyVO> getAvailableKeyByProvider(
-            @Parameter(description = "OSS厂商") @PathVariable String provider) {
+            @Parameter(description = "OSS厂商") @PathVariable("provider") String provider) {
         OssKeyVO result = ossKeyService.getAvailableKeyByProvider(provider);
         return R.ok(result);
     }
@@ -129,7 +129,7 @@ public class OssKeyController {
     @PostMapping("/{id}/validate")
     @RequirePermission(dynamic = true)
     public R<Boolean> validateOssKey(
-            @Parameter(description = "密钥ID") @PathVariable Long id) {
+            @Parameter(description = "密钥ID") @PathVariable("id") Long id) {
         Boolean result = ossKeyService.validateOssKey(id);
         return R.ok(result);
     }
@@ -155,7 +155,7 @@ public class OssKeyController {
     @GetMapping("/provider/{provider}/config")
     @RequirePermission(dynamic = true)
     public R<Map<String, Object>> getProviderConfig(
-            @Parameter(description = "OSS厂商") @PathVariable String provider) {
+            @Parameter(description = "OSS厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
             "provider", provider,
             "displayName", getProviderDisplayName(provider),

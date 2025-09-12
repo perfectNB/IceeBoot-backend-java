@@ -5,9 +5,9 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.zboot.framework.ai.service;
+package com.zboot.framework.llm.service;
 
-import com.zboot.framework.ai.model.QueryResult;
+import com.zboot.framework.llm.model.QueryResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;

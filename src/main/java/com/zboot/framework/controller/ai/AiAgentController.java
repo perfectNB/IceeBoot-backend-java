@@ -45,7 +45,7 @@ public class AiAgentController {
     @Operation(summary = "根据ID获取agents")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<AiAgentVO> getAgentById(@Parameter(description = "AI代理ID") @PathVariable Long id) {
+    public R<AiAgentVO> getAgentById(@Parameter(description = "AI代理ID") @PathVariable("id") Long id) {
         AiAgentVO agent = aiAgentService.getAgentById(id);
         return R.ok(agent);
     }
@@ -80,7 +80,7 @@ public class AiAgentController {
     @Operation(summary = "更新代理状态")
     @PutMapping("/{id}/status")
     public R<Void> updateAgentStatus(
-            @Parameter(description = "代理ID") @PathVariable Long id,
+            @Parameter(description = "代理ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
         Boolean result = aiAgentService.updateAgentStatus(id, request.get("status"));
         if (result) {
@@ -91,14 +91,14 @@ public class AiAgentController {
 
     @Operation(summary = "根据平台获取代理列表")
     @GetMapping("/platform/{platform}")
-    public R<List<AiAgentVO>> getAgentsByPlatform(@Parameter(description = "平台") @PathVariable String platform) {
+    public R<List<AiAgentVO>> getAgentsByPlatform(@Parameter(description = "平台") @PathVariable("platform") String platform) {
         List<AiAgentVO> agents = aiAgentService.getAgentsByPlatform(platform);
         return R.ok(agents);
     }
 
     @Operation(summary = "根据类型获取代理列表")
     @GetMapping("/type/{type}")
-    public R<List<AiAgentVO>> getAgentsByType(@Parameter(description = "类型") @PathVariable String type) {
+    public R<List<AiAgentVO>> getAgentsByType(@Parameter(description = "类型") @PathVariable("type") String type) {
         List<AiAgentVO> agents = aiAgentService.getAgentsByType(type);
         return R.ok(agents);
     }

@@ -5,13 +5,13 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.zboot.framework.ai.service;
+package com.zboot.framework.llm.service;
 
-import com.zboot.framework.ai.model.DatabaseQueryRequest;
-import com.zboot.framework.ai.model.DatabaseQueryResponse;
-import com.zboot.framework.ai.model.QueryResult;
-import com.zboot.framework.ai.model.TableSchema;
-import com.zboot.framework.ai.model.ColumnSchema;
+import com.zboot.framework.llm.model.DatabaseQueryRequest;
+import com.zboot.framework.llm.model.DatabaseQueryResponse;
+import com.zboot.framework.llm.model.QueryResult;
+import com.zboot.framework.llm.model.TableSchema;
+import com.zboot.framework.llm.model.ColumnSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

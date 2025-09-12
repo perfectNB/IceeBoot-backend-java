@@ -44,7 +44,7 @@ public class TaskController {
      */
     @Operation(summary = "查询任务详情", description = "根据ID查询任务详情")
     @GetMapping("/{id}")
-    public R<TaskDO> getTaskById(@PathVariable String id) {
+    public R<TaskDO> getTaskById(@PathVariable("id") String id) {
         TaskDO task = taskService.getById(id);
         return R.ok(task);
     }
@@ -64,7 +64,7 @@ public class TaskController {
      */
     @Operation(summary = "更新任务", description = "更新定时任务信息")
     @PutMapping("/{id}")
-    public R<TaskDO> updateTask(@PathVariable Long id, @RequestBody TaskDO task) {
+    public R<TaskDO> updateTask(@PathVariable("id") Long id, @RequestBody TaskDO task) {
         TaskDO result = taskService.updateTask(id, task);
         return R.ok(result);
     }
@@ -84,7 +84,7 @@ public class TaskController {
      */
     @Operation(summary = "启动任务", description = "启动定时任务")
     @PostMapping("/{id}/start")
-    public R<Void> startTask(@PathVariable String id) {
+    public R<Void> startTask(@PathVariable("id") String id) {
         taskService.startTask(id);
         return R.ok();
     }
@@ -94,7 +94,7 @@ public class TaskController {
      */
     @Operation(summary = "停止任务", description = "停止定时任务")
     @PostMapping("/{id}/stop")
-    public R<Void> stopTask(@PathVariable String id) {
+    public R<Void> stopTask(@PathVariable("id") String id) {
         taskService.stopTask(id);
         return R.ok();
     }
