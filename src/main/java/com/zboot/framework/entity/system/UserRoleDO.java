@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_user_role")
+@Schema(description = "用户角色")
 public class UserRoleDO extends ZbootDO {
 
     @Schema(description = "用户ID")

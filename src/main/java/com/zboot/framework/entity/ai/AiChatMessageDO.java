@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_ai_chat_message")
+@Schema(description = "大模型对话信息")
 public class AiChatMessageDO extends ZbootDO {
 
     @Schema(description = "会话ID")
