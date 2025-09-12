@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("t_task")
+@Schema(description = "定时任务")
 public class TaskDO extends ZbootDO {
 
 

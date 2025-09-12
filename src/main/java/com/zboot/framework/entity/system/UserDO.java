@@ -25,6 +25,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_user")
+@Schema(description = "用户")
 public class UserDO extends ZbootDO {
 
     @Schema(description = "用户名")

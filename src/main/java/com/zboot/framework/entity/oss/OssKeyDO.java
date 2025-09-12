@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_oss_key")
+@Schema(description = "oss密钥")
 public class OssKeyDO extends ZbootDO {
 
     @Schema(description = "OSS厂商")

@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_role_menu")
+@Schema(description = "角色有的菜单")
 public class RoleMenuDO extends ZbootDO {
 
     @Schema(description = "角色ID")

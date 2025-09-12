@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_log")
+@Schema(description = "日志")
 public class LogDO extends ZbootDO {
 
     @Schema(description = "日志级别")

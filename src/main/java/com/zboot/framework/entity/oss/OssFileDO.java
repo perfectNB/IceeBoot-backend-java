@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_oss_file")
+@Schema(description = "oss文件")
 public class OssFileDO extends ZbootDO {
 
     @Schema(description = "文件名")

@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_ai_chat_session")
+@Schema(description = "大模型对话")
 public class AiChatSessionDO extends ZbootDO {
 
     @Schema(description = "会话标题")
