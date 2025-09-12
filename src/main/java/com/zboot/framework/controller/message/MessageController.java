@@ -10,6 +10,7 @@ import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.message.MessageDTO;
+import com.zboot.framework.dto.update.message.MessageUpdateDTO;
 import com.zboot.framework.query.message.MessageQuery;
 import com.zboot.framework.service.message.IMessageService;
 import com.zboot.framework.vo.message.MessageVO;
@@ -50,6 +51,14 @@ public class MessageController {
     public R<Void> addMessage(@Validated @RequestBody MessageDTO messageDTO) {
         boolean success = messageService.addMessage(messageDTO);
         return success ? R.ok("消息创建成功") : R.fail("消息创建失败");
+    }
+
+    @Operation(summary = "更新消息", description = "更新消息")
+    @PutMapping
+    @RequirePermission(dynamic = true)
+    public R<Void> updateMessage(@RequestBody List<Long> ids) {
+        boolean success = messageService.updateMessage(ids);
+        return success ? R.ok("消息更新成功") : R.fail("消息更新失败");
     }
 
 
