@@ -3,13 +3,16 @@ package com.zboot.framework.service.ai;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.service.ai.llm.dto.LLMResponse;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
+import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import com.zboot.framework.entity.ai.AiChatSessionDO;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
 import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -100,4 +103,12 @@ public interface IAiChatService extends IService<AiChatSessionDO> {
      * @return 分页结果
      */
     PageResult<AiChatMessageVO> getMessage(AiChatMessageQuery query);
+
+    /**
+     * 流式对话
+     *
+     * @param request 流式对话请求
+     * @return 流式响应
+     */
+    Flux<LLMResponse> streamChat(StreamChatRequest request);
 }

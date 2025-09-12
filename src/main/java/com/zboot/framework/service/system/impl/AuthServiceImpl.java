@@ -39,19 +39,7 @@ public class AuthServiceImpl implements IAuthService {
     private ISysUserService userService;
 
     @Autowired
-    private ISysRoleMenuService iSysRoleMenuService;
-
-    @Autowired
     private ISysUserRoleService iSysUserRoleService;
-
-    @Autowired
-    private ISysPermissionService iSysPermissionService;
-
-    @Autowired
-    private ISysMenuService iSysMenuService;
-
-    @Autowired
-    private IAuthCacheService authCacheService;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;

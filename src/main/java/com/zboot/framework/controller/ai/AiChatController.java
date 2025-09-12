@@ -6,31 +6,25 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.zboot.common.annotation.RequirePermission;
 import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.ai.AiChatSessionDTO;
-import com.zboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import com.zboot.framework.query.ai.AiChatSessionQuery;
 import com.zboot.framework.query.ai.AiChatMessageQuery;
 import com.zboot.framework.service.ai.IAiChatService;
-import com.zboot.framework.service.ai.IStreamChatService;
 import com.zboot.framework.vo.ai.AiChatSessionVO;
 import com.zboot.framework.vo.ai.AiChatMessageVO;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Flux;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI对话管理控制器
@@ -45,7 +39,6 @@ import java.util.Map;
 public class AiChatController {
 
     private final IAiChatService aiChatService;
-    private final IStreamChatService streamChatService;
 
 
     @Operation(summary = "获取对话会话列表")
@@ -80,7 +73,7 @@ public class AiChatController {
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 //    @RequirePermission(dynamic = true)
     public Flux<String> streamChat(@Validated @RequestBody StreamChatRequest request) {
-        return streamChatService.streamChat(request)
+        return aiChatService.streamChat(request)
                 .map(response -> {
                     try {
                         // 将LLMResponse转换为SSE格式

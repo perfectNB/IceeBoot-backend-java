@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_menu")
+@Schema(description = "菜单")
 public class MenuDO extends ZbootDO {
 
     @Schema(description = "菜单标题")

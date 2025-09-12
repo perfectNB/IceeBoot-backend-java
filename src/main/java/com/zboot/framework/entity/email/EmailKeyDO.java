@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_email_key")
+@Schema(description = "邮箱密钥")
 public class EmailKeyDO extends ZbootDO {
 
     @Schema(description = "Email厂商")
