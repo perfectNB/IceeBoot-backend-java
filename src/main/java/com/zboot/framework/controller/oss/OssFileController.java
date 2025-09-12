@@ -29,7 +29,7 @@ import java.util.List;
  * OSS文件管理控制器
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Tag(name = "OSS文件管理", description = "OSS文件和存储桶管理相关接口")
 @RestController
@@ -54,7 +54,7 @@ public class OssFileController {
     @GetMapping("/buckets/{id}")
     @RequirePermission(dynamic = true)
     public R<OssBucketVO> getBucketById(
-            @Parameter(description = "桶ID") @PathVariable Long id) {
+            @Parameter(description = "桶ID") @PathVariable("id") Long id) {
         OssBucketVO result = ossBucketService.getBucketById(id);
         return R.ok(result);
     }
@@ -97,7 +97,7 @@ public class OssFileController {
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<OssFileVO> getFileById(
-            @Parameter(description = "文件ID") @PathVariable Long id) {
+            @Parameter(description = "文件ID") @PathVariable("id") Long id) {
         OssFileVO result = ossFileService.getFileById(id);
         return R.ok(result);
     }
@@ -114,7 +114,7 @@ public class OssFileController {
     @GetMapping("/download/{id}")
     @RequirePermission(dynamic = true)
     public ResponseEntity<Resource> downloadFile(
-            @Parameter(description = "文件ID") @PathVariable Long id) {
+            @Parameter(description = "文件ID") @PathVariable("id") Long id) {
         try {
             Resource resource = ossFileService.downloadFile(id);
             OssFileVO fileInfo = ossFileService.getFileById(id);

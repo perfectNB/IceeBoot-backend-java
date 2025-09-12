@@ -2,7 +2,7 @@
  * OSS文件实体类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 package com.zboot.framework.entity.oss;
 
@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
  * OSS文件实体类
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
  * OSS存储桶查询对象
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

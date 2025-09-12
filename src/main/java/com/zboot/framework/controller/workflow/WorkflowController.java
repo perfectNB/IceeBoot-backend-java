@@ -55,7 +55,7 @@ public class WorkflowController {
     @PostMapping("/task/{taskId}/complete")
     @RequirePermission(dynamic = true)
     public R<Void> completeTask(
-            @PathVariable String taskId,
+            @PathVariable("taskId") String taskId,
             @RequestBody(required = false) Map<String, Object> variables) {
         
         workflowService.completeTask(taskId, variables);
@@ -68,7 +68,7 @@ public class WorkflowController {
     @Operation(summary = "获取用户任务列表", description = "获取指定用户的任务列表")
     @GetMapping("/tasks/user/{assignee}")
     @RequirePermission(dynamic = true)
-    public R<List<Task>> getUserTasks(@PathVariable String assignee) {
+    public R<List<Task>> getUserTasks(@PathVariable("assignee") String assignee) {
         List<Task> tasks = workflowService.getUserTasks(assignee);
         return R.ok(tasks);
     }
@@ -79,7 +79,7 @@ public class WorkflowController {
     @Operation(summary = "获取候选任务列表", description = "获取指定候选用户的任务列表")
     @GetMapping("/tasks/candidate/{candidateUser}")
     @RequirePermission(dynamic = true)
-    public R<List<Task>> getCandidateTasks(@PathVariable String candidateUser) {
+    public R<List<Task>> getCandidateTasks(@PathVariable("candidateUser") String candidateUser) {
         List<Task> tasks = workflowService.getCandidateTasks(candidateUser);
         return R.ok(tasks);
     }
@@ -90,7 +90,7 @@ public class WorkflowController {
     @Operation(summary = "获取流程实例", description = "根据流程实例ID获取流程实例")
     @GetMapping("/process/{processInstanceId}")
     @RequirePermission(dynamic = true)
-    public R<ProcessInstance> getProcessInstance(@PathVariable String processInstanceId) {
+    public R<ProcessInstance> getProcessInstance(@PathVariable("processInstanceId") String processInstanceId) {
         ProcessInstance processInstance = workflowService.getProcessInstance(processInstanceId);
         return R.ok(processInstance);
     }
@@ -102,7 +102,7 @@ public class WorkflowController {
     @DeleteMapping("/process/{processInstanceId}")
     @RequirePermission(dynamic = true)
     public R<Void> deleteProcessInstance(
-            @PathVariable String processInstanceId,
+            @PathVariable("processInstanceId") String processInstanceId,
             @RequestParam(defaultValue = "手动删除") String deleteReason) {
         
         workflowService.deleteProcessInstance(processInstanceId, deleteReason);
@@ -115,7 +115,7 @@ public class WorkflowController {
     @Operation(summary = "判断流程是否结束", description = "判断指定流程实例是否已结束")
     @GetMapping("/process/{processInstanceId}/ended")
     @RequirePermission(dynamic = true)
-    public R<Boolean> isProcessEnded(@PathVariable String processInstanceId) {
+    public R<Boolean> isProcessEnded(@PathVariable("processInstanceId") String processInstanceId) {
         boolean isEnded = workflowService.isProcessEnded(processInstanceId);
         return R.ok(isEnded);
     }
@@ -127,7 +127,7 @@ public class WorkflowController {
     @PostMapping("/task/{taskId}/jump")
     @RequirePermission(dynamic = true)
     public R<Void> jumpToActivity(
-            @PathVariable String taskId,
+            @PathVariable("taskId") String taskId,
             @RequestParam String targetActivityId) {
         
         workflowService.jumpToActivity(taskId, targetActivityId);
@@ -140,7 +140,7 @@ public class WorkflowController {
     @Operation(summary = "结束流程", description = "强制结束指定的流程实例")
     @PostMapping("/process/{processInstanceId}/end")
     @RequirePermission(dynamic = true)
-    public R<Void> endProcess(@PathVariable String processInstanceId) {
+    public R<Void> endProcess(@PathVariable("processInstanceId") String processInstanceId) {
         workflowService.endProcess(processInstanceId);
         return R.ok();
     }

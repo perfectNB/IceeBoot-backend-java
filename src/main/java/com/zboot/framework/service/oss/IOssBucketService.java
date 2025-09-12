@@ -14,7 +14,7 @@ import java.util.List;
  * OSS存储桶服务接口
  * 
  * @author CodeIcee
- * @date 2025-01-27
+ * @date 2025-09-12
  */
 public interface IOssBucketService extends IService<OssBucketDO> {
 

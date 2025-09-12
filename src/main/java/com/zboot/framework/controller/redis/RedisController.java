@@ -46,7 +46,7 @@ public class RedisController {
      */
     @Operation(summary = "获取Redis键详情", description = "根据键名获取Redis键详情")
     @GetMapping("/keys/{key}")
-    public R<RedisKeyVO> getRedisKeyDetail(@PathVariable String key) {
+    public R<RedisKeyVO> getRedisKeyDetail(@PathVariable("key") String key) {
         RedisKeyVO result = redisService.getRedisKeyDetail(key);
         return R.ok(result);
     }
