@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.create.message.MessageDTO;
+import com.zboot.framework.dto.update.message.MessageUpdateDTO;
 import com.zboot.framework.entity.message.MessageDO;
 import com.zboot.framework.mapper.message.IMessageMapper;
 import com.zboot.framework.query.message.MessageQuery;
@@ -101,6 +102,16 @@ public class MessageServiceImpl extends ServiceImpl<IMessageMapper, MessageDO> i
         return this.save(message);
     }
 
+    @Override
+    public boolean updateMessage(List<Long> ids) {
+        for (Long id : ids) {
+            MessageDO message = new MessageDO();
+            message.setId(id);
+            message.setStatus("read");
+            this.updateById(message);
+        }
+        return true;
+    }
 
 
     @Override
