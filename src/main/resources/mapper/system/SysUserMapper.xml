@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.zboot.framework.mapper.system.SysUserMapper">
+<mapper namespace="com.iceeboot.framework.mapper.system.SysUserMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.system.UserDO">
+    <resultMap id="BaseResultMap" type="com.iceeboot.framework.entity.system.UserDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="username" property="username" jdbcType="VARCHAR"/>
         <result column="password" property="password" jdbcType="VARCHAR"/>
@@ -26,7 +26,7 @@
     </sql>
 
     <!-- 根据用户ID查询权限 -->
-    <select id="selectPermissionsByUserId" parameterType="java.lang.Long" resultType="com.zboot.framework.entity.system.PermissionDO">
+    <select id="selectPermissionsByUserId" parameterType="java.lang.Long" resultType="com.iceeboot.framework.entity.system.PermissionDO">
         SELECT DISTINCT p.*
         FROM t_permission p
         INNER JOIN t_role_permission rp ON p.id = rp.permission_id
@@ -38,7 +38,7 @@
     </select>
 
     <!-- 根据用户ID查询角色 -->
-    <select id="selectRolesByUserId" parameterType="java.lang.Long" resultType="com.zboot.framework.entity.system.RoleDO">
+    <select id="selectRolesByUserId" parameterType="java.lang.Long" resultType="com.iceeboot.framework.entity.system.RoleDO">
         SELECT r.*
         FROM t_role r
         INNER JOIN t_user_role ur ON r.id = ur.role_id

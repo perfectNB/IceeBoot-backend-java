@@ -1,7 +1,7 @@
 package ${basePackage}.entity.${packageName};
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.zboot.common.core.domain.ZbootDO;
+import com.iceeboot.common.core.domain.IceeBootDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_${lowerEntityName}")
 @Schema(description = "${entityName}实体")
-public class ${entityName}DO extends ZbootDO {
+public class ${entityName}DO extends IceeBootDO {
 
     // TODO: 添加具体字段
     // 示例字段：

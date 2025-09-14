@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.zboot.framework.mapper.log.LogMapper">
+<mapper namespace="com.iceeboot.framework.mapper.log.LogMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.log.LogDO">
+    <resultMap id="BaseResultMap" type="com.iceeboot.framework.entity.log.LogDO">
         <id column="id" property="id" />
         <result column="level" property="level" />
         <result column="module" property="module" />

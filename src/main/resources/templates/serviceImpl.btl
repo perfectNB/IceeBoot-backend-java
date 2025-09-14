@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.zboot.common.core.domain.PageResult;
+import com.iceeboot.common.core.domain.PageResult;
 import ${basePackage}.entity.${packageName}.${entityName}DO;
 import ${basePackage}.dto.create.${entityName}DTO;
 import ${basePackage}.dto.update.${entityName}UpdateDTO;
@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import com.zboot.common.exception.ZbootException;
+import com.iceeboot.common.exception.IceeBootException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,7 +69,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
             return ${lowerEntityName};
         } catch (Exception e) {
             log.error("创建${entityName}失败: {}", e.getMessage(), e);
-            throw new ZbootException("创建${entityName}失败", e);
+            throw new IceeBootException("创建${entityName}失败", e);
         }
     }
 
@@ -78,7 +78,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
         // TODO: 添加业务逻辑检查
         // 例如：检查名称是否重复
         // if (existsName(${lowerEntityName}UpdateDTO.getName(), ${lowerEntityName}UpdateDTO.getId())) {
-        //     throw new ZbootException("名称已存在");
+        //     throw new IceeBootException("名称已存在");
         // }
 
         ${entityName}DO ${lowerEntityName} = new ${entityName}DO();
@@ -103,7 +103,7 @@ public class ${entityName}ServiceImpl extends ServiceImpl<${entityName}Mapper, $
             return this.removeByIds(ids);
         } catch (Exception e) {
             log.error("批量删除${entityName}失败: {}", e.getMessage(), e);
-            throw new ZbootException("批量删除${entityName}失败", e);
+            throw new IceeBootException("批量删除${entityName}失败", e);
         }
     }
 }
