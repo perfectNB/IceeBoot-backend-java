@@ -51,6 +51,15 @@ public interface IOssFileService extends IService<OssFileDO> {
     Resource downloadFile(Long id);
 
     /**
+     * 生成文件下载链接
+     * 
+     * @param id 文件ID
+     * @param expiration 链接有效期（秒）
+     * @return 下载链接
+     */
+    String generateDownloadUrl(Long id, Long expiration);
+
+    /**
      * 删除文件
      * 
      * @param ids 文件ID列表

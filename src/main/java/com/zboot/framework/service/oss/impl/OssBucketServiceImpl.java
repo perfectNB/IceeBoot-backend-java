@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.exception.ZbootException;
 import org.springframework.util.StringUtils;
 import com.zboot.framework.dto.create.oss.OssBucketDTO;
 import com.zboot.framework.dto.update.oss.OssBucketUpdateDTO;
@@ -78,7 +79,7 @@ public class OssBucketServiceImpl extends ServiceImpl<OssBucketMapper, OssBucket
         // 检查同供应商下是否有重名的桶
         OssBucketDO existingBucket = getBucketByProviderAndName(dto.getProvider(), dto.getBucketName());
         if (existingBucket != null) {
-            throw new IllegalArgumentException("同供应商下已存在相同名称的桶: " + dto.getBucketName());
+            throw new ZbootException("同供应商下已存在相同名称的桶: " + dto.getBucketName());
         }
         
         OssBucketDO bucket = new OssBucketDO();
@@ -97,17 +98,17 @@ public class OssBucketServiceImpl extends ServiceImpl<OssBucketMapper, OssBucket
         // 检查桶是否存在文件
         OssBucketDO existingBucket = this.getById(dto.getId());
         if (existingBucket == null) {
-            throw new IllegalArgumentException("桶不存在");
+            throw new ZbootException("桶不存在");
         }
         
         if (hasBucketFiles(existingBucket.getBucketName())) {
-            throw new IllegalArgumentException("桶下存在文件，无法修改");
+            throw new ZbootException("桶下存在文件，无法修改");
         }
         
         // 检查同供应商下是否有重名的桶（排除自己）
         OssBucketDO duplicateBucket = getBucketByProviderAndName(dto.getProvider(), dto.getBucketName());
         if (duplicateBucket != null && !duplicateBucket.getId().equals(dto.getId())) {
-            throw new IllegalArgumentException("同供应商下已存在相同名称的桶: " + dto.getBucketName());
+            throw new ZbootException("同供应商下已存在相同名称的桶: " + dto.getBucketName());
         }
         
         OssBucketDO bucket = new OssBucketDO();
@@ -120,9 +121,10 @@ public class OssBucketServiceImpl extends ServiceImpl<OssBucketMapper, OssBucket
         for (Long id : ids) {
             OssBucketDO bucket = this.getById(id);
             if (bucket != null && hasBucketFiles(bucket.getBucketName())) {
-                throw new IllegalArgumentException("桶 " + bucket.getBucketName() + " 下存在文件，无法删除");
+                throw new ZbootException("桶 " + bucket.getBucketName() + " 下存在文件，无法删除");
             }
         }
+
         return this.removeByIds(ids);
     }
 

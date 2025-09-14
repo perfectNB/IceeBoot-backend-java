@@ -7,9 +7,11 @@
 package com.zboot.framework.service.message.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.dto.create.message.MessageDTO;
@@ -96,10 +98,31 @@ public class MessageServiceImpl extends ServiceImpl<IMessageMapper, MessageDO> i
         
         // 如果没有设置状态，默认为未读
         if (!StringUtils.hasText(message.getStatus())) {
-            message.setStatus("unread");
+            message.setStatus(SystemConstants.Status.UNREAD);
         }
         
         return this.save(message);
+    }
+
+    @Override
+    public boolean allRead() {
+        Long userId = TokenUtils.getCurrentUserId();
+        if (userId == null) {
+            log.warn("allRead failed: userId is null");
+            return false;
+        }
+        // 批量更新所有未读消息为已读
+        boolean updated = this.update(
+                new LambdaUpdateWrapper<MessageDO>()
+                        .eq(MessageDO::getUserId, userId)
+                        .eq(MessageDO::getStatus, SystemConstants.Status.UNREAD)
+                        .set(MessageDO::getStatus, SystemConstants.Status.READ)
+        );
+
+        if (!updated) {
+            log.warn("全部已读失败,userId:{}", userId);
+        }
+        return updated;
     }
 
     @Override
@@ -107,7 +130,7 @@ public class MessageServiceImpl extends ServiceImpl<IMessageMapper, MessageDO> i
         for (Long id : ids) {
             MessageDO message = new MessageDO();
             message.setId(id);
-            message.setStatus("read");
+            message.setStatus(SystemConstants.Status.READ);
             this.updateById(message);
         }
         return true;
@@ -125,18 +148,18 @@ public class MessageServiceImpl extends ServiceImpl<IMessageMapper, MessageDO> i
         // 获取当前用户ID
         Long userId = TokenUtils.getCurrentUserId();
         if (userId == null) {
-            return Map.of("unread", 0L, "read", 0L, "total", 0L);
+            return Map.of(SystemConstants.Status.UNREAD, 0L, "read", 0L, "total", 0L);
         }
 
         Map<String, Long> stats = new HashMap<>();
         
         // 统计未读消息数量
         Long unreadCount = messageMapper.countUnreadByUserId(userId);
-        stats.put("unread", unreadCount != null ? unreadCount : 0L);
+        stats.put(SystemConstants.Status.UNREAD, unreadCount != null ? unreadCount : 0L);
         
         // 统计已读消息数量
         Long readCount = messageMapper.countReadByUserId(userId);
-        stats.put("read", readCount != null ? readCount : 0L);
+        stats.put(SystemConstants.Status.READ, readCount != null ? readCount : 0L);
         
         // 统计总消息数量
         Long totalCount = messageMapper.countTotalByUserId(userId);

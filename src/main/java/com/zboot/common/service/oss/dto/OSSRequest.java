@@ -100,4 +100,9 @@ public class OSSRequest {
      * 自定义域名
      */
     private String customDomain;
+    
+    /**
+     * 原始文件名（用于下载时显示正确的文件名）
+     */
+    private String originalFileName;
 }

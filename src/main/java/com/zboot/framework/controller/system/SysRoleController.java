@@ -93,7 +93,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> saveRolePermissions(@PathVariable("roleId") Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = roleService.saveRolePermissions(roleId, permissionIds);
-        return success ? R.ok("角色权限分配成功") : R.fail("角色权限分配失败");
+        return success ? R.ok(ResponseMessage.ROLE_PERMISSION_ASSIGN_SUCCESS) : R.fail(ResponseMessage.ROLE_PERMISSION_ASSIGN_FAIL);
     }
 
     @Operation(summary = "保存角色菜单", description = "为角色分配菜单")
@@ -101,7 +101,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> saveRoleMenus(@PathVariable("roleId") Long roleId, @RequestBody List<Long> menuIds) {
         boolean success = roleService.saveRoleMenus(roleId, menuIds);
-        return success ? R.ok("角色菜单分配成功") : R.fail("角色菜单分配失败");
+        return success ? R.ok(ResponseMessage.ROLE_MENU_ASSIGN_SUCCESS) : R.fail(ResponseMessage.ROLE_MENU_ASSIGN_FAIL);
     }
 
     @Operation(summary = "获取全部角色", description = "获取全部角色")

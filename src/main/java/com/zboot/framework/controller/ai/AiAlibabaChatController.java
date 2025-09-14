@@ -1,5 +1,6 @@
 package com.zboot.framework.controller.ai;
 
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.ai.StreamChatRequest;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class AiAlibabaChatController {
     public R<String> chat(@Validated @RequestBody StreamChatRequest request) {
         String userInput = request.getContent();
         if (userInput == null || userInput.isBlank()) {
-            return R.fail("对话内容不能为空");
+            return R.fail(ResponseMessage.AI_CHAT_CONTENT_EMPTY);
         }
         String content = chatModel
                 .call(new Prompt(userInput))
