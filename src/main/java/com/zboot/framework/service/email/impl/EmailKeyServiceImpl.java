@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.email.dto.EmailRequest;
 import com.zboot.common.service.email.factory.EmailFactory;
 import com.zboot.common.service.email.service.EmailService;
@@ -80,7 +81,7 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
     public Boolean addEmailKey(EmailKeyDTO dto) {
         // 验证厂商是否支持
         if (!getSupportedProviders().contains(dto.getEmailProvider())) {
-            throw new IllegalArgumentException("不支持的Email厂商: " + dto.getEmailProvider());
+            throw new ZbootException("不支持的Email厂商: " + dto.getEmailProvider());
         }
         
         EmailKeyDO emailKey = new EmailKeyDO();

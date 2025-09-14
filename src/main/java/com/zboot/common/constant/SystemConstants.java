@@ -86,6 +86,12 @@ public class SystemConstants {
         
         /** 停用 */
         public static final String DISABLED = "disabled";
+
+        /** 已读 */
+        public static final String READ = "read";
+
+        /** 未读 */
+        public static final String UNREAD = "unread";
     }
 
     // ==================== Agent类型 ====================

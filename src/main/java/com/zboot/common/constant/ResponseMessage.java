@@ -54,6 +54,8 @@ public class ResponseMessage {
     
     public static final String SYSTEM_ERROR = "系统异常，请联系管理员";
     
+    public static final String SYSTEM_WELCOME = "谢谢您使用ZBOOT超级脚手架";
+    
     public static final String BAD_REQUEST = "请求参数错误";
     
     public static final String UNAUTHORIZED = "认证失败，无法访问系统资源";
@@ -86,9 +88,15 @@ public class ResponseMessage {
     
     // ==================== AI模块 ====================
     
+    public static final String CREATE_SUCCESS = "创建成功";
+    
     public static final String CREATE_FAIL = "创建失败";
     
+    public static final String UPDATE_SUCCESS = "更新成功";
+    
     public static final String UPDATE_FAIL = "更新失败";
+    
+    public static final String DELETE_SUCCESS = "删除成功";
     
     public static final String DELETE_FAIL = "删除失败";
     
@@ -201,6 +209,221 @@ public class ResponseMessage {
     public static final String CACHE_REFRESH_SUCCESS = "缓存刷新成功";
     
     public static final String CACHE_REFRESH_FAIL = "缓存刷新失败";
+    
+    // ==================== 消息管理 ====================
+    
+    public static final String MESSAGE_CREATE_SUCCESS = "消息创建成功";
+    
+    public static final String MESSAGE_CREATE_FAIL = "消息创建失败";
+    
+    public static final String MESSAGE_UPDATE_SUCCESS = "消息更新成功";
+    
+    public static final String MESSAGE_UPDATE_FAIL = "消息更新失败";
+    
+    public static final String MESSAGE_DELETE_SUCCESS = "消息删除成功";
+    
+    public static final String MESSAGE_DELETE_FAIL = "消息删除失败";
+    
+    // ==================== OSS文件管理 ====================
+    
+    public static final String OSS_CREATE_SUCCESS = "新增成功";
+    
+    public static final String OSS_CREATE_FAIL = "新增失败";
+    
+    public static final String OSS_UPDATE_SUCCESS = "更新成功";
+    
+    public static final String OSS_UPDATE_FAIL = "更新失败";
+    
+    public static final String OSS_DELETE_SUCCESS = "删除成功";
+    
+    public static final String OSS_DELETE_FAIL = "删除失败";
+    
+    public static final String OSS_STATUS_UPDATE_SUCCESS = "状态更新成功";
+    
+    public static final String OSS_STATUS_UPDATE_FAIL = "状态更新失败";
+    
+    // ==================== 邮件管理 ====================
+    
+    public static final String EMAIL_CREATE_SUCCESS = "新增成功";
+    
+    public static final String EMAIL_CREATE_FAIL = "新增失败";
+    
+    public static final String EMAIL_UPDATE_SUCCESS = "更新成功";
+    
+    public static final String EMAIL_UPDATE_FAIL = "更新失败";
+    
+    public static final String EMAIL_DELETE_SUCCESS = "删除成功";
+    
+    public static final String EMAIL_DELETE_FAIL = "删除失败";
+    
+    public static final String EMAIL_STATUS_UPDATE_SUCCESS = "状态更新成功";
+    
+    public static final String EMAIL_STATUS_UPDATE_FAIL = "状态更新失败";
+    
+    // ==================== 短信管理 ====================
+    
+    public static final String SMS_CREATE_SUCCESS = "新增成功";
+    
+    public static final String SMS_CREATE_FAIL = "新增失败";
+    
+    public static final String SMS_UPDATE_SUCCESS = "更新成功";
+    
+    public static final String SMS_UPDATE_FAIL = "更新失败";
+    
+    public static final String SMS_DELETE_SUCCESS = "删除成功";
+    
+    public static final String SMS_DELETE_FAIL = "删除失败";
+    
+    public static final String SMS_STATUS_UPDATE_SUCCESS = "状态更新成功";
+    
+    public static final String SMS_STATUS_UPDATE_FAIL = "状态更新失败";
+    
+    // ==================== AI聊天管理 ====================
+    
+    public static final String AI_CHAT_CONTENT_EMPTY = "对话内容不能为空";
+    
+    public static final String AI_LLM_CREATE_SUCCESS = "新增成功";
+    
+    public static final String AI_LLM_CREATE_FAIL = "新增失败";
+    
+    public static final String AI_LLM_UPDATE_SUCCESS = "更新成功";
+    
+    public static final String AI_LLM_UPDATE_FAIL = "更新失败";
+    
+    public static final String AI_LLM_DELETE_SUCCESS = "删除成功";
+    
+    public static final String AI_LLM_DELETE_FAIL = "删除失败";
+    
+    public static final String AI_LLM_STATUS_UPDATE_SUCCESS = "状态更新成功";
+    
+    public static final String AI_LLM_STATUS_UPDATE_FAIL = "状态更新失败";
+    
+    // ==================== 角色权限关联管理 ====================
+    
+    public static final String ROLE_PERMISSION_CREATE_SUCCESS = "新增角色权限关联成功";
+    
+    public static final String ROLE_PERMISSION_CREATE_FAIL = "新增角色权限关联失败";
+    
+    public static final String ROLE_PERMISSION_UPDATE_SUCCESS = "更新角色权限关联成功";
+    
+    public static final String ROLE_PERMISSION_UPDATE_FAIL = "更新角色权限关联失败";
+    
+    public static final String ROLE_PERMISSION_DELETE_SUCCESS = "删除角色权限关联成功";
+    
+    public static final String ROLE_PERMISSION_DELETE_FAIL = "删除角色权限关联失败";
+    
+    public static final String ROLE_PERMISSION_ASSIGN_SUCCESS = "分配权限成功";
+    
+    public static final String ROLE_PERMISSION_ASSIGN_FAIL = "分配权限失败";
+    
+    public static final String ROLE_PERMISSION_REMOVE_SUCCESS = "移除角色权限成功";
+    
+    public static final String ROLE_PERMISSION_REMOVE_FAIL = "移除角色权限失败";
+    
+    public static final String ROLE_PERMISSION_RELATION_CREATE_FAIL = "新增角色权限关联失败";
+    
+    public static final String ROLE_PERMISSION_RELATION_UPDATE_FAIL = "更新角色权限关联失败";
+    
+    public static final String ROLE_PERMISSION_RELATION_DELETE_FAIL = "删除角色权限关联失败";
+    
+    // 角色菜单关联管理补充常量
+    public static final String ROLE_MENU_RELATION_CREATE_FAIL = "新增角色菜单关联失败";
+    
+    public static final String ROLE_MENU_RELATION_UPDATE_FAIL = "更新角色菜单关联失败";
+    
+    public static final String ROLE_MENU_RELATION_DELETE_FAIL = "删除角色菜单关联失败";
+    
+    // ==================== 用户角色关联管理 ====================
+    
+    public static final String USER_ROLE_CREATE_SUCCESS = "新增用户角色关联成功";
+    
+    public static final String USER_ROLE_CREATE_FAIL = "新增用户角色关联失败";
+    
+    public static final String USER_ROLE_UPDATE_SUCCESS = "更新用户角色关联成功";
+    
+    public static final String USER_ROLE_UPDATE_FAIL = "更新用户角色关联失败";
+    
+    public static final String USER_ROLE_DELETE_SUCCESS = "删除用户角色关联成功";
+    
+    public static final String USER_ROLE_DELETE_FAIL = "删除用户角色关联失败";
+    
+    public static final String USER_ROLE_ASSIGN_SUCCESS = "分配角色成功";
+    
+    public static final String USER_ROLE_ASSIGN_FAIL = "分配角色失败";
+    
+    public static final String USER_ROLE_REMOVE_SUCCESS = "移除用户角色成功";
+    
+    public static final String USER_ROLE_REMOVE_FAIL = "移除用户角色失败";
+    
+    public static final String USER_ROLE_RELATION_CREATE_FAIL = "新增用户角色关联失败";
+    
+    public static final String USER_ROLE_RELATION_UPDATE_FAIL = "更新用户角色关联失败";
+    
+    public static final String USER_ROLE_RELATION_DELETE_FAIL = "删除用户角色关联失败";
+    
+    // ==================== 角色菜单关联管理 ====================
+    
+    public static final String ROLE_MENU_CREATE_SUCCESS = "新增角色菜单关联成功";
+    
+    public static final String ROLE_MENU_CREATE_FAIL = "新增角色菜单关联失败";
+    
+    public static final String ROLE_MENU_UPDATE_SUCCESS = "更新角色菜单关联成功";
+    
+    public static final String ROLE_MENU_UPDATE_FAIL = "更新角色菜单关联失败";
+    
+    public static final String ROLE_MENU_DELETE_SUCCESS = "删除角色菜单关联成功";
+    
+    public static final String ROLE_MENU_DELETE_FAIL = "删除角色菜单关联失败";
+    
+    public static final String ROLE_MENU_ASSIGN_SUCCESS = "分配菜单成功";
+    
+    public static final String ROLE_MENU_ASSIGN_FAIL = "分配菜单失败";
+    
+    public static final String ROLE_MENU_REMOVE_SUCCESS = "移除角色菜单成功";
+    
+    public static final String ROLE_MENU_REMOVE_FAIL = "移除角色菜单失败";
+    
+    // ==================== 角色权限菜单分配 ====================
+    
+    public static final String ROLE_PERMISSION_ASSIGN_SUCCESS_MSG = "角色权限分配成功";
+    
+    public static final String ROLE_PERMISSION_ASSIGN_FAIL_MSG = "角色权限分配失败";
+    
+    public static final String ROLE_MENU_ASSIGN_SUCCESS_MSG = "角色菜单分配成功";
+    
+    public static final String ROLE_MENU_ASSIGN_FAIL_MSG = "角色菜单分配失败";
+    
+    // ==================== 日志管理 ====================
+    
+    public static final String LOG_DELETE_SUCCESS = "删除成功";
+    
+    public static final String LOG_DELETE_FAIL = "删除失败";
+    
+    // ==================== 权限测试 ====================
+    
+    public static final String PERMISSION_TEST_PUBLIC = "这是一个公开接口，无需权限验证";
+    
+    public static final String PERMISSION_TEST_USER_VIEW = "您有用户查看权限，可以访问此接口";
+    
+    public static final String PERMISSION_TEST_USER_MANAGE = "您有用户管理权限，可以访问此接口";
+    
+    public static final String PERMISSION_TEST_USER_FULL = "您有完整的用户权限，可以访问此接口";
+    
+    public static final String PERMISSION_TEST_ADMIN = "您有管理员权限，可以访问此接口";
+    
+    public static final String PERMISSION_TEST_DYNAMIC = "通过动态权限验证，可以访问此接口";
+    
+    public static final String PERMISSION_TEST_PURE_DYNAMIC = "通过纯动态权限验证";
+    
+    public static final String PERMISSION_TEST_SYSTEM_CONFIG = "系统配置信息";
+    
+    public static final String PERMISSION_TEST_SYSTEM_MONITOR = "系统监控信息";
+    
+    public static final String PERMISSION_TEST_SUPER_ADMIN = "超级管理员操作";
+    
+    // ==================== 通用错误 ====================
+    
+    public static final String METHOD_NOT_ALLOWED = "请求方法不允许";
     
     // ==================== 私有构造函数 ====================
     

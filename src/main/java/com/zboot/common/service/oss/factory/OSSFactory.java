@@ -6,6 +6,7 @@
  */
 package com.zboot.common.service.oss.factory;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.oss.service.OSSService;
 import com.zboot.common.service.oss.service.impl.*;
 import lombok.extern.slf4j.Slf4j;
@@ -48,11 +49,11 @@ public class OSSFactory {
      * 
      * @param provider 厂商名称
      * @return OSS服务实例
-     * @throws IllegalArgumentException 当厂商名称不支持时抛出异常
+     * @throws ZbootException 当厂商名称不支持时抛出异常
      */
     public static OSSService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IllegalArgumentException("OSS厂商名称不能为空");
+            throw new ZbootException("OSS厂商名称不能为空");
         }
         
         String normalizedProvider = provider.toLowerCase().trim();
@@ -94,7 +95,7 @@ public class OSSFactory {
                 return new MinIOService();
             default:
                 log.error("不支持的OSS厂商: {}", provider);
-                throw new IllegalArgumentException("不支持的OSS厂商: " + provider);
+                throw new ZbootException("不支持的OSS厂商: " + provider);
         }
     }
     

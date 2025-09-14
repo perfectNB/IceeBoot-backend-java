@@ -6,6 +6,7 @@
  */
 package com.zboot.common.service.sms.factory;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.sms.service.SMSService;
 import com.zboot.common.service.sms.service.impl.*;
 import lombok.extern.slf4j.Slf4j;
@@ -49,11 +50,11 @@ public class SMSFactory {
      * 
      * @param provider 厂商名称
      * @return SMS服务实例
-     * @throws IllegalArgumentException 当厂商名称不支持时抛出异常
+     * @throws ZbootException 当厂商名称不支持时抛出异常
      */
     public static SMSService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IllegalArgumentException("SMS厂商名称不能为空");
+            throw new ZbootException("SMS厂商名称不能为空");
         }
         
         String normalizedProvider = provider.toLowerCase().trim();
@@ -97,7 +98,7 @@ public class SMSFactory {
                 return new QiniuSMSService();
             default:
                 log.error("不支持的SMS厂商: {}", provider);
-                throw new IllegalArgumentException("不支持的SMS厂商: " + provider);
+                throw new ZbootException("不支持的SMS厂商: " + provider);
         }
     }
     

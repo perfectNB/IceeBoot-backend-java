@@ -42,6 +42,13 @@ public interface IMessageService extends IService<MessageDO> {
      */
     boolean addMessage(MessageDTO messageDTO);
 
+    /**
+     * 全部已读
+     *
+     * @return 是否成功
+     */
+    boolean allRead();
+
 
     /**
      * 更新消息

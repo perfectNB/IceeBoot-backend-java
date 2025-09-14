@@ -7,6 +7,7 @@
 package com.zboot.framework.controller.system;
 
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.system.RolePermissionDTO;
@@ -59,7 +60,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> addRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
         boolean success = rolePermissionService.addRolePermission(rolePermissionDTO);
-        return success ? R.ok() : R.fail("新增角色权限关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_CREATE_FAIL);
     }
 
 
@@ -68,7 +69,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> updateRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
         boolean success = rolePermissionService.updateRolePermission(rolePermissionDTO);
-        return success ? R.ok() : R.fail("更新角色权限关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_UPDATE_FAIL);
     }
 
 
@@ -77,7 +78,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteRolePermissions(@RequestBody List<Long> ids) {
         boolean success = rolePermissionService.deleteRolePermissions(ids);
-        return success ? R.ok() : R.fail("删除角色权限关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_DELETE_FAIL);
     }
 
 
@@ -104,7 +105,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> assignPermissionsToRole(@PathVariable("roleId") Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
-        return success ? R.ok() : R.fail("分配权限失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_ASSIGN_FAIL);
     }
 
 
@@ -113,6 +114,6 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> removeAllPermissionsByRoleId(@PathVariable("roleId") Long roleId) {
         boolean success = rolePermissionService.removeAllPermissionsByRoleId(roleId);
-        return success ? R.ok() : R.fail("移除角色权限失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_REMOVE_FAIL);
     }
 }
