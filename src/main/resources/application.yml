@@ -7,7 +7,7 @@
 server:
   port: 9000
   servlet:
-    context-path: /zboot/api
+    context-path: /iceeboot/api
   tomcat:
     uri-encoding: UTF-8
     max-threads: 1000
@@ -17,7 +17,7 @@ server:
 
 spring:
   application:
-    name: zboot-backend-java
+    name: iceeboot-backend-java
   profiles:
     active: ${APP_PROFILE:dev}
   main:
@@ -69,7 +69,7 @@ mybatis-plus:
       logic-not-delete-value: 0
     banner: false
   mapper-locations: classpath*:mapper/**/*Mapper.xml
-  type-aliases-package: com.zboot.domain
+  type-aliases-package: com.iceeboot.domain
 
 # Sa-Token配置
 sa-token:
@@ -101,14 +101,14 @@ sa-token:
 # 日志配置
 logging:
   level:
-    com.zboot: debug
+    com.iceeboot: debug
     org.springframework: warn
     org.mybatis: debug
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
   file:
-    name: logs/zboot.log
+    name: logs/iceeboot.log
     max-size: 10MB
     max-history: 30
 
@@ -128,23 +128,23 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
-  packages-to-scan: com.zboot.framework.controller
-  paths-to-match: /zboot/api/**, /v1/**, /api/v1/**
+  packages-to-scan: com.iceeboot.framework.controller
+  paths-to-match: /iceeboot/api/**, /v1/**, /api/v1/**
 
 
 
 # 自定义配置
-zboot:
+iceeboot:
   # 名称
-  name: ZBoot超级脚手架
+  name: iceeboot超级脚手架
   # 版本
   version: 1.0.0
   # 版权年份
   copyrightYear: 2025
   # 实例演示开关
   demoEnabled: true
-  # 文件路径 示例（ Windows配置D:/zboot/uploadPath，Linux配置 /home/zboot/uploadPath）
-  profile: /home/zboot/uploadPath
+  # 文件路径 示例（ Windows配置D:/iceeboot/uploadPath，Linux配置 /home/iceeboot/uploadPath）
+  profile: /home/iceeboot/uploadPath
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数组计算 char 字符验证

@@ -6,7 +6,7 @@ import ${basePackage}.dto.create.${entityName}DTO;
 import ${basePackage}.dto.update.${entityName}UpdateDTO;
 import ${basePackage}.vo.${packageName}.${entityName}VO;
 import ${basePackage}.query.${packageName}.${entityName}Query;
-import com.zboot.common.core.domain.PageResult;
+import com.iceeboot.common.core.domain.PageResult;
 
 /**
  * ${entityName}服务接口

@@ -2,16 +2,16 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/zboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
-    username: ${DB_USERNAME:zboot}
-    password: ${DB_PASSWORD:123456}
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/iceeboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
+    username: ${DB_USERNAME:iceeboot}
+    password: ${DB_PASSWORD:111111}
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 10
       maximum-pool-size: 30
       auto-commit: true
       idle-timeout: 30000
-      pool-name: ZbootHikariCP
+      pool-name: IceeBootHikariCP
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
@@ -27,7 +27,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:111111}
       database: ${REDIS_DATABASE:1}
       timeout: 10000
       lettuce:
@@ -40,7 +40,7 @@ spring:
     mongodb:
       host: ${MONGODB_HOST:localhost}
       port: ${MONGODB_PORT:27017}
-      database: ${MONGODB_DATABASE:zboot}
+      database: ${MONGODB_DATABASE:iceeboot}
       username: ${MONGODB_USERNAME:}
       password: ${MONGODB_PASSWORD:}
       auto-index-creation: false
@@ -68,17 +68,21 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+  ai:
+    dashscope:
+      api-key: sk-11
+
 # 日志配置
 logging:
   level:
-    com.zboot: info
+    com.iceeboot: info
     org.springframework: warn
     org.mybatis: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   file:
-    name: logs/zboot-test.log
+    name: logs/iceeboot-test.log
     max-size: 50MB
     max-history: 30
 
@@ -98,8 +102,8 @@ mybatis-plus:
 knife4j:
   enable: true
   openapi:
-    title: ZBoot API文档 - 测试环境
-    description: ZBoot超级脚手架API接口文档 - 测试环境
+    title: iceeboot API文档 - 测试环境
+    description: iceeboot超级脚手架API接口文档 - 测试环境
     version: 1.0.0
     concat: CodeIcee
     url: https://github.com/CodeIcee

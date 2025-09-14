@@ -1,4 +1,4 @@
--- ZBoot超级脚手架数据库表结构
+-- iceeboot超级脚手架数据库表结构
 -- @Description: 数据库表结构初始化脚本
 -- @Date: 2025-01-11
 -- @Author: CodeIcee
@@ -305,7 +305,7 @@ CREATE TABLE IF NOT EXISTS `sys_log` (
 
 -- 插入默认管理员用户
 INSERT IGNORE INTO `sys_user` (`id`, `username`, `nickname`, `email`, `phone`, `sex`, `password`, `status`, `create_by`, `create_time`, `remark`) 
-VALUES (1, 'admin', '管理员', 'admin@zboot.com', '13888888888', '0', '$2a$10$7JB720yubVSOfvVMe6/b.eqJWjkXMdydqvcgs1RE9pmOig.jy.jG.', '0', 'system', NOW(), '管理员账户');
+VALUES (1, 'admin', '管理员', 'admin@iceeboot.com', '13888888888', '0', '$2a$10$7JB720yubVSOfvVMe6/b.eqJWjkXMdydqvcgs1RE9pmOig.jy.jG.', '0', 'system', NOW(), '管理员账户');
 
 -- 插入默认角色
 INSERT IGNORE INTO `sys_role` (`id`, `role_name`, `role_key`, `role_sort`, `status`, `create_by`, `create_time`, `remark`) 

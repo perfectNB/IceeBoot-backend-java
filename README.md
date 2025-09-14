@@ -1,6 +1,6 @@
 
 
-# Zboot 超级脚手架后端版
+# IceeBoot 超级脚手架后端版
 
 <div align="center">
   <p>
@@ -20,9 +20,9 @@
 
 ## 🚀 项目简介
 
-**Zboot 超级脚手架后端版** 是一个面向现代化企业级应用开发的全栈后端解决方案。它不仅仅是一个简单的项目模板，更是一个集成了当前最前沿技术栈的智能化开发平台。Zboot 致力于为开发者提供一个开箱即用、功能完备、易于扩展的后端开发基础设施，让开发者能够专注于业务逻辑的实现，而无需在基础架构搭建上花费大量时间。
+**IceeBoot 超级脚手架后端版** 是一个面向现代化企业级应用开发的全栈后端解决方案。它不仅仅是一个简单的项目模板，更是一个集成了当前最前沿技术栈的智能化开发平台。iceeboot 致力于为开发者提供一个开箱即用、功能完备、易于扩展的后端开发基础设施，让开发者能够专注于业务逻辑的实现，而无需在基础架构搭建上花费大量时间。
 
-在当今快速发展的技术环境中，企业对于软件开发的效率和质量要求越来越高。传统的从零开始搭建项目架构的方式已经无法满足快速迭代的需求。Zboot 应运而生，它整合了业界最佳实践，融合了人工智能技术，为开发团队提供了一个强大而灵活的开发平台。
+在当今快速发展的技术环境中，企业对于软件开发的效率和质量要求越来越高。传统的从零开始搭建项目架构的方式已经无法满足快速迭代的需求。iceeboot 应运而生，它整合了业界最佳实践，融合了人工智能技术，为开发团队提供了一个强大而灵活的开发平台。
 
 ### 🎯 设计理念
 
@@ -34,7 +34,7 @@
 
 ## 🛠️ 核心技术栈
 
-Zboot 采用了当前最主流和成熟的技术栈，确保项目的稳定性、可维护性和扩展性：
+iceeboot 采用了当前最主流和成熟的技术栈，确保项目的稳定性、可维护性和扩展性：
 
 ### 后端核心框架
 - **Spring Boot 3.x**：作为核心框架，提供自动配置、依赖注入、AOP等企业级功能
@@ -60,7 +60,7 @@ Zboot 采用了当前最主流和成熟的技术栈，确保项目的稳定性�
 
 ## 🔐 权限控制系统
 
-Zboot 采用 **Sa-Token** 作为权限认证框架，实现了业界领先的细粒度权限控制体系：
+iceeboot 采用 **Sa-Token** 作为权限认证框架，实现了业界领先的细粒度权限控制体系：
 
 ### 权限控制特性
 - **接口级权限控制**：每个API接口都可以独立配置访问权限，确保系统安全
@@ -77,7 +77,7 @@ Zboot 采用 **Sa-Token** 作为权限认证框架，实现了业界领先的细
 
 ## 🤖 AI大模型集成
 
-Zboot 紧跟人工智能发展趋势，深度集成了国内外主流AI大模型，为应用提供强大的智能化能力：
+iceeboot 紧跟人工智能发展趋势，深度集成了国内外主流AI大模型，为应用提供强大的智能化能力：
 
 ### 国内AI大模型
 - **DeepSeek**：深度求索科技的大语言模型，在代码生成和逻辑推理方面表现优异
@@ -99,7 +99,7 @@ Zboot 紧跟人工智能发展趋势，深度集成了国内外主流AI大模型
 
 ## 🤖 Agent智能体支持
 
-Zboot 引入了先进的Agent智能体技术，支持构建和集成智能化的业务流程：
+iceeboot 引入了先进的Agent智能体技术，支持构建和集成智能化的业务流程：
 
 ### 支持的Agent平台
 - **Coze**：字节跳动推出的AI Bot开发平台，支持快速构建智能对话机器人
@@ -113,7 +113,7 @@ Zboot 引入了先进的Agent智能体技术，支持构建和集成智能化的
 
 ## 🔧 第三方服务集成
 
-Zboot 内置了多种常用的第三方服务，开箱即用，大大提升开发效率：
+iceeboot 内置了多种常用的第三方服务，开箱即用，大大提升开发效率：
 
 ### 短信服务 (SMS)
 - **多厂商支持**：集成阿里云、腾讯云、华为云等主流短信服务商
@@ -147,7 +147,7 @@ Zboot 内置了多种常用的第三方服务，开箱即用，大大提升开�
 
 ## ⚡ 轻量化设计
 
-Zboot 秉承"简单即美"的设计理念，提供轻量化的开发体验：
+iceeboot 秉承"简单即美"的设计理念，提供轻量化的开发体验：
 
 ### 极简配置
 - **零配置启动**：除了数据库连接，几乎无需其他配置即可启动项目
@@ -168,7 +168,7 @@ Zboot 秉承"简单即美"的设计理念，提供轻量化的开发体验：
 
 ## 🔨 智能代码生成器
 
-Zboot 内置了强大的代码生成器，支持基于数据库表结构的代码自动生成：
+iceeboot 内置了强大的代码生成器，支持基于数据库表结构的代码自动生成：
 
 ### 生成能力
 - **完整的CRUD代码**：自动生成Controller、Service、ServiceImpl、Mapper、Entity等
@@ -189,7 +189,7 @@ Zboot 内置了强大的代码生成器，支持基于数据库表结构的代�
 
 ## 🗄️ 数据库自动管理
 
-Zboot 提供了智能的数据库管理功能，大大简化了数据库维护工作：
+iceeboot 提供了智能的数据库管理功能，大大简化了数据库维护工作：
 
 ### 自动建表
 - **启动检测**：项目启动时自动检测数据库结构
@@ -210,7 +210,7 @@ Zboot 提供了智能的数据库管理功能，大大简化了数据库维护�
 ## 🚧 项目现状与发展规划
 
 ### 当前状态
-Zboot 项目目前处于快速发展阶段，虽然开发时间不到一个月，但已经具备了完整的基础功能和核心特性。项目采用敏捷开发模式，持续迭代和完善功能。
+iceeboot 项目目前处于快速发展阶段，虽然开发时间不到一个月，但已经具备了完整的基础功能和核心特性。项目采用敏捷开发模式，持续迭代和完善功能。
 
 ### 已完成功能
 - ✅ 基础架构搭建
@@ -245,11 +245,11 @@ Zboot 项目目前处于快速发展阶段，虽然开发时间不到一个月�
 ## 📁 项目结构
 
 ```
-zboot-backend-java/
+iceeboot-backend-java/
 ├── 📁 src/
 │   ├── 📁 main/
 │   │   ├── 📁 java/
-│   │   │   └── 📁 com/zboot/
+│   │   │   └── 📁 com/iceeboot/
 │   │   │       ├── 📁 common/                    # 通用模块
 │   │   │       │   ├── 📁 config/               # 配置类
 │   │   │       │   ├── 📁 constant/             # 常量定义
@@ -264,7 +264,7 @@ zboot-backend-java/
 │   │   │       │   ├── 📄 CodeGenerator.java    # 核心生成器
 │   │   │       │   └── 📁 templates/            # 代码模板
 │   │   │       ├── 📁 project/                  # 业务模块
-│   │   │       │   └── 📁 zboot_test/           # 示例业务模块
+│   │   │       │   └── 📁 iceeboot_test/           # 示例业务模块
 │   │   │       │       ├── 📁 controller/       # 控制器层
 │   │   │       │       ├── 📁 service/          # 服务层
 │   │   │       │       │   └── 📁 impl/         # 服务实现
@@ -275,7 +275,7 @@ zboot-backend-java/
 │   │   │       │       │   └── 📁 update/       # 更新DTO
 │   │   │       │       ├── 📁 vo/               # 视图对象
 │   │   │       │       └── 📁 query/            # 查询对象
-│   │   │       └── 📄 ZbootApplication.java     # 启动类
+│   │   │       └── 📄 iceebootApplication.java     # 启动类
 │   │   └── 📁 resources/
 │   │       ├── 📄 application.yml               # 主配置文件
 │   │       ├── 📄 application-dev.yml           # 开发环境配置
@@ -317,8 +317,8 @@ zboot-backend-java/
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/your-username/zboot-backend-java.git
-   cd zboot-backend-java
+   git clone https://github.com/your-username/iceeboot-backend-java.git
+   cd iceeboot-backend-java
    ```
 
 2. **配置数据库**
@@ -326,7 +326,7 @@ zboot-backend-java/
    # application-dev.yml
    spring:
      datasource:
-       url: jdbc:mysql://localhost:3306/zboot?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+       url: jdbc:mysql://localhost:3306/iceeboot?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
        username: your_username
        password: your_password
    ```
@@ -408,7 +408,7 @@ public class UserController {
 
 - 📧 **邮箱**：857787854@qq.com
 - 💬 **QQ群**：待建立
-- 🐙 **GitHub Issues**：[提交问题](https://github.com/your-username/zboot-backend-java/issues)
+- 🐙 **GitHub Issues**：[提交问题](https://github.com/your-username/iceeboot-backend-java/issues)
 
 ## 🙏 致谢
 

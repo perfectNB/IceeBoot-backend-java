@@ -1,6 +1,6 @@
 package ${basePackage}.query.${packageName};
 
-import com.zboot.common.core.domain.BaseQuery;
+import com.iceeboot.common.core.domain.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

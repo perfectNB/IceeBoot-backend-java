@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.zboot.framework.mapper.email.EmailKeyMapper">
+<mapper namespace="com.iceeboot.framework.mapper.email.EmailKeyMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.zboot.framework.entity.email.EmailKeyDO">
+    <resultMap id="BaseResultMap" type="com.iceeboot.framework.entity.email.EmailKeyDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="email_provider" property="emailProvider" jdbcType="VARCHAR"/>
         <result column="email_address" property="emailAddress" jdbcType="VARCHAR"/>
