@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.sms.dto.SMSRequest;
 import com.zboot.common.service.sms.factory.SMSFactory;
 import com.zboot.common.service.sms.service.SMSService;
@@ -78,7 +79,7 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
     public Boolean addSmsKey(SmsKeyDTO dto) {
         // 验证厂商是否支持
         if (!getSupportedProviders().contains(dto.getSmsProvider())) {
-            throw new IllegalArgumentException("不支持的SMS厂商: " + dto.getSmsProvider());
+            throw new ZbootException("不支持的SMS厂商: " + dto.getSmsProvider());
         }
         
         SmsKeyDO smsKey = new SmsKeyDO();
@@ -298,12 +299,12 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
         BeanUtils.copyProperties(smsKey, vo);
         
         // 脱敏处理密钥信息
-        if (StringUtils.hasText(vo.getAccessKeyId())) {
-            vo.setAccessKeyId(maskSensitiveInfo(vo.getAccessKeyId()));
-        }
-        if (StringUtils.hasText(vo.getAccessKeySecret())) {
-            vo.setAccessKeySecret(maskSensitiveInfo(vo.getAccessKeySecret()));
-        }
+//        if (StringUtils.hasText(vo.getAccessKeyId())) {
+//            vo.setAccessKeyId(maskSensitiveInfo(vo.getAccessKeyId()));
+//        }
+//        if (StringUtils.hasText(vo.getAccessKeySecret())) {
+//            vo.setAccessKeySecret(maskSensitiveInfo(vo.getAccessKeySecret()));
+//        }
         
         return vo;
     }

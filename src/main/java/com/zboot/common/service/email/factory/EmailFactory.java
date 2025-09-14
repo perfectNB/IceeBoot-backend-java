@@ -6,6 +6,7 @@
  */
 package com.zboot.common.service.email.factory;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.email.service.EmailService;
 import com.zboot.common.service.email.service.impl.*;
 import lombok.extern.slf4j.Slf4j;
@@ -49,11 +50,11 @@ public class EmailFactory {
      * 
      * @param provider 厂商名称
      * @return Email服务实例
-     * @throws IllegalArgumentException 当厂商名称不支持时抛出异常
+     * @throws ZbootException 当厂商名称不支持时抛出异常
      */
     public static EmailService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IllegalArgumentException("Email厂商名称不能为空");
+            throw new ZbootException("Email厂商名称不能为空");
         }
         
         String normalizedProvider = provider.toLowerCase().trim();
@@ -97,7 +98,7 @@ public class EmailFactory {
                 return new TencentEmailService();
             default:
                 log.error("不支持的Email厂商: {}", provider);
-                throw new IllegalArgumentException("不支持的Email厂商: " + provider);
+                throw new ZbootException("不支持的Email厂商: " + provider);
         }
     }
     

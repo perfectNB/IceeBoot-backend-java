@@ -6,6 +6,7 @@
  */
 package com.zboot.common.service.sms.utils;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.sms.dto.SMSRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -116,7 +117,7 @@ public class SMSUtils {
      */
     public static String generateVerificationCode(int length) {
         if (length <= 0) {
-            throw new IllegalArgumentException("验证码长度必须大于0");
+            throw new ZbootException("验证码长度必须大于0");
         }
         
         StringBuilder code = new StringBuilder();

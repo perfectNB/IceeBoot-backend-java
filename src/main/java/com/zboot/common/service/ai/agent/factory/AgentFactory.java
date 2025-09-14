@@ -7,6 +7,7 @@
  */
 package com.zboot.common.service.ai.agent.factory;
 
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.ai.agent.service.AgentService;
 import com.zboot.common.service.ai.agent.service.impl.CozeAgentService;
 import com.zboot.common.service.ai.agent.service.impl.DifyAgentService;
@@ -54,14 +55,14 @@ public class AgentFactory {
      */
     public AgentService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IllegalArgumentException("厂商名称不能为空");
+            throw new ZbootException("厂商名称不能为空");
         }
         
         String normalizedProvider = provider.toLowerCase().trim();
         AgentService service = serviceMap.get(normalizedProvider);
         
         if (service == null) {
-            throw new IllegalArgumentException("不支持的Agent厂商: " + provider);
+            throw new ZbootException("不支持的Agent厂商: " + provider);
         }
         
         return service;

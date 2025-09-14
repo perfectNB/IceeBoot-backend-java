@@ -1,5 +1,6 @@
 package com.zboot.framework.controller.log;
 
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 
@@ -45,7 +46,7 @@ public class LogController {
     @DeleteMapping
     public R<Void> deleteLogs(@RequestBody List<String> ids) {
         boolean success = logService.deleteLogs(ids);
-        return success ? R.ok("删除成功") : R.fail("删除失败");
+        return success ? R.ok(ResponseMessage.DELETE_SUCCESS) : R.fail(ResponseMessage.DELETE_FAIL);
     }
 
 

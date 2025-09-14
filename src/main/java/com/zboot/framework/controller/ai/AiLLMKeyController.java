@@ -6,6 +6,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.ai.AiLLMKeyDTO;
 import com.zboot.framework.dto.update.ai.AiLLMKeyUpdateDTO;
@@ -51,7 +52,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addLLMKey(@Validated @RequestBody AiLLMKeyDTO dto) {
         Boolean result = aiLLMKeyService.addLLMKey(dto);
-        return result ? R.ok() : R.fail("新增失败");
+        return result ? R.ok() : R.fail(ResponseMessage.CREATE_FAIL);
     }
 
     @Operation(summary = "更新大模型密钥", description = "更新大模型密钥信息")
@@ -59,7 +60,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateLLMKey(@Validated @RequestBody AiLLMKeyUpdateDTO dto) {
         Boolean result = aiLLMKeyService.updateLLMKey(dto);
-        return result ? R.ok() : R.fail("更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除大模型密钥")
@@ -67,7 +68,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteLLMKey(@RequestBody List<Long> ids) {
         Boolean result = aiLLMKeyService.deleteLLMKey(ids);
-        return result ? R.ok() : R.fail("删除失败");
+        return result ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "更新大模型密钥状态")
@@ -78,7 +79,7 @@ public class AiLLMKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = aiLLMKeyService.updateLLMKeyStatus(id, status);
-        return result ? R.ok() : R.fail("状态更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
 
 

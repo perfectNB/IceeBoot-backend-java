@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.ai.llm.factory.LLMFactory;
 import com.zboot.common.service.ai.llm.service.LLMService;
 import com.zboot.framework.dto.create.ai.AiLLMKeyDTO;
@@ -80,7 +81,7 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
     public Boolean addLLMKey(AiLLMKeyDTO dto) {
         // 验证厂商是否支持
         if (!getSupportedProviders().contains(dto.getLlmProvider())) {
-            throw new IllegalArgumentException("不支持的大模型厂商: " + dto.getLlmProvider());
+            throw new ZbootException("不支持的大模型厂商: " + dto.getLlmProvider());
         }
         
         AiLLMKeyDO llmKey = new AiLLMKeyDO();
@@ -302,12 +303,12 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
         
         // 脱敏处理密钥信息
 
-        if (StringUtils.hasText(vo.getApiKey())) {
-            vo.setApiKey(maskSensitiveInfo(vo.getApiKey()));
-        }
-        if (StringUtils.hasText(vo.getSecretKey())) {
-            vo.setSecretKey(maskSensitiveInfo(vo.getSecretKey()));
-        }
+//        if (StringUtils.hasText(vo.getApiKey())) {
+//            vo.setApiKey(maskSensitiveInfo(vo.getApiKey()));
+//        }
+//        if (StringUtils.hasText(vo.getSecretKey())) {
+//            vo.setSecretKey(maskSensitiveInfo(vo.getSecretKey()));
+//        }
         
         return vo;
     }

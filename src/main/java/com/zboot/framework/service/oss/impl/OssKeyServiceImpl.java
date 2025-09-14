@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.factory.OSSFactory;
 import com.zboot.common.service.oss.service.OSSService;
@@ -78,7 +79,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
     public Boolean addOssKey(OssKeyDTO dto) {
         // 验证厂商是否支持
         if (!getSupportedProviders().contains(dto.getOssProvider())) {
-            throw new IllegalArgumentException("不支持的OSS厂商: " + dto.getOssProvider());
+            throw new ZbootException("不支持的OSS厂商: " + dto.getOssProvider());
         }
         
         OssKeyDO ossKey = new OssKeyDO();
@@ -294,12 +295,12 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
         BeanUtils.copyProperties(ossKey, vo);
         
         // 脱敏处理密钥信息
-        if (StringUtils.hasText(vo.getAccessKeyId())) {
-            vo.setAccessKeyId(maskSensitiveInfo(vo.getAccessKeyId()));
-        }
-        if (StringUtils.hasText(vo.getAccessKeySecret())) {
-            vo.setAccessKeySecret(maskSensitiveInfo(vo.getAccessKeySecret()));
-        }
+//        if (StringUtils.hasText(vo.getAccessKeyId())) {
+//            vo.setAccessKeyId(maskSensitiveInfo(vo.getAccessKeyId()));
+//        }
+//        if (StringUtils.hasText(vo.getAccessKeySecret())) {
+//            vo.setAccessKeySecret(maskSensitiveInfo(vo.getAccessKeySecret()));
+//        }
         
         return vo;
     }

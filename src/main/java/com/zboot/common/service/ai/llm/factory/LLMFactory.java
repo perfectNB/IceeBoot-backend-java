@@ -8,6 +8,7 @@
 package com.zboot.common.service.ai.llm.factory;
 
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.ai.llm.service.LLMService;
 import com.zboot.common.service.ai.llm.service.impl.DeepSeekService;
 import com.zboot.common.service.ai.llm.service.impl.ChatGPTService;
@@ -88,16 +89,16 @@ public class LLMFactory {
      * 根据厂商名称获取服务实例
      * @param provider 厂商名称
      * @return 服务实例
-     * @throws IllegalArgumentException 如果厂商不支持
+     * @throws ZbootException 如果厂商不支持
      */
     public LLMService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IllegalArgumentException("厂商名称不能为空");
+            throw new ZbootException("厂商名称不能为空");
         }
         
         LLMService service = serviceMap.get(provider.toLowerCase());
         if (service == null) {
-            throw new IllegalArgumentException("不支持的厂商: " + provider);
+            throw new ZbootException("不支持的厂商: " + provider);
         }
         
         return service;

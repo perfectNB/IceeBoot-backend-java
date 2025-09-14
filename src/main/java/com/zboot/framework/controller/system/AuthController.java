@@ -7,6 +7,7 @@
 package com.zboot.framework.controller.system;
 
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.system.LoginDTO;
 import com.zboot.framework.service.system.IAuthService;
@@ -39,7 +40,7 @@ public class AuthController {
     @RequirePermission(dynamic = true)
     public R<LoginVO> test1() {
 
-        return R.ok("谢谢您使用ZBOOT超级脚手架");
+        return R.ok(ResponseMessage.SYSTEM_WELCOME);
     }
 
     @Operation(summary = "test2", description = "test")

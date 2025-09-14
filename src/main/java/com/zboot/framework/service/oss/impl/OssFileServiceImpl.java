@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zboot.common.constant.SystemConstants;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.dto.OSSResponse;
 import com.zboot.common.service.oss.factory.OSSFactory;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 
 /**
  * OSS文件服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-09-12
  */
@@ -55,11 +56,11 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     public IPage<OssFileVO> getFilePage(OssFileQuery query) {
         Page<OssFileDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         LambdaQueryWrapper<OssFileDO> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.like(OssFileDO::getFileName, query.getKeyword())
-                   .or()
-                   .like(OssFileDO::getOriginalName, query.getKeyword());
+                    .or()
+                    .like(OssFileDO::getOriginalName, query.getKeyword());
         }
         if (StringUtils.hasText(query.getFileName())) {
             wrapper.like(OssFileDO::getFileName, query.getFileName());
@@ -79,16 +80,16 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         if (StringUtils.hasText(query.getStatus())) {
             wrapper.eq(OssFileDO::getStatus, query.getStatus());
         }
-        
+
         wrapper.orderByDesc(OssFileDO::getCreateTime);
-        
+
         IPage<OssFileDO> result = this.page(page, wrapper);
-        
+
         // 转换为VO
         Page<OssFileVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         List<OssFileVO> voList = result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
         voPage.setRecords(voList);
-        
+
         return voPage;
     }
 
@@ -102,36 +103,36 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     public OssFileVO uploadFile(OssFileUploadDTO dto) {
         try {
             MultipartFile file = dto.getFile();
-            
+
             // 获取密钥信息
             OssKeyVO ossKey = ossKeyService.getOssKeyById(dto.getKeyId());
             if (ossKey == null) {
-                throw new IllegalArgumentException("密钥不存在");
+                throw new ZbootException("密钥不存在");
             }
-            
+
             // 验证供应商是否匹配
             if (!dto.getProvider().equals(ossKey.getOssProvider())) {
-                throw new IllegalArgumentException("供应商与密钥不匹配");
+                throw new ZbootException("供应商与密钥不匹配");
             }
-            
+
             // 生成文件名
             String originalFilename = file.getOriginalFilename();
             String fileExtension = getFileExtension(originalFilename);
             String fileName = generateFileName(dto.getPathPrefix(), fileExtension);
-            
+
             // 计算文件MD5
             String fileMd5 = calculateMD5(file.getBytes());
-            
+
             // 检查是否已存在相同MD5的文件
             OssFileDO existingFile = baseMapper.selectByFileMd5(fileMd5);
             if (existingFile != null) {
                 log.info("文件已存在，返回已有文件信息: {}", existingFile.getFileName());
                 return convertToVO(existingFile);
             }
-            
+
             // 获取OSS服务
             OSSService ossService = OSSFactory.getService(dto.getProvider());
-            
+
             // 构建OSS请求
             OSSRequest ossRequest = new OSSRequest()
                     .setAccessKeyId(ossKey.getAccessKeyId())
@@ -139,14 +140,16 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
                     .setBucketName(dto.getBucketName())
                     .setObjectKey(fileName)
                     .setContent(file.getBytes())
-                    .setContentType(file.getContentType());
-            
+                    .setContentType(file.getContentType())
+                    .setEndpoint(ossKey.getEndpoint())
+                    ;
+
             // 上传文件
             OSSResponse ossResponse = ossService.uploadFile(ossRequest).block();
             if (!Boolean.TRUE.equals(ossResponse.getSuccess())) {
                 throw new RuntimeException("文件上传失败: " + ossResponse.getErrorMessage());
             }
-            
+
             // 保存文件信息到数据库
             OssFileDO ossFile = new OssFileDO();
             ossFile.setFileName(fileName);
@@ -158,11 +161,11 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
             ossFile.setBucketName(dto.getBucketName());
             ossFile.setFileMd5(fileMd5);
             ossFile.setStatus(SystemConstants.Status.ACTIVE);
-            
+
             this.save(ossFile);
-            
+
             return convertToVO(ossFile);
-            
+
         } catch (IOException e) {
             log.error("文件上传失败: {}", e.getMessage(), e);
             throw new RuntimeException("文件上传失败: " + e.getMessage());
@@ -173,38 +176,82 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     public Resource downloadFile(Long id) {
         OssFileDO file = this.getById(id);
         if (file == null) {
-            throw new IllegalArgumentException("文件不存在");
+            throw new ZbootException("文件不存在");
         }
-        
+
         // 获取桶信息
         OssBucketDO bucket = ossBucketService.getBucketByProviderAndName(file.getProvider(), file.getBucketName());
         if (bucket == null) {
-            throw new IllegalArgumentException("桶不存在");
+            throw new ZbootException("桶不存在");
         }
-        
+
         // 获取密钥信息
         OssKeyVO ossKey = ossKeyService.getOssKeyById(bucket.getKeyId());
         if (ossKey == null) {
-            throw new IllegalArgumentException("密钥不存在");
+            throw new ZbootException("密钥不存在");
         }
-        
+
         // 获取OSS服务
         OSSService ossService = OSSFactory.getService(file.getProvider());
-        
+
         // 构建OSS请求
         OSSRequest ossRequest = new OSSRequest()
                 .setAccessKeyId(ossKey.getAccessKeyId())
                 .setAccessKeySecret(ossKey.getAccessKeySecret())
                 .setBucketName(file.getBucketName())
-                .setObjectKey(file.getFileName());
-        
+                .setObjectKey(file.getFileName())
+                .setEndpoint(ossKey.getEndpoint())
+                .setOriginalFileName(file.getOriginalName())
+                ;
+
         // 下载文件
         OSSResponse ossResponse = ossService.downloadFile(ossRequest).block();
         if (!Boolean.TRUE.equals(ossResponse.getSuccess())) {
             throw new RuntimeException("文件下载失败: " + ossResponse.getErrorMessage());
         }
-        
+
         return new ByteArrayResource(ossResponse.getContent());
+    }
+
+    @Override
+    public String generateDownloadUrl(Long id, Long expiration) {
+        OssFileDO file = this.getById(id);
+        if (file == null) {
+            throw new ZbootException("文件不存在");
+        }
+
+        // 获取桶信息
+        OssBucketDO bucket = ossBucketService.getBucketByProviderAndName(file.getProvider(), file.getBucketName());
+        if (bucket == null) {
+            throw new ZbootException("桶不存在");
+        }
+
+        // 获取密钥信息
+        OssKeyVO ossKey = ossKeyService.getOssKeyById(bucket.getKeyId());
+        if (ossKey == null) {
+            throw new ZbootException("密钥不存在");
+        }
+
+        // 获取OSS服务
+        OSSService ossService = OSSFactory.getService(file.getProvider());
+
+        // 构建OSS请求
+        OSSRequest ossRequest = new OSSRequest()
+                .setAccessKeyId(ossKey.getAccessKeyId())
+                .setAccessKeySecret(ossKey.getAccessKeySecret())
+                .setBucketName(file.getBucketName())
+                .setObjectKey(file.getFileName())
+                .setEndpoint(ossKey.getEndpoint())
+                .setOriginalFileName(file.getOriginalName())
+                ;
+
+        // 生成预签名下载URL
+        OSSResponse ossResponse = ossService.generatePresignedUrl(ossRequest, expiration).block();
+        if (!Boolean.TRUE.equals(ossResponse.getSuccess())) {
+            throw new RuntimeException("生成下载链接失败: " + ossResponse.getErrorMessage());
+        }
+
+        return ossResponse.getFileUrl();
     }
 
     @Override
@@ -214,7 +261,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
             if (file == null) {
                 continue;
             }
-            
+
             try {
                 // 获取桶信息
                 OssBucketDO bucket = ossBucketService.getBucketByProviderAndName(file.getProvider(), file.getBucketName());
@@ -224,14 +271,16 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
                     if (ossKey != null) {
                         // 获取OSS服务
                         OSSService ossService = OSSFactory.getService(file.getProvider());
-                        
+
                         // 构建OSS请求
                         OSSRequest ossRequest = new OSSRequest()
                                 .setAccessKeyId(ossKey.getAccessKeyId())
                                 .setAccessKeySecret(ossKey.getAccessKeySecret())
                                 .setBucketName(file.getBucketName())
-                                .setObjectKey(file.getFileName());
-                        
+                                .setObjectKey(file.getFileName())
+                                .setEndpoint(ossKey.getEndpoint())
+                                ;
+
                         // 删除OSS文件
                         OSSResponse ossResponse = ossService.deleteFile(ossRequest).block();
                         if (!Boolean.TRUE.equals(ossResponse.getSuccess())) {
@@ -243,7 +292,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
                 log.error("删除OSS文件异常: {}", e.getMessage(), e);
             }
         }
-        
+
         // 删除数据库记录
         return this.removeByIds(ids);
     }
@@ -264,10 +313,10 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     private OssFileVO convertToVO(OssFileDO file) {
         OssFileVO vo = new OssFileVO();
         BeanUtils.copyProperties(file, vo);
-        
+
         // 格式化文件大小
         vo.setFileSizeFormatted(formatFileSize(file.getFileSize()));
-        
+
         return vo;
     }
 
@@ -277,7 +326,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     private String generateFileName(String pathPrefix, String fileExtension) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        
+
         StringBuilder fileName = new StringBuilder();
         if (StringUtils.hasText(pathPrefix)) {
             fileName.append(pathPrefix);
@@ -289,7 +338,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         if (StringUtils.hasText(fileExtension)) {
             fileName.append(".").append(fileExtension);
         }
-        
+
         return fileName.toString();
     }
 
@@ -328,16 +377,16 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         if (fileSize == null || fileSize == 0) {
             return "0 B";
         }
-        
+
         String[] units = {"B", "KB", "MB", "GB", "TB"};
         int unitIndex = 0;
         double size = fileSize.doubleValue();
-        
+
         while (size >= 1024 && unitIndex < units.length - 1) {
             size /= 1024;
             unitIndex++;
         }
-        
+
         return String.format("%.2f %s", size, units[unitIndex]);
     }
 }
