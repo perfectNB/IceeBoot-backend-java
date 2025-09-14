@@ -9,6 +9,7 @@
 package com.zboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.common.utils.TokenUtils;
 import com.zboot.framework.llm.service.DatabaseQueryFunction;
@@ -68,7 +69,7 @@ public class IntelligentChatController {
     public R<String> chat(@Validated @RequestBody StreamChatRequest request) {
         String userInput = request.getContent();
         if (userInput == null || userInput.isBlank()) {
-            return R.fail("对话内容不能为空");
+            return R.fail(ResponseMessage.AI_CHAT_CONTENT_EMPTY);
         }
         
         try {

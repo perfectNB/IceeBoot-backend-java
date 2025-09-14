@@ -1,31 +1,32 @@
 /**
  * 阿里云OSS服务实现类
+ * 使用阿里云官方SDK实现
  * 
  * @author CodeIcee
  * @date 2025-09-03
  */
 package com.zboot.common.service.oss.service.impl;
 
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.HttpMethod;
+import com.aliyun.oss.model.*;
 import com.zboot.common.service.oss.dto.OSSCapacityInfo;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.dto.OSSResponse;
 import com.zboot.common.service.oss.service.OSSService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
+import java.io.*;
+import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 阿里云OSS服务实现类
- * 基于阿里云OSS REST API实现对象存储操作
- * 注意：当前实现使用HTTP协议以保持架构兼容性，实际生产环境建议使用阿里云OSS SDK
+ * 使用阿里云官方SDK实现
  * 
  * @author CodeIcee
  * @date 2025-09-03
@@ -35,14 +36,10 @@ public class AliyunOSSService implements OSSService {
     
     private static final String PROVIDER_NAME = "aliyun";
     private static final String DEFAULT_ENDPOINT = "oss-cn-hangzhou.aliyuncs.com";
-    private static final Integer DEFAULT_TIMEOUT = 60;
     
-    private final WebClient webClient;
-    
-    public AliyunOSSService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(100 * 1024 * 1024)) // 100MB
-                .build();
+    private OSS createOSSClient(OSSRequest request) {
+        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+        return new OSSClientBuilder().build(endpoint, request.getAccessKeyId(), request.getAccessKeySecret());
     }
     
     @Override
@@ -54,157 +51,140 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> uploadFile(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS当前使用HTTP实现，生产环境建议使用官方SDK");
-                
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getObjectKey());
-                
-                WebClient.RequestBodySpec requestSpec = webClient.put()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "PUT", request.getObjectKey()));
-                            if (request.getContentType() != null) {
-                                headers.set("Content-Type", request.getContentType());
-                            }
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        });
-                
-                String response;
-                if (request.getContent() != null) {
-                    response = requestSpec.bodyValue(request.getContent())
-                            .retrieve()
-                            .bodyToMono(String.class)
-                            .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .block();
-                } else {
+                if (request.getContent() == null) {
                     return OSSResponse.failure("INVALID_CONTENT", "文件内容不能为空")
                             .setProvider(getProvider())
                             .setResponseTime(System.currentTimeMillis() - startTime);
                 }
+                
+                ossClient = createOSSClient(request);
+                
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(request.getContent().length);
+                if (request.getContentType() != null) {
+                    metadata.setContentType(request.getContentType());
+                }
+                
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(request.getContent());
+                PutObjectResult result = ossClient.putObject(request.getBucketName(), request.getObjectKey(), inputStream, metadata);
                 
                 String fileUrl = buildFileUrl(request);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setFileUrl(fileUrl)
+                        .setEtag(result.getETag())
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime);
                         
             } catch (Exception e) {
-                log.error("阿里云OSS上传文件失败，建议使用WebSocket实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("UPLOAD_FAILED", "上传失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, byte[] content) {
-        return uploadFile(request.setContent(content));
+        request.setContent(content);
+        return uploadFile(request);
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, InputStream inputStream) {
-        return Mono.fromCallable(() -> {
-            try {
-                byte[] content = inputStream.readAllBytes();
-                return uploadFile(request.setContent(content)).block();
-            } catch (Exception e) {
-                log.error("阿里云OSS处理输入流失败: {}", e.getMessage(), e);
-                return OSSResponse.failure("STREAM_PROCESSING_FAILED", "处理输入流失败: " + e.getMessage())
-                        .setProvider(getProvider());
-            }
-        });
+        try {
+            byte[] content = inputStream.readAllBytes();
+            request.setContent(content);
+            return uploadFile(request);
+        } catch (IOException e) {
+            return Mono.just(OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
+                    .setProvider(getProvider()));
+        }
     }
     
     @Override
     public Mono<OSSResponse> downloadFile(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS当前使用HTTP实现，生产环境建议使用官方SDK");
+                ossClient = createOSSClient(request);
                 
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getObjectKey());
-                
-                byte[] content = webClient.get()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "GET", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(byte[].class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                OSSObject ossObject = ossClient.getObject(request.getBucketName(), request.getObjectKey());
+                byte[] content = ossObject.getObjectContent().readAllBytes();
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setContent(content)
-                        .setFileSize(content != null ? (long) content.length : 0L)
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime);
                         
             } catch (Exception e) {
-                log.error("阿里云OSS下载文件失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("DOWNLOAD_FAILED", "下载失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS下载文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("DOWNLOAD_FAILED", "下载失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
     
     @Override
     public Mono<OSSResponse> downloadFileToLocal(OSSRequest request) {
-        return downloadFile(request)
-                .map(response -> {
-                    if (response.getSuccess() && response.getContent() != null) {
-                        try {
-                            java.nio.file.Files.write(
-                                    java.nio.file.Paths.get(request.getLocalFilePath()),
-                                    response.getContent()
-                            );
-                            return response;
-                        } catch (Exception e) {
-                            log.error("阿里云OSS保存文件到本地失败: {}", e.getMessage(), e);
-                            return OSSResponse.failure("SAVE_TO_LOCAL_FAILED", "保存到本地失败: " + e.getMessage())
-                                    .setProvider(getProvider());
-                        }
-                    }
-                    return response;
-                });
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
+            
+            try {
+                ossClient = createOSSClient(request);
+                
+                GetObjectRequest getObjectRequest = new GetObjectRequest(request.getBucketName(), request.getObjectKey());
+                ossClient.getObject(getObjectRequest, new File(request.getLocalFilePath()));
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("localPath", request.getLocalFilePath()));
+                        
+            } catch (Exception e) {
+                log.error("阿里云OSS下载文件到本地失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("DOWNLOAD_TO_LOCAL_FAILED", "下载到本地失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
+            }
+        });
     }
     
     @Override
     public Mono<OSSResponse> deleteFile(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS当前使用HTTP实现，生产环境建议使用官方SDK");
-                
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getObjectKey());
-                
-                webClient.delete()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "DELETE", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                ossClient = createOSSClient(request);
+                ossClient.deleteObject(request.getBucketName(), request.getObjectKey());
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -213,10 +193,14 @@ public class AliyunOSSService implements OSSService {
                         .setResponseTime(System.currentTimeMillis() - startTime);
                         
             } catch (Exception e) {
-                log.error("阿里云OSS删除文件失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("DELETE_FAILED", "删除失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS删除文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("DELETE_FAILED", "删除失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
@@ -225,48 +209,31 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> deleteFiles(OSSRequest request, List<String> objectKeys) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS批量删除当前使用HTTP实现，生产环境建议使用官方SDK");
+                ossClient = createOSSClient(request);
                 
-                // 阿里云OSS批量删除需要构建XML请求体
-                StringBuilder xmlBody = new StringBuilder();
-                xmlBody.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                xmlBody.append("<Delete>");
-                xmlBody.append("<Quiet>false</Quiet>");
-                for (String key : objectKeys) {
-                    xmlBody.append("<Object><Key>").append(key).append("</Key></Object>");
-                }
-                xmlBody.append("</Delete>");
+                DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(request.getBucketName());
+                deleteRequest.setKeys(objectKeys);
                 
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s?delete", endpoint);
-                
-                webClient.post()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "POST", ""));
-                            headers.set("Content-Type", "application/xml");
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .bodyValue(xmlBody.toString())
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                DeleteObjectsResult result = ossClient.deleteObjects(deleteRequest);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("deletedCount", objectKeys.size()));
+                        .setExtraData(Map.of("deletedCount", result.getDeletedObjects().size()));
                         
             } catch (Exception e) {
-                log.error("阿里云OSS批量删除文件失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("BATCH_DELETE_FAILED", "批量删除失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS批量删除文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("BATCH_DELETE_FAILED", "批量删除失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
@@ -275,193 +242,219 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> fileExists(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getObjectKey());
-                
-                webClient.head()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "HEAD", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .toBodilessEntity()
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                ossClient = createOSSClient(request);
+                boolean exists = ossClient.doesObjectExist(request.getBucketName(), request.getObjectKey());
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("exists", true));
+                        .setExtraData(Map.of("exists", exists));
                         
             } catch (Exception e) {
-                // HEAD请求失败通常表示文件不存在
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime)
                         .setExtraData(Map.of("exists", false));
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
     
     @Override
     public Mono<OSSResponse> getFileInfo(OSSRequest request) {
-        return fileExists(request)
-                .flatMap(response -> {
-                    Boolean exists = (Boolean) response.getExtraData().get("exists");
-                    if (Boolean.TRUE.equals(exists)) {
-                        return downloadFile(request)
-                                .map(downloadResponse -> {
-                                    if (downloadResponse.getSuccess()) {
-                                        return downloadResponse;
-                                    } else {
-                                        return OSSResponse.failure("GET_FILE_INFO_FAILED", "获取文件信息失败")
-                                                .setProvider(getProvider());
-                                    }
-                                });
-                    } else {
-                        return Mono.just(OSSResponse.failure("FILE_NOT_FOUND", "文件不存在")
-                                .setProvider(getProvider()));
-                    }
-                });
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
+            
+            try {
+                ossClient = createOSSClient(request);
+                
+                ObjectMetadata metadata = ossClient.getObjectMetadata(request.getBucketName(), request.getObjectKey());
+                
+                Map<String, Object> fileInfo = new HashMap<>();
+                fileInfo.put("size", metadata.getContentLength());
+                fileInfo.put("contentType", metadata.getContentType());
+                fileInfo.put("lastModified", metadata.getLastModified());
+                fileInfo.put("etag", metadata.getETag());
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(fileInfo);
+                        
+            } catch (Exception e) {
+                log.error("阿里云OSS获取文件信息失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("GET_FILE_INFO_FAILED", "获取文件信息失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
+            }
+        });
     }
     
     @Override
     public Mono<OSSResponse> listFiles(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS列表查询当前使用HTTP实现，生产环境建议使用官方SDK");
+                ossClient = createOSSClient(request);
                 
-                String endpoint = buildEndpoint(request);
-                String url = endpoint;
-                
+                ListObjectsRequest listRequest = new ListObjectsRequest(request.getBucketName());
                 if (request.getObjectKey() != null) {
-                    url += "?prefix=" + request.getObjectKey();
+                    listRequest.setPrefix(request.getObjectKey());
                 }
                 
-                String xmlResponse = webClient.get()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "GET", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                ObjectListing objectListing = ossClient.listObjects(listRequest);
                 
-                // 简单的XML解析（实际项目中应使用专业的XML解析器）
-                List<Map<String, Object>> files = parseListObjectsResponse(xmlResponse);
+                List<Map<String, Object>> files = objectListing.getObjectSummaries().stream()
+                        .map(summary -> {
+                            Map<String, Object> file = new HashMap<>();
+                            file.put("key", summary.getKey());
+                            file.put("size", summary.getSize());
+                            file.put("lastModified", summary.getLastModified().toString());
+                            return file;
+                        })
+                        .collect(Collectors.toList());
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("files", files, "count", files.size()));
+                        .setExtraData(Map.of("files", files));
                         
             } catch (Exception e) {
-                log.error("阿里云OSS列出文件失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("LIST_FILES_FAILED", "列出文件失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS列出文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("LIST_FILES_FAILED", "列出文件失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
     
     @Override
     public Mono<OSSCapacityInfo> checkCapacity(OSSRequest request) {
-        return listFiles(request)
-                .map(response -> {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> files = (List<Map<String, Object>>) response.getExtraData().get("files");
-                        
-                        long totalSize = 0;
-                        long objectCount = files.size();
-                        
-                        for (Map<String, Object> file : files) {
-                            Object sizeObj = file.get("size");
-                            if (sizeObj instanceof Number) {
-                                totalSize += ((Number) sizeObj).longValue();
-                            }
-                        }
-                        
-                        OSSCapacityInfo capacityInfo = new OSSCapacityInfo()
-                                .setBucketName(request.getBucketName())
-                                .setUsedCapacity(totalSize)
-                                .setObjectCount(objectCount)
-                                .setProvider(getProvider())
-                                .setRegion(request.getRegion())
-                                .setStatisticsTime(LocalDateTime.now());
-                        
-                        // 阿里云OSS没有总容量限制，设置为无限大
-                        capacityInfo.setTotalCapacity(Long.MAX_VALUE);
-                        capacityInfo.calculateAvailableCapacity();
-                        capacityInfo.calculateUsagePercentage();
-                        
-                        return capacityInfo;
-                        
-                    } catch (Exception e) {
-                        log.error("阿里云OSS计算容量信息失败: {}", e.getMessage(), e);
-                        return new OSSCapacityInfo()
-                                .setBucketName(request.getBucketName())
-                                .setProvider(getProvider())
-                                .setStatisticsTime(LocalDateTime.now());
-                    }
-                });
+        return Mono.fromCallable(() -> {
+            // 阿里云OSS没有直接的容量查询API，返回默认值
+            OSSCapacityInfo capacityInfo = new OSSCapacityInfo()
+                    .setProvider(getProvider())
+                    .setBucketName(request.getBucketName())
+                    .setTotalCapacity(-1L) // 表示无限制
+                    .setUsedCapacity(0L)
+                    .setAvailableCapacity(-1L)
+                    .setStatisticsTime(LocalDateTime.now());
+            return capacityInfo;
+        });
     }
     
     @Override
     public Mono<OSSResponse> generatePresignedUrl(OSSRequest request, Long expiration) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                // 阿里云OSS预签名URL生成（简化实现）
-                String fileUrl = buildFileUrl(request);
-                long expirationTime = System.currentTimeMillis() + expiration * 1000;
+                ossClient = createOSSClient(request);
                 
-                // 实际项目中需要根据阿里云OSS的签名算法生成预签名URL
-                String presignedUrl = fileUrl + "?Expires=" + (expirationTime / 1000) + "&OSSAccessKeyId=" + request.getAccessKeyId();
+                Date expirationDate = new Date(System.currentTimeMillis() + expiration * 1000);
+                
+                // 创建生成预签名URL的请求
+                GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(
+                    request.getBucketName(), 
+                    request.getObjectKey(), 
+                    HttpMethod.GET
+                );
+                generatePresignedUrlRequest.setExpiration(expirationDate);
+                
+                // 如果请求中包含原始文件名，添加Content-Disposition参数以支持中文文件名
+                if (request.getOriginalFileName() != null && !request.getOriginalFileName().isEmpty()) {
+                    try {
+                        // 对文件名进行URL编码
+                        String encodedFileName = java.net.URLEncoder.encode(request.getOriginalFileName(), "UTF-8")
+                                .replace("+", "%20"); // 替换空格编码
+                        
+                        // 添加response-content-disposition查询参数
+                        generatePresignedUrlRequest.addQueryParameter("response-content-disposition", 
+                            "attachment; filename*=UTF-8''" + encodedFileName);
+                    } catch (Exception e) {
+                        log.warn("文件名编码失败，使用默认文件名: {}", e.getMessage());
+                    }
+                }
+                
+                URL presignedUrl = ossClient.generatePresignedUrl(generatePresignedUrlRequest);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
-                        .setFileUrl(presignedUrl)
+                        .setFileUrl(presignedUrl.toString())
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("expiration", expirationTime));
+                        .setExtraData(Map.of("expiration", expirationDate.getTime()));
                         
             } catch (Exception e) {
                 log.error("阿里云OSS生成预签名URL失败: {}", e.getMessage(), e);
                 return OSSResponse.failure("GENERATE_PRESIGNED_URL_FAILED", "生成预签名URL失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
     
     @Override
     public Mono<OSSResponse> copyFile(OSSRequest request, String sourceObjectKey, String targetObjectKey) {
-        return downloadFile(request.setObjectKey(sourceObjectKey))
-                .flatMap(downloadResponse -> {
-                    if (downloadResponse.getSuccess() && downloadResponse.getContent() != null) {
-                        return uploadFile(request.setObjectKey(targetObjectKey).setContent(downloadResponse.getContent()));
-                    } else {
-                        return Mono.just(OSSResponse.failure("COPY_FILE_FAILED", "复制文件失败：源文件下载失败")
-                                .setProvider(getProvider()));
-                    }
-                });
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
+            
+            try {
+                ossClient = createOSSClient(request);
+                
+                CopyObjectRequest copyRequest = new CopyObjectRequest(request.getBucketName(), sourceObjectKey, 
+                        request.getBucketName(), targetObjectKey);
+                ossClient.copyObject(copyRequest);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(targetObjectKey)
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("sourceKey", sourceObjectKey, "targetKey", targetObjectKey));
+                        
+            } catch (Exception e) {
+                log.error("阿里云OSS复制文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("COPY_FILE_FAILED", "复制文件失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
+            }
+        });
     }
     
     @Override
@@ -469,12 +462,19 @@ public class AliyunOSSService implements OSSService {
         return copyFile(request, sourceObjectKey, targetObjectKey)
                 .flatMap(copyResponse -> {
                     if (copyResponse.getSuccess()) {
-                        return deleteFile(request.setObjectKey(sourceObjectKey))
+                        OSSRequest deleteRequest = new OSSRequest();
+                        deleteRequest.setBucketName(request.getBucketName());
+                        deleteRequest.setObjectKey(sourceObjectKey);
+                        deleteRequest.setAccessKeyId(request.getAccessKeyId());
+                        deleteRequest.setAccessKeySecret(request.getAccessKeySecret());
+                        deleteRequest.setEndpoint(request.getEndpoint());
+                        
+                        return deleteFile(deleteRequest)
                                 .map(deleteResponse -> {
                                     if (deleteResponse.getSuccess()) {
-                                        return copyResponse.setObjectKey(targetObjectKey);
+                                        return copyResponse.setExtraData(Map.of("sourceKey", sourceObjectKey, "targetKey", targetObjectKey, "moved", true));
                                     } else {
-                                        return OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败：删除源文件失败")
+                                        return OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败：复制成功但删除源文件失败")
                                                 .setProvider(getProvider());
                                     }
                                 });
@@ -489,23 +489,13 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> createBucket(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS创建存储桶当前使用HTTP实现，生产环境建议使用官方SDK");
+                ossClient = createOSSClient(request);
                 
-                String endpoint = buildEndpoint(request);
-                
-                webClient.put()
-                        .uri(endpoint)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "PUT", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                CreateBucketRequest createRequest = new CreateBucketRequest(request.getBucketName());
+                ossClient.createBucket(createRequest);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -513,10 +503,14 @@ public class AliyunOSSService implements OSSService {
                         .setResponseTime(System.currentTimeMillis() - startTime);
                         
             } catch (Exception e) {
-                log.error("阿里云OSS创建存储桶失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("CREATE_BUCKET_FAILED", "创建存储桶失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS创建存储桶失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("CREATE_BUCKET_FAILED", "创建存储桶失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
@@ -525,23 +519,11 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> deleteBucket(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                log.warn("阿里云OSS删除存储桶当前使用HTTP实现，生产环境建议使用官方SDK");
-                
-                String endpoint = buildEndpoint(request);
-                
-                webClient.delete()
-                        .uri(endpoint)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "DELETE", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                ossClient = createOSSClient(request);
+                ossClient.deleteBucket(request.getBucketName());
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -549,10 +531,14 @@ public class AliyunOSSService implements OSSService {
                         .setResponseTime(System.currentTimeMillis() - startTime);
                         
             } catch (Exception e) {
-                log.error("阿里云OSS删除存储桶失败，建议使用SDK实现: {}", e.getMessage(), e);
-                return OSSResponse.failure("DELETE_BUCKET_FAILED", "删除存储桶失败，阿里云OSS主要使用SDK协议，当前HTTP实现可能无法正常工作，建议使用官方SDK实现: " + e.getMessage())
+                log.error("阿里云OSS删除存储桶失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("DELETE_BUCKET_FAILED", "删除存储桶失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
@@ -561,27 +547,17 @@ public class AliyunOSSService implements OSSService {
     public Mono<OSSResponse> bucketExists(OSSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
+            OSS ossClient = null;
             
             try {
-                String endpoint = buildEndpoint(request);
-                
-                webClient.head()
-                        .uri(endpoint)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "HEAD", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .toBodilessEntity()
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                ossClient = createOSSClient(request);
+                boolean exists = ossClient.doesBucketExist(request.getBucketName());
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("exists", true));
+                        .setExtraData(Map.of("exists", exists));
                         
             } catch (Exception e) {
                 return OSSResponse.success()
@@ -589,6 +565,10 @@ public class AliyunOSSService implements OSSService {
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
                         .setExtraData(Map.of("exists", false));
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         });
     }
@@ -601,108 +581,16 @@ public class AliyunOSSService implements OSSService {
     }
     
     /**
-     * 构建端点URL
-     */
-    private String buildEndpoint(OSSRequest request) {
-        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-        String protocol = (request.getUseHttps() != null && !request.getUseHttps()) ? "http" : "https";
-        
-        // 阿里云OSS的URL格式：https://bucket.oss-region.aliyuncs.com
-        if (request.getBucketName() != null && !endpoint.contains(request.getBucketName())) {
-            endpoint = request.getBucketName() + "." + endpoint;
-        }
-        
-        return String.format("%s://%s", protocol, endpoint);
-    }
-    
-    /**
      * 构建文件URL
      */
     private String buildFileUrl(OSSRequest request) {
-        String endpoint = buildEndpoint(request);
+        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+        String protocol = (request.getUseHttps() != null && !request.getUseHttps()) ? "http" : "https";
+        
         if (request.getCustomDomain() != null) {
-            String protocol = (request.getUseHttps() != null && !request.getUseHttps()) ? "http" : "https";
             return String.format("%s://%s/%s", protocol, request.getCustomDomain(), request.getObjectKey());
         } else {
-            return String.format("%s/%s", endpoint, request.getObjectKey());
+            return String.format("%s://%s.%s/%s", protocol, request.getBucketName(), endpoint, request.getObjectKey());
         }
-    }
-    
-    /**
-     * 从端点获取Host
-     */
-    private String getHostFromEndpoint(OSSRequest request) {
-        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-        if (request.getBucketName() != null && !endpoint.contains(request.getBucketName())) {
-            endpoint = request.getBucketName() + "." + endpoint;
-        }
-        return endpoint;
-    }
-    
-    /**
-     * 构建认证头
-     * 简化实现，实际项目中需要根据阿里云OSS的签名算法实现
-     */
-    private String buildAuthHeader(OSSRequest request, String method, String objectKey) {
-        // 阿里云OSS使用自定义的签名算法
-        // 这里提供简化实现，实际项目中需要完整的签名逻辑
-        String accessKeyId = request.getAccessKeyId();
-        String accessKeySecret = request.getAccessKeySecret();
-        
-        if (accessKeyId == null || accessKeySecret == null) {
-            return "";
-        }
-        
-        // 简化的认证头，实际需要完整的阿里云OSS签名
-        String timestamp = java.time.Instant.now().toString();
-        return String.format("OSS %s:%s", accessKeyId, Base64.getEncoder().encodeToString((method + timestamp + accessKeySecret).getBytes(StandardCharsets.UTF_8)));
-    }
-    
-    /**
-     * 解析列出对象的XML响应
-     * 简化实现，实际项目中应使用专业的XML解析器
-     */
-    private List<Map<String, Object>> parseListObjectsResponse(String xmlResponse) {
-        List<Map<String, Object>> files = new java.util.ArrayList<>();
-        
-        try {
-            // 简单的字符串匹配解析（实际项目中应使用DOM或SAX解析器）
-            String[] contents = xmlResponse.split("<Contents>");
-            for (int i = 1; i < contents.length; i++) {
-                String content = contents[i];
-                Map<String, Object> file = new java.util.HashMap<>();
-                
-                // 提取Key
-                int keyStart = content.indexOf("<Key>") + 5;
-                int keyEnd = content.indexOf("</Key>");
-                if (keyStart > 4 && keyEnd > keyStart) {
-                    file.put("key", content.substring(keyStart, keyEnd));
-                }
-                
-                // 提取Size
-                int sizeStart = content.indexOf("<Size>") + 6;
-                int sizeEnd = content.indexOf("</Size>");
-                if (sizeStart > 5 && sizeEnd > sizeStart) {
-                    try {
-                        file.put("size", Long.parseLong(content.substring(sizeStart, sizeEnd)));
-                    } catch (NumberFormatException e) {
-                        file.put("size", 0L);
-                    }
-                }
-                
-                // 提取LastModified
-                int modifiedStart = content.indexOf("<LastModified>") + 14;
-                int modifiedEnd = content.indexOf("</LastModified>");
-                if (modifiedStart > 13 && modifiedEnd > modifiedStart) {
-                    file.put("lastModified", content.substring(modifiedStart, modifiedEnd));
-                }
-                
-                files.add(file);
-            }
-        } catch (Exception e) {
-            log.error("解析阿里云OSS列表响应失败: {}", e.getMessage(), e);
-        }
-        
-        return files;
     }
 }

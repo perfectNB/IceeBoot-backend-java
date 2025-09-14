@@ -7,6 +7,7 @@ package com.zboot.framework.controller.oss;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.oss.OssKeyDTO;
@@ -69,7 +70,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addOssKey(@Validated @RequestBody OssKeyDTO dto) {
         Boolean result = ossKeyService.addOssKey(dto);
-        return result ? R.ok() : R.fail("新增失败");
+        return result ? R.ok() : R.fail(ResponseMessage.CREATE_FAIL);
     }
 
     @Operation(summary = "更新OSS密钥", description = "更新OSS密钥信息")
@@ -77,7 +78,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateOssKey(@Validated @RequestBody OssKeyUpdateDTO dto) {
         Boolean result = ossKeyService.updateOssKey(dto);
-        return result ? R.ok() : R.fail("更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除OSS密钥")
@@ -85,7 +86,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteOssKey(@RequestBody List<Long> ids) {
         Boolean result = ossKeyService.deleteOssKey(ids);
-        return result ? R.ok() : R.fail("删除失败");
+        return result ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
     }
 
     @Operation(summary = "更新OSS密钥状态")
@@ -96,7 +97,7 @@ public class OssKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = ossKeyService.updateOssKeyStatus(id, status);
-        return result ? R.ok() : R.fail("状态更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
 
     @Operation(summary = "根据厂商获取激活的密钥列表")

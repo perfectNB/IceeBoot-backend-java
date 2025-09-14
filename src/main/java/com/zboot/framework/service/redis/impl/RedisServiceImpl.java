@@ -1,6 +1,7 @@
 package com.zboot.framework.service.redis.impl;
 
 import com.zboot.common.core.domain.PageResult;
+import com.zboot.common.exception.ZbootException;
 import com.zboot.common.utils.RedisUtils;
 import com.zboot.framework.dto.create.redis.CreateRedisKeyDTO;
 import com.zboot.framework.query.redis.RedisQuery;
@@ -99,7 +100,7 @@ public class RedisServiceImpl implements RedisService {
                     if (value instanceof Map) {
                         redisTemplate.opsForHash().putAll(key, (Map<String, Object>) value);
                     } else {
-                        throw new IllegalArgumentException("Hash类型的值必须是Map对象");
+                        throw new ZbootException("Hash类型的值必须是Map对象");
                     }
                     break;
                 case "list":
@@ -107,7 +108,7 @@ public class RedisServiceImpl implements RedisService {
                         redisTemplate.delete(key); // 先清空
                         ((List<?>) value).forEach(item -> redisTemplate.opsForList().rightPush(key, item));
                     } else {
-                        throw new IllegalArgumentException("List类型的值必须是List对象");
+                        throw new ZbootException("List类型的值必须是List对象");
                     }
                     break;
                 case "set":
@@ -115,7 +116,7 @@ public class RedisServiceImpl implements RedisService {
                         redisTemplate.delete(key); // 先清空
                         ((List<?>) value).forEach(item -> redisTemplate.opsForSet().add(key, item));
                     } else {
-                        throw new IllegalArgumentException("Set类型的值必须是List对象");
+                        throw new ZbootException("Set类型的值必须是List对象");
                     }
                     break;
                 case "zset":
@@ -129,7 +130,7 @@ public class RedisServiceImpl implements RedisService {
                             redisTemplate.opsForZSet().add(key, member, score);
                         }
                     } else {
-                        throw new IllegalArgumentException("ZSet类型的值必须是包含score和member的List对象");
+                        throw new ZbootException("ZSet类型的值必须是包含score和member的List对象");
                     }
                     break;
                 default:

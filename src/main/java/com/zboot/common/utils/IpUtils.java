@@ -8,6 +8,7 @@ package com.zboot.common.utils;
 
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
+import com.zboot.common.exception.ZbootException;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -185,7 +186,7 @@ public class IpUtils {
      */
     public static long ipToLong(String ip) {
         if (!isValidIp(ip)) {
-            throw new IllegalArgumentException("无效的IP地址: " + ip);
+            throw new ZbootException("无效的IP地址: " + ip);
         }
         
         String[] parts = ip.split("\\.");

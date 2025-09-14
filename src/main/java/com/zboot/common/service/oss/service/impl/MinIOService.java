@@ -1,5 +1,6 @@
 /**
  * MinIO服务实现类
+ * 使用MinIO官方SDK实现
  * 
  * @author CodeIcee
  * @date 2025-09-03
@@ -10,19 +11,26 @@ import com.zboot.common.service.oss.dto.OSSCapacityInfo;
 import com.zboot.common.service.oss.dto.OSSRequest;
 import com.zboot.common.service.oss.dto.OSSResponse;
 import com.zboot.common.service.oss.service.OSSService;
+import io.minio.*;
+import io.minio.errors.*;
+import io.minio.http.Method;
+import io.minio.messages.Bucket;
+import io.minio.messages.Item;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.DeleteError;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.InputStream;
-import java.time.Duration;
+import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MinIO服务实现类
- * 基于MinIO S3兼容API实现对象存储操作
+ * 使用MinIO官方SDK实现
  * 
  * @author CodeIcee
  * @date 2025-09-03
@@ -31,15 +39,20 @@ import java.util.Map;
 public class MinIOService implements OSSService {
     
     private static final String PROVIDER_NAME = "minio";
-    private static final String DEFAULT_ENDPOINT = "localhost:9000";
-    private static final Integer DEFAULT_TIMEOUT = 60;
+    private static final String DEFAULT_ENDPOINT = "http://localhost:9000";
     
-    private final WebClient webClient;
-    
-    public MinIOService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(100 * 1024 * 1024)) // 100MB
-                .build();
+    private MinioClient createMinioClient(OSSRequest request) {
+        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+        
+        MinioClient.Builder builder = MinioClient.builder()
+                .endpoint(endpoint)
+                .credentials(request.getAccessKeyId(), request.getAccessKeySecret());
+        
+        if (request.getRegion() != null) {
+            builder.region(request.getRegion());
+        }
+        
+        return builder.build();
     }
     
     @Override
@@ -53,32 +66,26 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s/%s", endpoint, request.getBucketName(), request.getObjectKey());
-                
-                WebClient.RequestBodySpec requestSpec = webClient.put()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "PUT", request.getObjectKey()));
-                            if (request.getContentType() != null) {
-                                headers.set("Content-Type", request.getContentType());
-                            }
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        });
-                
-                String response;
-                if (request.getContent() != null) {
-                    response = requestSpec.bodyValue(request.getContent())
-                            .retrieve()
-                            .bodyToMono(String.class)
-                            .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .block();
-                } else {
+                if (request.getContent() == null) {
                     return OSSResponse.failure("INVALID_CONTENT", "文件内容不能为空")
                             .setProvider(getProvider())
                             .setResponseTime(System.currentTimeMillis() - startTime);
                 }
+                
+                MinioClient minioClient = createMinioClient(request);
+                
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(request.getContent());
+                
+                PutObjectArgs.Builder putObjectBuilder = PutObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .stream(inputStream, request.getContent().length, -1);
+                
+                if (request.getContentType() != null) {
+                    putObjectBuilder.contentType(request.getContentType());
+                }
+                
+                ObjectWriteResponse response = minioClient.putObject(putObjectBuilder.build());
                 
                 String fileUrl = buildFileUrl(request);
                 
@@ -87,7 +94,8 @@ public class MinIOService implements OSSService {
                         .setFileUrl(fileUrl)
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
-                        .setResponseTime(System.currentTimeMillis() - startTime);
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("etag", response.etag(), "versionId", response.versionId() != null ? response.versionId() : ""));
                         
             } catch (Exception e) {
                 log.error("MinIO上传文件失败: {}", e.getMessage(), e);
@@ -100,21 +108,20 @@ public class MinIOService implements OSSService {
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, byte[] content) {
-        return uploadFile(request.setContent(content));
+        request.setContent(content);
+        return uploadFile(request);
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, InputStream inputStream) {
-        return Mono.fromCallable(() -> {
-            try {
-                byte[] content = inputStream.readAllBytes();
-                return uploadFile(request.setContent(content)).block();
-            } catch (Exception e) {
-                log.error("MinIO处理输入流失败: {}", e.getMessage(), e);
-                return OSSResponse.failure("STREAM_PROCESSING_FAILED", "处理输入流失败: " + e.getMessage())
-                        .setProvider(getProvider());
-            }
-        });
+        try {
+            byte[] content = inputStream.readAllBytes();
+            request.setContent(content);
+            return uploadFile(request);
+        } catch (IOException e) {
+            return Mono.just(OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
+                    .setProvider(getProvider()));
+        }
     }
     
     @Override
@@ -123,28 +130,31 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s/%s", endpoint, request.getBucketName(), request.getObjectKey());
+                MinioClient minioClient = createMinioClient(request);
                 
-                byte[] content = webClient.get()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "GET", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(byte[].class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                GetObjectArgs getObjectArgs = GetObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .build();
                 
-                return OSSResponse.success()
-                        .setProvider(getProvider())
-                        .setContent(content)
-                        .setFileSize(content != null ? (long) content.length : 0L)
-                        .setBucketName(request.getBucketName())
-                        .setObjectKey(request.getObjectKey())
-                        .setResponseTime(System.currentTimeMillis() - startTime);
+                try (InputStream is = minioClient.getObject(getObjectArgs);
+                     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        baos.write(buffer, 0, bytesRead);
+                    }
+                    
+                    byte[] content = baos.toByteArray();
+                    
+                    return OSSResponse.success()
+                            .setProvider(getProvider())
+                            .setContent(content)
+                            .setBucketName(request.getBucketName())
+                            .setObjectKey(request.getObjectKey())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
                         
             } catch (Exception e) {
                 log.error("MinIO下载文件失败: {}", e.getMessage(), e);
@@ -165,7 +175,7 @@ public class MinIOService implements OSSService {
                                     java.nio.file.Paths.get(request.getLocalFilePath()),
                                     response.getContent()
                             );
-                            return response;
+                            return response.setExtraData(Map.of("localPath", request.getLocalFilePath()));
                         } catch (Exception e) {
                             log.error("MinIO保存文件到本地失败: {}", e.getMessage(), e);
                             return OSSResponse.failure("SAVE_TO_LOCAL_FAILED", "保存到本地失败: " + e.getMessage())
@@ -182,20 +192,14 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s/%s", endpoint, request.getBucketName(), request.getObjectKey());
+                MinioClient minioClient = createMinioClient(request);
                 
-                webClient.delete()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "DELETE", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                RemoveObjectArgs removeObjectArgs = RemoveObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .build();
+                
+                minioClient.removeObject(removeObjectArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -218,38 +222,48 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                // MinIO S3兼容批量删除需要构建XML请求体
-                StringBuilder xmlBody = new StringBuilder();
-                xmlBody.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                xmlBody.append("<Delete xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
-                xmlBody.append("<Quiet>false</Quiet>");
+                MinioClient minioClient = createMinioClient(request);
+                
+                List<DeleteObject> objects = new ArrayList<>();
                 for (String key : objectKeys) {
-                    xmlBody.append("<Object><Key>").append(key).append("</Key></Object>");
+                    objects.add(new DeleteObject(key));
                 }
-                xmlBody.append("</Delete>");
                 
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s?delete", endpoint, request.getBucketName());
+                RemoveObjectsArgs removeObjectsArgs = RemoveObjectsArgs.builder()
+                        .bucket(request.getBucketName())
+                        .objects(objects)
+                        .build();
                 
-                webClient.post()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "POST", ""));
-                            headers.set("Content-Type", "application/xml");
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .bodyValue(xmlBody.toString())
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                Iterable<Result<DeleteError>> results = minioClient.removeObjects(removeObjectsArgs);
+                
+                int deletedCount = 0;
+                List<String> errors = new ArrayList<>();
+                
+                for (Result<DeleteError> result : results) {
+                    try {
+                        DeleteError error = result.get();
+                        if (error != null) {
+                            errors.add(error.objectName() + ": " + error.message());
+                        } else {
+                            deletedCount++;
+                        }
+                    } catch (Exception e) {
+                        deletedCount++; // 没有错误表示删除成功
+                    }
+                }
+                
+                Map<String, Object> extraData = new HashMap<>();
+                extraData.put("deletedCount", deletedCount);
+                extraData.put("totalCount", objectKeys.size());
+                if (!errors.isEmpty()) {
+                    extraData.put("errors", errors);
+                }
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("deletedCount", objectKeys.size()));
+                        .setExtraData(extraData);
                         
             } catch (Exception e) {
                 log.error("MinIO批量删除文件失败: {}", e.getMessage(), e);
@@ -266,20 +280,14 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s/%s", endpoint, request.getBucketName(), request.getObjectKey());
+                MinioClient minioClient = createMinioClient(request);
                 
-                webClient.head()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "HEAD", request.getObjectKey()));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .toBodilessEntity()
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                StatObjectArgs statObjectArgs = StatObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .build();
+                
+                StatObjectResponse stat = minioClient.statObject(statObjectArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -289,7 +297,6 @@ public class MinIOService implements OSSService {
                         .setExtraData(Map.of("exists", true));
                         
             } catch (Exception e) {
-                // HEAD请求失败通常表示文件不存在
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
@@ -302,24 +309,43 @@ public class MinIOService implements OSSService {
     
     @Override
     public Mono<OSSResponse> getFileInfo(OSSRequest request) {
-        return fileExists(request)
-                .flatMap(response -> {
-                    Boolean exists = (Boolean) response.getExtraData().get("exists");
-                    if (Boolean.TRUE.equals(exists)) {
-                        return downloadFile(request)
-                                .map(downloadResponse -> {
-                                    if (downloadResponse.getSuccess()) {
-                                        return downloadResponse;
-                                    } else {
-                                        return OSSResponse.failure("GET_FILE_INFO_FAILED", "获取文件信息失败")
-                                                .setProvider(getProvider());
-                                    }
-                                });
-                    } else {
-                        return Mono.just(OSSResponse.failure("FILE_NOT_FOUND", "文件不存在")
-                                .setProvider(getProvider()));
-                    }
-                });
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                MinioClient minioClient = createMinioClient(request);
+                
+                StatObjectArgs statObjectArgs = StatObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .build();
+                
+                StatObjectResponse stat = minioClient.statObject(statObjectArgs);
+                
+                Map<String, Object> info = new HashMap<>();
+                info.put("size", stat.size());
+                info.put("etag", stat.etag());
+                info.put("contentType", stat.contentType());
+                info.put("lastModified", stat.lastModified());
+                info.put("versionId", stat.versionId());
+                if (stat.userMetadata() != null) {
+                    info.put("userMetadata", stat.userMetadata());
+                }
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(info);
+                        
+            } catch (Exception e) {
+                log.error("MinIO获取文件信息失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("GET_FILE_INFO_FAILED", "获取文件信息失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
@@ -328,33 +354,35 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getBucketName());
+                MinioClient minioClient = createMinioClient(request);
+                
+                ListObjectsArgs.Builder listObjectsBuilder = ListObjectsArgs.builder()
+                        .bucket(request.getBucketName());
                 
                 if (request.getObjectKey() != null) {
-                    url += "?prefix=" + request.getObjectKey();
+                    listObjectsBuilder.prefix(request.getObjectKey());
                 }
                 
-                String xmlResponse = webClient.get()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "GET", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                Iterable<Result<Item>> results = minioClient.listObjects(listObjectsBuilder.build());
                 
-                // 简单的XML解析（实际项目中应使用专业的XML解析器）
-                List<Map<String, Object>> files = parseListObjectsResponse(xmlResponse);
+                List<Map<String, Object>> files = new ArrayList<>();
+                for (Result<Item> result : results) {
+                    Item item = result.get();
+                    Map<String, Object> file = new HashMap<>();
+                    file.put("key", item.objectName());
+                    file.put("size", item.size());
+                    file.put("etag", item.etag());
+                    file.put("lastModified", item.lastModified());
+                    file.put("isDir", item.isDir());
+                    file.put("storageClass", item.storageClass());
+                    files.add(file);
+                }
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("files", files, "count", files.size()));
+                        .setExtraData(Map.of("files", files));
                         
             } catch (Exception e) {
                 log.error("MinIO列出文件失败: {}", e.getMessage(), e);
@@ -367,45 +395,17 @@ public class MinIOService implements OSSService {
     
     @Override
     public Mono<OSSCapacityInfo> checkCapacity(OSSRequest request) {
-        return listFiles(request)
-                .map(response -> {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> files = (List<Map<String, Object>>) response.getExtraData().get("files");
-                        
-                        long totalSize = 0;
-                        long objectCount = files.size();
-                        
-                        for (Map<String, Object> file : files) {
-                            Object sizeObj = file.get("size");
-                            if (sizeObj instanceof Number) {
-                                totalSize += ((Number) sizeObj).longValue();
-                            }
-                        }
-                        
-                        OSSCapacityInfo capacityInfo = new OSSCapacityInfo()
-                                .setBucketName(request.getBucketName())
-                                .setUsedCapacity(totalSize)
-                                .setObjectCount(objectCount)
-                                .setProvider(getProvider())
-                                .setRegion(request.getRegion())
-                                .setStatisticsTime(LocalDateTime.now());
-                        
-                        // MinIO没有总容量限制，设置为无限大
-                        capacityInfo.setTotalCapacity(Long.MAX_VALUE);
-                        capacityInfo.calculateAvailableCapacity();
-                        capacityInfo.calculateUsagePercentage();
-                        
-                        return capacityInfo;
-                        
-                    } catch (Exception e) {
-                        log.error("MinIO计算容量信息失败: {}", e.getMessage(), e);
-                        return new OSSCapacityInfo()
-                                .setBucketName(request.getBucketName())
-                                .setProvider(getProvider())
-                                .setStatisticsTime(LocalDateTime.now());
-                    }
-                });
+        return Mono.fromCallable(() -> {
+             // MinIO没有直接的容量查询API，返回默认值
+             OSSCapacityInfo capacityInfo = new OSSCapacityInfo()
+                     .setProvider(getProvider())
+                     .setBucketName(request.getBucketName())
+                     .setTotalCapacity(-1L) // 表示无限制
+                     .setUsedCapacity(0L)
+                     .setAvailableCapacity(-1L)
+                     .setStatisticsTime(LocalDateTime.now());
+             return capacityInfo;
+         });
     }
     
     @Override
@@ -414,13 +414,29 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                // MinIO预签名URL生成（简化实现）
-                String fileUrl = buildFileUrl(request);
-                long expirationTime = System.currentTimeMillis() + expiration * 1000;
+                MinioClient minioClient = createMinioClient(request);
                 
-                // 实际项目中需要根据AWS S3的签名算法生成预签名URL
-                String presignedUrl = fileUrl + "?X-Amz-Expires=" + expiration + "&X-Amz-Date=" + 
-                        java.time.Instant.now().toString().replaceAll("[:-]", "").substring(0, 15) + "Z";
+                GetPresignedObjectUrlArgs.Builder argsBuilder = GetPresignedObjectUrlArgs.builder()
+                        .method(Method.GET)
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .expiry(expiration.intValue(), TimeUnit.SECONDS);
+                
+                // 添加response-content-disposition参数以正确处理中文文件名
+                if (request.getOriginalFileName() != null && !request.getOriginalFileName().isEmpty()) {
+                    try {
+                        String encodedFileName = java.net.URLEncoder.encode(request.getOriginalFileName(), "UTF-8");
+                        Map<String, String> extraQueryParams = new HashMap<>();
+                        extraQueryParams.put("response-content-disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+                        argsBuilder.extraQueryParams(extraQueryParams);
+                    } catch (Exception e) {
+                        log.warn("编码文件名失败: {}", e.getMessage());
+                    }
+                }
+                
+                GetPresignedObjectUrlArgs presignedObjectUrlArgs = argsBuilder.build();
+                
+                String presignedUrl = minioClient.getPresignedObjectUrl(presignedObjectUrlArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -428,7 +444,7 @@ public class MinIOService implements OSSService {
                         .setBucketName(request.getBucketName())
                         .setObjectKey(request.getObjectKey())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("expiration", expirationTime));
+                        .setExtraData(Map.of("expiration", System.currentTimeMillis() + expiration * 1000));
                         
             } catch (Exception e) {
                 log.error("MinIO生成预签名URL失败: {}", e.getMessage(), e);
@@ -441,15 +457,39 @@ public class MinIOService implements OSSService {
     
     @Override
     public Mono<OSSResponse> copyFile(OSSRequest request, String sourceObjectKey, String targetObjectKey) {
-        return downloadFile(request.setObjectKey(sourceObjectKey))
-                .flatMap(downloadResponse -> {
-                    if (downloadResponse.getSuccess() && downloadResponse.getContent() != null) {
-                        return uploadFile(request.setObjectKey(targetObjectKey).setContent(downloadResponse.getContent()));
-                    } else {
-                        return Mono.just(OSSResponse.failure("COPY_FILE_FAILED", "复制文件失败：源文件下载失败")
-                                .setProvider(getProvider()));
-                    }
-                });
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                MinioClient minioClient = createMinioClient(request);
+                
+                CopySource copySource = CopySource.builder()
+                        .bucket(request.getBucketName())
+                        .object(sourceObjectKey)
+                        .build();
+                
+                CopyObjectArgs copyObjectArgs = CopyObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(targetObjectKey)
+                        .source(copySource)
+                        .build();
+                
+                ObjectWriteResponse response = minioClient.copyObject(copyObjectArgs);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(targetObjectKey)
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("sourceKey", sourceObjectKey, "targetKey", targetObjectKey, "etag", response.etag()));
+                        
+            } catch (Exception e) {
+                log.error("MinIO复制文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("COPY_FILE_FAILED", "复制文件失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
@@ -457,17 +497,30 @@ public class MinIOService implements OSSService {
         return copyFile(request, sourceObjectKey, targetObjectKey)
                 .flatMap(copyResponse -> {
                     if (copyResponse.getSuccess()) {
-                        return deleteFile(request.setObjectKey(sourceObjectKey))
+                        // 复制成功后删除源文件
+                        OSSRequest deleteRequest = new OSSRequest()
+                                .setBucketName(request.getBucketName())
+                                .setObjectKey(sourceObjectKey)
+                                .setAccessKeyId(request.getAccessKeyId())
+                                .setAccessKeySecret(request.getAccessKeySecret())
+                                .setEndpoint(request.getEndpoint())
+                                .setRegion(request.getRegion());
+                        
+                        return deleteFile(deleteRequest)
                                 .map(deleteResponse -> {
                                     if (deleteResponse.getSuccess()) {
-                                        return copyResponse.setObjectKey(targetObjectKey);
+                                        return copyResponse.setExtraData(Map.of(
+                                                "sourceKey", sourceObjectKey,
+                                                "targetKey", targetObjectKey,
+                                                "moved", true
+                                        ));
                                     } else {
-                                        return OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败：删除源文件失败")
+                                        return OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败: 复制成功但删除源文件失败")
                                                 .setProvider(getProvider());
                                     }
                                 });
                     } else {
-                        return Mono.just(OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败：复制文件失败")
+                        return Mono.just(OSSResponse.failure("MOVE_FILE_FAILED", "移动文件失败: 复制文件失败")
                                 .setProvider(getProvider()));
                     }
                 });
@@ -479,20 +532,20 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getBucketName());
+                MinioClient minioClient = createMinioClient(request);
                 
-                webClient.put()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "PUT", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                MakeBucketArgs makeBucketArgs = MakeBucketArgs.builder()
+                        .bucket(request.getBucketName())
+                        .build();
+                
+                if (request.getRegion() != null) {
+                    makeBucketArgs = MakeBucketArgs.builder()
+                            .bucket(request.getBucketName())
+                            .region(request.getRegion())
+                            .build();
+                }
+                
+                minioClient.makeBucket(makeBucketArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -514,20 +567,13 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getBucketName());
+                MinioClient minioClient = createMinioClient(request);
                 
-                webClient.delete()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "DELETE", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                RemoveBucketArgs removeBucketArgs = RemoveBucketArgs.builder()
+                        .bucket(request.getBucketName())
+                        .build();
+                
+                minioClient.removeBucket(removeBucketArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
@@ -549,26 +595,19 @@ public class MinIOService implements OSSService {
             long startTime = System.currentTimeMillis();
             
             try {
-                String endpoint = buildEndpoint(request);
-                String url = String.format("%s/%s", endpoint, request.getBucketName());
+                MinioClient minioClient = createMinioClient(request);
                 
-                webClient.head()
-                        .uri(url)
-                        .headers(headers -> {
-                            headers.set("Authorization", buildAuthHeader(request, "HEAD", ""));
-                            headers.set("Host", getHostFromEndpoint(request));
-                            headers.set("Date", java.time.Instant.now().toString());
-                        })
-                        .retrieve()
-                        .toBodilessEntity()
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                        .block();
+                BucketExistsArgs bucketExistsArgs = BucketExistsArgs.builder()
+                        .bucket(request.getBucketName())
+                        .build();
+                
+                boolean exists = minioClient.bucketExists(bucketExistsArgs);
                 
                 return OSSResponse.success()
                         .setProvider(getProvider())
                         .setBucketName(request.getBucketName())
                         .setResponseTime(System.currentTimeMillis() - startTime)
-                        .setExtraData(Map.of("exists", true));
+                        .setExtraData(Map.of("exists", exists));
                         
             } catch (Exception e) {
                 return OSSResponse.success()
@@ -588,101 +627,16 @@ public class MinIOService implements OSSService {
     }
     
     /**
-     * 构建端点URL
-     */
-    private String buildEndpoint(OSSRequest request) {
-        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-        String protocol = (request.getUseHttps() != null && !request.getUseHttps()) ? "http" : "https";
-        return String.format("%s://%s", protocol, endpoint);
-    }
-    
-    /**
      * 构建文件URL
      */
     private String buildFileUrl(OSSRequest request) {
-        String endpoint = buildEndpoint(request);
+        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+        
         if (request.getCustomDomain() != null) {
             String protocol = (request.getUseHttps() != null && !request.getUseHttps()) ? "http" : "https";
             return String.format("%s://%s/%s", protocol, request.getCustomDomain(), request.getObjectKey());
         } else {
             return String.format("%s/%s/%s", endpoint, request.getBucketName(), request.getObjectKey());
         }
-    }
-    
-    /**
-     * 从端点获取Host
-     */
-    private String getHostFromEndpoint(OSSRequest request) {
-        String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-        return endpoint;
-    }
-    
-    /**
-     * 构建认证头
-     * 简化实现，实际项目中需要根据AWS S3的签名算法实现
-     */
-    private String buildAuthHeader(OSSRequest request, String method, String objectKey) {
-        // MinIO使用AWS S3兼容的签名算法
-        // 这里提供简化实现，实际项目中需要完整的AWS V4签名
-        String accessKey = request.getAccessKeyId();
-        String secretKey = request.getAccessKeySecret();
-        
-        if (accessKey == null || secretKey == null) {
-            return "";
-        }
-        
-        // 简化的认证头，实际需要完整的AWS V4签名
-        String timestamp = java.time.Instant.now().toString().replaceAll("[:-]", "").substring(0, 15) + "Z";
-        String credential = String.format("%s/%s", accessKey, timestamp.substring(0, 8));
-        
-        return String.format("AWS4-HMAC-SHA256 Credential=%s, SignedHeaders=host;x-amz-date, Signature=dummy", credential);
-    }
-    
-    /**
-     * 解析列出对象的XML响应
-     * 简化实现，实际项目中应使用专业的XML解析器
-     */
-    private List<Map<String, Object>> parseListObjectsResponse(String xmlResponse) {
-        List<Map<String, Object>> files = new java.util.ArrayList<>();
-        
-        try {
-            // 简单的字符串匹配解析（实际项目中应使用DOM或SAX解析器）
-            String[] contents = xmlResponse.split("<Contents>");
-            for (int i = 1; i < contents.length; i++) {
-                String content = contents[i];
-                Map<String, Object> file = new java.util.HashMap<>();
-                
-                // 提取Key
-                int keyStart = content.indexOf("<Key>") + 5;
-                int keyEnd = content.indexOf("</Key>");
-                if (keyStart > 4 && keyEnd > keyStart) {
-                    file.put("key", content.substring(keyStart, keyEnd));
-                }
-                
-                // 提取Size
-                int sizeStart = content.indexOf("<Size>") + 6;
-                int sizeEnd = content.indexOf("</Size>");
-                if (sizeStart > 5 && sizeEnd > sizeStart) {
-                    try {
-                        file.put("size", Long.parseLong(content.substring(sizeStart, sizeEnd)));
-                    } catch (NumberFormatException e) {
-                        file.put("size", 0L);
-                    }
-                }
-                
-                // 提取LastModified
-                int modifiedStart = content.indexOf("<LastModified>") + 14;
-                int modifiedEnd = content.indexOf("</LastModified>");
-                if (modifiedStart > 13 && modifiedEnd > modifiedStart) {
-                    file.put("lastModified", content.substring(modifiedStart, modifiedEnd));
-                }
-                
-                files.add(file);
-            }
-        } catch (Exception e) {
-            log.error("解析MinIO列表响应失败: {}", e.getMessage(), e);
-        }
-        
-        return files;
     }
 }

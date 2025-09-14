@@ -7,6 +7,7 @@
 package com.zboot.framework.controller.system;
 
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.common.core.domain.R;
 import com.zboot.framework.dto.create.system.RoleMenuDTO;
@@ -59,7 +60,7 @@ public class SysRoleMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> addRoleMenu(@Validated @RequestBody RoleMenuDTO roleMenuDTO) {
         boolean success = roleMenuService.addRoleMenu(roleMenuDTO);
-        return success ? R.ok() : R.fail("新增角色菜单关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_MENU_RELATION_CREATE_FAIL);
     }
 
 
@@ -68,7 +69,7 @@ public class SysRoleMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> updateRoleMenu(@Validated @RequestBody RoleMenuDTO roleMenuDTO) {
         boolean success = roleMenuService.updateRoleMenu(roleMenuDTO);
-        return success ? R.ok() : R.fail("更新角色菜单关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_MENU_RELATION_UPDATE_FAIL);
     }
 
 
@@ -77,7 +78,7 @@ public class SysRoleMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteRoleMenus(@RequestBody List<Long> ids) {
         boolean success = roleMenuService.deleteRoleMenus(ids);
-        return success ? R.ok() : R.fail("删除角色菜单关联失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_MENU_RELATION_DELETE_FAIL);
     }
 
 
@@ -103,7 +104,7 @@ public class SysRoleMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> assignMenusToRole(@PathVariable("roleId") Long roleId, @RequestBody List<Long> menuIds) {
         boolean success = roleMenuService.assignMenusToRole(roleId, menuIds);
-        return success ? R.ok() : R.fail("分配菜单失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_MENU_ASSIGN_FAIL);
     }
 
 
@@ -112,6 +113,6 @@ public class SysRoleMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> removeAllMenusByRoleId(@PathVariable("id") Long roleId) {
         boolean success = roleMenuService.removeAllMenusByRoleId(roleId);
-        return success ? R.ok() : R.fail("移除角色菜单失败");
+        return success ? R.ok() : R.fail(ResponseMessage.ROLE_MENU_REMOVE_FAIL);
     }
 }

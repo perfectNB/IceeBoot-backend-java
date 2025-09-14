@@ -50,7 +50,6 @@ public class SysMenuController {
 
     @Operation(summary = "查询用户菜单列表", description = "根据条件分页查询菜单列表")
     @GetMapping("/user")
-    @RequirePermission(dynamic = true)
     public R<List<SysMenuVO>> getUserMenu() {
         List<SysMenuVO> userMenu = menuService.getUserMenu();
         return R.ok(userMenu);

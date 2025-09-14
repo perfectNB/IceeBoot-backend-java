@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
                                                         HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',不支持'{}'请求", requestURI, e.getMethod());
-        return R.fail("请求方法不允许");
+        return R.fail(ResponseMessage.METHOD_NOT_ALLOWED);
     }
 
     /**

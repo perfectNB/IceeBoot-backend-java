@@ -7,6 +7,7 @@ package com.zboot.framework.controller.email;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zboot.common.annotation.RequirePermission;
+import com.zboot.common.constant.ResponseMessage;
 import com.zboot.common.core.domain.R;
 import com.zboot.common.core.domain.PageResult;
 import com.zboot.framework.dto.create.email.EmailKeyDTO;
@@ -69,7 +70,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addEmailKey(@Validated @RequestBody EmailKeyDTO dto) {
         Boolean result = emailKeyService.addEmailKey(dto);
-        return result ? R.ok() : R.fail("新增失败");
+        return result ? R.ok() : R.fail(ResponseMessage.EMAIL_CREATE_FAIL);
     }
 
     @Operation(summary = "更新Email密钥", description = "更新Email密钥信息")
@@ -77,7 +78,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateEmailKey(@Validated @RequestBody EmailKeyUpdateDTO dto) {
         Boolean result = emailKeyService.updateEmailKey(dto);
-        return result ? R.ok() : R.fail("更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.EMAIL_UPDATE_FAIL);
     }
 
     @Operation(summary = "删除Email密钥")
@@ -85,7 +86,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteEmailKey(@RequestBody List<Long> ids) {
         Boolean result = emailKeyService.deleteEmailKey(ids);
-        return result ? R.ok() : R.fail("删除失败");
+        return result ? R.ok() : R.fail(ResponseMessage.EMAIL_DELETE_FAIL);
     }
 
     @Operation(summary = "更新Email密钥状态")
@@ -96,7 +97,7 @@ public class EmailKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = emailKeyService.updateEmailKeyStatus(id, status);
-        return result ? R.ok() : R.fail("状态更新失败");
+        return result ? R.ok() : R.fail(ResponseMessage.EMAIL_STATUS_UPDATE_FAIL);
     }
 
     @Operation(summary = "根据厂商获取激活的密钥列表")
