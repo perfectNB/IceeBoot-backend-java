@@ -24,6 +24,13 @@
   </p>
 </div>
 
+## 🕸️项目地址
+- **前端**：https://gitee.com/woshinibaba438cnmlgb/zboot-frontend-vue
+- **后端**：https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java
+- **使用文档**：还没写，带上线.....
+- **项目官网**：还没做，带上线.....
+
+
 ## 📋 环境要求
 
 在开始使用 IceeBoot 之前，请确保您的开发环境满足以下要求：
@@ -464,49 +471,6 @@ iceeboot-backend-java/
 └── 📄 .gitignore                                # Git忽略文件
 ```
 
-## 🚀 快速开始
-
-### 环境要求
-- JDK 17+
-- Maven 3.6+
-- MySQL 8.0+
-- Redis 6.0+
-
-### 安装步骤
-
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/your-username/iceeboot-backend-java.git
-   cd iceeboot-backend-java
-   ```
-
-2. **配置数据库**
-   ```yaml
-   # application-dev.yml
-   spring:
-     datasource:
-       url: jdbc:mysql://localhost:3306/iceeboot?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-       username: your_username
-       password: your_password
-   ```
-
-3. **配置Redis**
-   ```yaml
-   # application-dev.yml
-   spring:
-     redis:
-       host: localhost
-       port: 6379
-       password: your_redis_password
-   ```
-
-4. **启动项目**
-   ```bash
-   mvn spring-boot:run
-   ```
-
-5. **访问接口文档**
-   打开浏览器访问：http://localhost:9000/doc.html
 
 ## 📖 使用指南
 
@@ -576,27 +540,42 @@ public class ChatController {
 }
 ```
 
-#### 流式对话调用
+#### 流式对话调用(在StreamChatRequest里面写好参数和上下文自动配置到对应模型)
 ```java
+    @Operation(summary = "流式对话")
 @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-public Flux<String> streamChat(@RequestBody String message) {
-    return chatModel.stream(new Prompt(message))
-            .map(response -> response.getResult().getOutput().getContent());
+//    @RequirePermission(dynamic = true)
+public Flux<String> streamChat(@Validated @RequestBody StreamChatRequest request) {
+   return aiChatService.streamChat(request)
+           .map(response -> {
+              try {
+                 // 将LLMResponse转换为SSE格式
+                 if (response.getError() != null) {
+                    return "data: {\"error\":\"" + response.getError() + "\",\"finished\":true}\n\n";
+                 }
+
+                 if (response.getChoices() != null && !response.getChoices().isEmpty()) {
+                    var choice = response.getChoices().get(0);
+                    if (choice.getDelta() != null && choice.getDelta().getContent() != null) {
+                       String content = choice.getDelta().getContent().replace("\"", "\\\"").replace("\n", "\\n");
+                       return "data: {\"content\":\"" + content + "\",\"finished\":false}\n\n";
+                    }
+                 }
+
+                 if (Boolean.TRUE.equals(response.getFinished())) {
+                    return "data: {\"finished\":true}\n\n";
+                 }
+
+                 return "data: {\"heartbeat\":true}\n\n";
+              } catch (Exception e) {
+                 return "data: {\"error\":\"数据处理异常\",\"finished\":true}\n\n";
+              }
+           })
+           .onErrorReturn("data: {\"error\":\"流式对话异常\",\"finished\":true}\n\n");
 }
 ```
 
-#### 智能数据库查询
-系统支持通过自然语言查询数据库：
-```java
-// 用户输入："查询最近注册的10个用户"
-// 系统自动生成SQL并执行查询
-@PostMapping("/intelligent-chat")
-public String intelligentChat(@RequestBody String query) {
-    // 系统会自动判断是否需要查询数据库
-    // 并调用相应的Function Calling功能
-    return intelligentChatService.chat(query);
-}
-```
+
 
 #### 多模型支持
 系统支持多种AI模型，可以通过配置切换：
@@ -725,6 +704,8 @@ public String callDifyApp(String message) {
 
 - 📧 **邮箱**：857787854@qq.com
 - 💬 **QQ群**：待建立
+- 🐧 QQ：857787854
+- 🛰️ 微信：CodeIcee
 
 
 ## 🙏 致谢
