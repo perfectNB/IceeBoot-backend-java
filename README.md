@@ -1,6 +1,12 @@
 
 
-# IceeBoot 超级脚手架后端版
+<div align="center">
+  <img src="src/main/resources/assets/log/logo.svg" alt="IceeBoot Logo" width="120" height="120">
+  <h1>🚀 IceeBoot超级脚手架—后端</h1>
+  <p>基于 SpringBoot + Ai大模型 + Mcp + Vue 3 + TypeScript + Element Plus 的现代化前后端分离管理系统</p>
+
+
+</div>
 
 <div align="center">
   <p>
@@ -18,11 +24,75 @@
   </p>
 </div>
 
+## 📋 环境要求
+
+在开始使用 IceeBoot 之前，请确保您的开发环境满足以下要求：
+
+### 🔧 必需环境
+- **JDK 17+**：项目基于 Java 17 开发，需要 JDK 17 或更高版本
+- **Spring Boot 3.3.4**：使用最新的 Spring Boot 3.x 版本
+- **MySQL 8.0+**：主数据库，支持 JSON 字段和全文索引等高级特性
+- **Redis 6.0+**：缓存和会话存储，支持 Stream 等新特性
+- **Maven 3.6+**：项目构建和依赖管理工具
+
+### 🛠️ 开发工具（推荐）
+- **IntelliJ IDEA 2023+** 或 **Eclipse 2023+**
+- **Git 2.30+**：版本控制
+- **Docker**（可选）：容器化部署
+- **Postman** 或 **Apifox**：API 测试工具
+
+### 🌐 第三方服务（可选）
+- **阿里云 DashScope**：通义千问 AI 大模型服务
+- **阿里云 OSS** / **腾讯云 COS** / **华为云 OBS**：对象存储服务
+- **阿里云短信** / **腾讯云短信**：短信发送服务
+- **SMTP 邮箱服务**：邮件发送功能
+
 ## 🚀 项目简介
 
 **IceeBoot 超级脚手架后端版** 是一个面向现代化企业级应用开发的全栈后端解决方案。它不仅仅是一个简单的项目模板，更是一个集成了当前最前沿技术栈的智能化开发平台。iceeboot 致力于为开发者提供一个开箱即用、功能完备、易于扩展的后端开发基础设施，让开发者能够专注于业务逻辑的实现，而无需在基础架构搭建上花费大量时间。
 
 在当今快速发展的技术环境中，企业对于软件开发的效率和质量要求越来越高。传统的从零开始搭建项目架构的方式已经无法满足快速迭代的需求。iceeboot 应运而生，它整合了业界最佳实践，融合了人工智能技术，为开发团队提供了一个强大而灵活的开发平台。
+
+## 🖼️ 功能展示
+
+以下是 IceeBoot 的主要功能界面展示：
+
+### 📊 系统主页
+<div align="center">
+  <img src="src/main/resources/assets/img/首页展示.png" alt="首页展示1" width="800">
+  <p><em>首页展示 - 数据统计图表和系统状态监控</em></p>
+</div>
+<div align="center">
+  <img src="src/main/resources/assets/img/主页展示.png" alt="系统主页" width="800">
+  <p><em>系统主页 - 展示系统概览、统计数据和快捷操作入口</em></p>
+</div>
+<div align="center">
+  <img src="src/main/resources/assets/img/首页展示2.png" alt="首页展示2" width="800">
+  <p><em>首页展示 - 更多功能模块和操作面板</em></p>
+</div>
+
+### 🤖 AI 智能功能
+<div align="center">
+  <img src="src/main/resources/assets/img/Ai展示.png" alt="AI功能展示" width="800">
+  <p><em>AI 功能展示 - 智能对话、文本生成和AI助手功能</em></p>
+</div>
+
+<div align="center">
+  <img src="src/main/resources/assets/img/Ai集成展示.png" alt="AI集成展示" width="800">
+  <p><em>AI 集成展示 - 多种AI模型集成管理和配置界面</em></p>
+</div>
+
+### ⚙️ 代码生成器
+<div align="center">
+  <img src="src/main/resources/assets/img/代码生成器展示.png" alt="代码生成器" width="800">
+  <p><em>代码生成器 - 基于数据库表结构自动生成完整的CRUD代码</em></p>
+</div>
+
+### 📈 系统监控
+<div align="center">
+  <img src="src/main/resources/assets/img/监控展示.png" alt="系统监控" width="800">
+  <p><em>系统监控 - 实时监控系统性能、资源使用情况和运行状态</em></p>
+</div>
 
 ### 🎯 设计理念
 
@@ -37,26 +107,48 @@
 iceeboot 采用了当前最主流和成熟的技术栈，确保项目的稳定性、可维护性和扩展性：
 
 ### 后端核心框架
-- **Spring Boot 3.x**：作为核心框架，提供自动配置、依赖注入、AOP等企业级功能
-- **Spring Security**：与Sa-Token配合，构建多层次的安全防护体系
-- **Spring Data JPA**：简化数据访问层开发，提供强大的ORM能力
+- **Spring Boot 3.3.4**：最新的Spring Boot版本，提供自动配置、依赖注入、AOP等企业级功能
+- **Spring WebFlux**：响应式编程支持，提供非阻塞的Web服务能力
+- **Spring AOP**：面向切面编程，支持事务管理、日志记录等横切关注点
+- **Spring Validation**：参数校验框架，支持JSR-303标准和自定义校验规则
+
+### AI与智能化
+- **Spring AI Alibaba 1.0.0-M5.1**：阿里云官方Spring AI实现，深度集成通义千问等AI模型
+- **Function Calling**：支持AI函数调用，实现智能数据库查询等功能
+- **WebFlux Reactive**：支持AI模型的流式响应和异步处理
 
 ### 数据持久化
-- **MyBatis 3.x**：灵活的SQL映射框架，支持复杂查询和高性能数据访问
-- **MyBatis-Plus**：MyBatis的增强工具，提供代码生成、分页、性能分析等功能
-- **MySQL 8.0+**：主流关系型数据库，支持JSON、全文索引等高级特性
-- **Redis 6.0+**：高性能缓存和会话存储，支持多种数据结构
+- **MyBatis-Plus 3.5.9**：MyBatis的增强版本，提供代码生成、分页、性能分析等功能
+- **MySQL Connector 8.0.33**：MySQL官方驱动，支持最新的MySQL 8.0特性
+- **Spring Data Redis**：Redis集成，支持缓存、会话存储和分布式锁
+- **Spring Data MongoDB**：MongoDB文档数据库支持
+- **Spring Data Elasticsearch**：全文搜索和数据分析支持
 
 ### 权限认证与安全
-- **Sa-Token**：轻量级权限认证框架，支持多种认证模式和细粒度权限控制
-- **JWT**：无状态的身份验证机制，支持分布式系统
-- **BCrypt**：密码加密算法，确保用户密码安全
+- **Sa-Token 1.37.0**：轻量级权限认证框架，支持多种认证模式和细粒度权限控制
+- **Sa-Token Redis Jackson**：Sa-Token的Redis序列化支持
+- **Spring Security Crypto 6.2.0**：密码加密和安全工具
+
+### 消息队列与任务调度
+- **Spring Boot AMQP**：RabbitMQ消息队列集成
+- **Spring Boot Quartz**：定时任务调度框架
+- **Activiti 7.1.0.M6**：工作流引擎，支持业务流程管理
+
+### 对象存储服务
+- **阿里云OSS SDK 3.17.4**：阿里云对象存储服务
+- **华为云OBS SDK 3.21.8**：华为云对象存储服务
+- **腾讯云COS SDK 5.6.155**：腾讯云对象存储服务
+- **七牛云Kodo SDK 7.15.1**：七牛云对象存储服务
+- **MinIO SDK 8.5.7**：开源对象存储服务
 
 ### 开发工具与中间件
-- **Swagger/Knife4j**：API文档自动生成和在线调试
-- **Logback**：高性能日志框架，支持异步日志和多种输出格式
-- **Jackson**：JSON序列化和反序列化
-- **Validation**：参数校验框架，支持自定义校验规则
+- **Knife4j 4.3.0**：基于OpenAPI 3.0的API文档生成和调试工具
+- **Hutool 5.8.22**：Java工具类库，提供丰富的工具方法
+- **FastJSON2 2.0.43**：阿里巴巴高性能JSON处理库
+- **Apache Commons Lang3**：Apache通用工具库
+- **Apache Commons Collections4 4.4**：集合工具库
+- **Beetl 3.15.10**：模板引擎，用于代码生成
+- **Lombok**：简化Java代码编写，自动生成getter/setter等方法
 
 ## 🔐 权限控制系统
 
@@ -79,10 +171,77 @@ iceeboot 采用 **Sa-Token** 作为权限认证框架，实现了业界领先的
 
 iceeboot 紧跟人工智能发展趋势，深度集成了国内外主流AI大模型，为应用提供强大的智能化能力：
 
+### 🌟 Spring AI Alibaba 集成
+
+IceeBoot 深度集成了 **Spring AI Alibaba**，这是阿里云官方推出的 Spring AI 实现，专门针对阿里云的AI服务进行了优化。
+
+#### 核心特性
+- **开箱即用**：只需配置API密钥即可快速接入通义千问等模型
+- **Spring Boot 自动配置**：完全符合Spring Boot的配置理念
+- **流式响应支持**：支持SSE流式输出，提升用户体验
+- **Function Calling**：支持函数调用，实现AI与业务系统的深度集成
+- **多模态支持**：支持文本、图像等多种输入模式
+
+#### 快速配置
+
+1. **添加依赖**（已集成）
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud.ai</groupId>
+    <artifactId>spring-ai-alibaba-starter</artifactId>
+    <version>1.0.0-M5.1</version>
+</dependency>
+```
+
+2. **配置API密钥**
+在 `application-dev.yml` 中添加配置：
+```yaml
+spring:
+  ai:
+    dashscope:
+      api-key: sk-your-dashscope-api-key  # 在阿里云DashScope控制台获取
+      chat:
+        options:
+          model: qwen-plus  # 可选：qwen-turbo, qwen-plus, qwen-max
+          temperature: 0.7
+          max-tokens: 2000
+```
+
+3. **获取API密钥**
+- 访问 [阿里云DashScope控制台](https://dashscope.console.aliyun.com/)
+- 注册并实名认证
+- 创建API密钥
+- 复制密钥到配置文件
+
+#### 支持的模型
+- **qwen-turbo**：响应速度快，适合对话场景
+- **qwen-plus**：平衡性能和成本，推荐使用
+- **qwen-max**：最强性能，适合复杂任务
+- **qwen-max-longcontext**：支持长文本处理
+- **qwen2.5系列**：最新的Qwen2.5模型家族
+
+#### Function Calling 功能
+
+IceeBoot 实现了智能的 Function Calling 功能，AI可以自动调用系统函数：
+
+```java
+@Bean
+@Description("查询数据库获取信息")
+public Function<DatabaseQueryRequest, DatabaseQueryResponse> databaseQuery(
+        DatabaseQueryFunction databaseQueryFunction) {
+    return databaseQueryFunction;
+}
+```
+
+用户可以通过自然语言查询数据库：
+- "查询最近注册的用户"
+- "统计今天的活跃用户数量"
+- "显示所有管理员角色"
+
 ### 国内AI大模型
+- **通义千问**：阿里巴巴达摩院开发的大语言模型，通过Spring AI Alibaba深度集成
 - **DeepSeek**：深度求索科技的大语言模型，在代码生成和逻辑推理方面表现优异
 - **文心一言**：百度推出的知识增强大语言模型，具备强大的中文理解和生成能力
-- **通义千问**：阿里巴巴达摩院开发的大语言模型，在多模态理解方面具有优势
 - **Kimi**：月之暗面公司的长文本处理大模型，支持超长上下文理解
 
 ### 国外AI大模型
@@ -347,39 +506,197 @@ iceeboot-backend-java/
    ```
 
 5. **访问接口文档**
-   打开浏览器访问：http://localhost:8080/doc.html
+   打开浏览器访问：http://localhost:9000/doc.html
 
 ## 📖 使用指南
 
-### 代码生成
-1. 运行 `CodeGenerator.java` 主方法
-2. 输入包名和实体名称
-3. 系统自动生成完整的CRUD代码
+### 🚀 快速启动
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/your-username/iceeboot-backend-java.git
+   cd iceeboot-backend-java
+   ```
 
-### AI模型调用
-```java
-@Autowired
-private AIService aiService;
+2. **配置数据库**
+   ```yaml
+   # application-dev.yml
+   spring:
+     datasource:
+       url: jdbc:mysql://localhost:3306/iceeboot?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+       username: your_username
+       password: your_password
+   ```
 
-public String chatWithAI(String message) {
-    return aiService.chat("deepseek", message);
-}
+3. **配置Redis**
+   ```yaml
+   # application-dev.yml
+   spring:
+     redis:
+       host: localhost
+       port: 6379
+       password: your_redis_password
+   ```
+
+4. **启动项目**
+   ```bash
+   mvn spring-boot:run
+   ```
+
+5. **访问接口文档**
+   打开浏览器访问：http://localhost:9000/doc.html
+
+### 🤖 AI大模型调用
+
+IceeBoot 集成了 **Spring AI Alibaba**，支持通义千问等多种AI大模型。
+
+#### 配置AI模型
+在 `application-dev.yml` 中配置您的API密钥：
+```yaml
+spring:
+  ai:
+    dashscope:
+      api-key: sk-your-dashscope-api-key
 ```
 
-### 权限控制
+#### 基础对话调用
 ```java
 @RestController
-@RequestMapping("/api/user")
-public class UserController {
+@RequiredArgsConstructor
+public class ChatController {
     
-    @SaCheckPermission("user:list")
-    @GetMapping("/list")
-    public Result getUserList() {
-        // 需要user:list权限才能访问
-        return Result.success();
+    private final ChatModel chatModel;
+    
+    @PostMapping("/chat")
+    public String chat(@RequestBody String message) {
+        return chatModel.call(new Prompt(message))
+                .getResult()
+                .getOutput()
+                .getContent();
     }
 }
 ```
+
+#### 流式对话调用
+```java
+@PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+public Flux<String> streamChat(@RequestBody String message) {
+    return chatModel.stream(new Prompt(message))
+            .map(response -> response.getResult().getOutput().getContent());
+}
+```
+
+#### 智能数据库查询
+系统支持通过自然语言查询数据库：
+```java
+// 用户输入："查询最近注册的10个用户"
+// 系统自动生成SQL并执行查询
+@PostMapping("/intelligent-chat")
+public String intelligentChat(@RequestBody String query) {
+    // 系统会自动判断是否需要查询数据库
+    // 并调用相应的Function Calling功能
+    return intelligentChatService.chat(query);
+}
+```
+
+#### 多模型支持
+系统支持多种AI模型，可以通过配置切换：
+- **通义千问**：阿里云DashScope平台
+- **DeepSeek**：深度求索大模型
+- **文心一言**：百度大模型
+- **ChatGPT**：OpenAI模型
+- **Claude**：Anthropic模型
+
+### 🤖 Agent智能体使用
+
+IceeBoot 支持集成多种Agent平台，实现智能化业务流程。
+
+#### 支持的Agent平台
+- **Coze（扣子）**：字节跳动AI Bot开发平台
+- **Dify**：开源LLM应用开发平台
+
+#### Agent配置管理
+```java
+// 创建Agent配置
+AiAgentDTO agentDto = new AiAgentDTO();
+agentDto.setName("客服助手");
+agentDto.setPlatform("coze"); // 或 "dify"
+agentDto.setType("agent"); // 或 "workflow"
+agentDto.setApiUrl("https://api.coze.com/v1/bot/chat");
+agentDto.setApiKey("your-agent-api-key");
+agentDto.setBotId("your-bot-id");
+
+// 保存Agent配置
+aiAgentService.addAgent(agentDto);
+```
+
+#### Agent调用示例
+```java
+@Service
+@RequiredArgsConstructor
+public class AgentService {
+    
+    private final IAiAgentService aiAgentService;
+    
+    public String callAgent(String platform, String message) {
+        // 获取指定平台的Agent
+        List<AiAgentVO> agents = aiAgentService.getAgentsByPlatform(platform);
+        
+        if (!agents.isEmpty()) {
+            AiAgentVO agent = agents.get(0);
+            // 调用Agent API
+            return callAgentAPI(agent, message);
+        }
+        
+        return "未找到可用的Agent";
+    }
+}
+```
+
+#### Coze平台集成
+```java
+// Coze Bot调用示例
+public String callCozeBot(String message) {
+    CozeRequest request = new CozeRequest();
+    request.setBotId("your-bot-id");
+    request.setUserId("user-123");
+    request.setQuery(message);
+    request.setStream(false);
+    
+    // 调用Coze API
+    return cozeClient.chat(request);
+}
+```
+
+#### Dify平台集成
+```java
+// Dify应用调用示例
+public String callDifyApp(String message) {
+    DifyRequest request = new DifyRequest();
+    request.setInputs(Map.of("query", message));
+    request.setQuery(message);
+    request.setResponseMode("blocking");
+    request.setUser("user-123");
+    
+    // 调用Dify API
+    return difyClient.chatMessages(request);
+}
+```
+
+### ⚙️ 代码生成器
+1. 运行 `CodeGenerator.java` 主方法
+2. 输入包名和实体名称
+3. 系统自动生成完整的CRUD代码
+4. 生成的代码包括：
+   - Controller层：RESTful API接口
+   - Service层：业务逻辑处理
+   - Mapper层：数据访问层
+   - Entity：实体类
+   - DTO：数据传输对象
+   - VO：视图对象
+   - Query：查询对象
+
+
+
 
 ## 🤝 贡献指南
 
@@ -402,13 +719,13 @@ public class UserController {
 
 本项目采用 [MIT License](LICENSE) 开源协议。
 
-## 📞 联系我们
+## 📞 联系我
 
 如果您有任何问题、建议或合作意向，欢迎通过以下方式联系：
 
 - 📧 **邮箱**：857787854@qq.com
 - 💬 **QQ群**：待建立
-- 🐙 **GitHub Issues**：[提交问题](https://github.com/your-username/iceeboot-backend-java/issues)
+
 
 ## 🙏 致谢
 
