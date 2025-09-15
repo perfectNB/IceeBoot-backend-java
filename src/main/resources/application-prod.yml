@@ -8,17 +8,27 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 10
-      maximum-pool-size: 30
+      maximum-pool-size: 50
       auto-commit: true
-      idle-timeout: 30000
+      # 连接空闲超时时间（毫秒）- 10分钟
+      idle-timeout: 600000
       pool-name: IceeBootHikariCP
-      max-lifetime: 1800000
+      # 连接最大生存时间（毫秒）- 25分钟，小于MySQL的wait_timeout
+      max-lifetime: 1500000
+      # 连接超时时间（毫秒）- 30秒
       connection-timeout: 30000
+      # 连接测试查询
       connection-test-query: SELECT 1
+      # 验证连接的超时时间（毫秒）
+      validation-timeout: 5000
       # 应用关闭时的连接池关闭超时时间（毫秒）
       initialization-fail-timeout: 1
       # 连接泄漏检测阈值（毫秒），0表示禁用
       leak-detection-threshold: 60000
+      # 是否在获取连接时测试连接的有效性
+      connection-init-sql: SELECT 1
+      # 保持连接活跃的时间间隔（毫秒）
+      keepalive-time: 300000
 
 
 
