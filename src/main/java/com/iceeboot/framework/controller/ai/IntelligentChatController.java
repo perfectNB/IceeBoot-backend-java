@@ -152,7 +152,7 @@ public class IntelligentChatController {
             // 使用 Bean 名称 "databaseQuery" 来引用注册的函数
             Prompt prompt = new Prompt(messages,
                     DashScopeChatOptions.builder()
-                            .withFunction("databaseQuery") // 使用 Bean 名称
+                            .withFunction("logQuery")
                             .build());
 
             // 调用模型

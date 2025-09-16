@@ -11,27 +11,27 @@ import java.util.*;
 /**
  * 查询结果封装类
  */
-public class QueryResult {
+public class LLMQueryResult {
     private boolean success;
     private String errorMessage;
     private List<Map<String, Object>> data;
     private int totalCount;
     private long executionTime;
 
-    private QueryResult() {
+    private LLMQueryResult() {
         this.executionTime = System.currentTimeMillis();
     }
 
-    public static QueryResult success(List<Map<String, Object>> data, int totalCount) {
-        QueryResult result = new QueryResult();
+    public static LLMQueryResult success(List<Map<String, Object>> data, int totalCount) {
+        LLMQueryResult result = new LLMQueryResult();
         result.success = true;
         result.data = data;
         result.totalCount = totalCount;
         return result;
     }
 
-    public static QueryResult error(String errorMessage) {
-        QueryResult result = new QueryResult();
+    public static LLMQueryResult error(String errorMessage) {
+        LLMQueryResult result = new LLMQueryResult();
         result.success = false;
         result.errorMessage = errorMessage;
         result.data = new ArrayList<>();

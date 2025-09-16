@@ -1,9 +1,3 @@
-/**
- * 角色权限关联视图对象
- * 
- * @author CodeIcee
- * @date 2025-08-13
- */
 package com.iceeboot.framework.vo.system;
 
 import io.swagger.v3.oas.annotations.media.Schema;

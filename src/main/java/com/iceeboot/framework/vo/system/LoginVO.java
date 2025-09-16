@@ -1,9 +1,3 @@
-/**
- * 登录响应视图对象
- * 
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.vo.system;
 
 import io.swagger.v3.oas.annotations.media.Schema;
