@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.redis;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.redis.CreateRedisKeyDTO;
@@ -35,6 +36,7 @@ public class RedisController {
      */
     @Operation(summary = "获取Redis键列表", description = "分页查询Redis键列表")
     @GetMapping("/keys")
+    @RequirePermission(dynamic = true)
     public R<PageResult<RedisKeyVO>> getRedisKeys(RedisQuery query) {
         log.info("获取Redis键列表");
         PageResult<RedisKeyVO> result = redisService.getRedisKeys(query);

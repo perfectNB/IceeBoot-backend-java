@@ -90,6 +90,13 @@ public class QiniuKodoService implements OSSService {
                 }
                 
                 Auth auth = createAuth(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(auth, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
                 String upToken = auth.uploadToken(request.getBucketName());
                 
                 Configuration cfg = createConfiguration(request);
@@ -121,20 +128,114 @@ public class QiniuKodoService implements OSSService {
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, byte[] content) {
-        request.setContent(content);
-        return uploadFile(request);
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                if (content == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "文件内容不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                Auth auth = createAuth(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(auth, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                String upToken = auth.uploadToken(request.getBucketName());
+                
+                Configuration cfg = createConfiguration(request);
+                UploadManager uploadManager = new UploadManager(cfg);
+                
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(content);
+                Response response = uploadManager.put(inputStream, request.getObjectKey(), upToken, null, request.getContentType());
+                
+                if (response.isOK()) {
+                    DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+                    String fileUrl = buildFileUrl(request);
+                    
+                    return OSSResponse.success()
+                            .setProvider(getProvider())
+                            .setFileUrl(fileUrl)
+                            .setBucketName(request.getBucketName())
+                            .setObjectKey(request.getObjectKey())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                } else {
+                    return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + response.error)
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+            } catch (Exception e) {
+                log.error("七牛云Kodo上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, InputStream inputStream) {
-        try {
-            byte[] content = inputStream.readAllBytes();
-            request.setContent(content);
-            return uploadFile(request);
-        } catch (IOException e) {
-            return Mono.just(OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
-                    .setProvider(getProvider()));
-        }
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                if (inputStream == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "输入流不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                byte[] content = inputStream.readAllBytes();
+                
+                Auth auth = createAuth(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(auth, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                String upToken = auth.uploadToken(request.getBucketName());
+                
+                Configuration cfg = createConfiguration(request);
+                UploadManager uploadManager = new UploadManager(cfg);
+                
+                ByteArrayInputStream byteInputStream = new ByteArrayInputStream(content);
+                Response response = uploadManager.put(byteInputStream, request.getObjectKey(), upToken, null, request.getContentType());
+                
+                if (response.isOK()) {
+                    DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+                    String fileUrl = buildFileUrl(request);
+                    
+                    return OSSResponse.success()
+                            .setProvider(getProvider())
+                            .setFileUrl(fileUrl)
+                            .setBucketName(request.getBucketName())
+                            .setObjectKey(request.getObjectKey())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                } else {
+                    return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + response.error)
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+            } catch (IOException e) {
+                return OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } catch (Exception e) {
+                log.error("七牛云Kodo上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
@@ -574,6 +675,63 @@ public class QiniuKodoService implements OSSService {
         return bucketExists(request)
                 .map(response -> response.getSuccess())
                 .onErrorReturn(false);
+    }
+    
+    /**
+     * 确保桶存在，如果不存在则创建
+     * @param auth 七牛云认证对象
+     * @param request OSS请求
+     * @return 操作结果
+     */
+    private OSSResponse ensureBucketExists(Auth auth, OSSRequest request) {
+        try {
+            // 七牛云需要通过BucketManager检查桶是否存在
+            Configuration cfg = createConfiguration(request);
+            BucketManager bucketManager = new BucketManager(auth, cfg);
+            
+            try {
+                // 尝试获取桶信息来检查桶是否存在
+                bucketManager.getBucketInfo(request.getBucketName());
+                // 如果没有抛出异常，说明桶存在
+                return OSSResponse.success().setProvider(getProvider());
+            } catch (QiniuException e) {
+                // 如果是桶不存在的错误，尝试创建桶
+                if (e.code() == 631) { // 631表示桶不存在
+                    log.info("桶 {} 不存在，尝试创建", request.getBucketName());
+                    
+                    try {
+                        // 七牛云创建桶需要指定区域
+                        String regionName = request.getRegion() != null ? request.getRegion() : DEFAULT_REGION;
+                        bucketManager.createBucket(request.getBucketName(), regionName);
+                        log.info("成功创建桶: {}", request.getBucketName());
+                        return OSSResponse.success().setProvider(getProvider());
+                    } catch (QiniuException createException) {
+                        String errorMsg = createException.getMessage();
+                        log.error("创建桶失败: {}", errorMsg, createException);
+                        
+                        // 检查是否是桶名已存在的错误
+                        if (createException.code() == 614) { // 614表示桶已存在
+                            return OSSResponse.failure("BUCKET_ALREADY_EXISTS", 
+                                String.format("桶名 '%s' 已被其他用户使用，请更换桶名", request.getBucketName()))
+                                .setProvider(getProvider());
+                        } else {
+                            return OSSResponse.failure("CREATE_BUCKET_FAILED", 
+                                String.format("创建桶失败: %s", errorMsg))
+                                .setProvider(getProvider());
+                        }
+                    }
+                } else {
+                    // 其他错误
+                    return OSSResponse.failure("CHECK_BUCKET_FAILED", "检查桶存在性失败: " + e.getMessage())
+                            .setProvider(getProvider());
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("检查桶存在性失败: {}", e.getMessage(), e);
+            return OSSResponse.failure("CHECK_BUCKET_FAILED", "检查桶存在性失败: " + e.getMessage())
+                    .setProvider(getProvider());
+        }
     }
     
     /**

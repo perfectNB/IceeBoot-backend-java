@@ -289,6 +289,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
                     cacheKey,
                     permissions
             );
+            redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
 
             return true;
         } catch (Exception e) {

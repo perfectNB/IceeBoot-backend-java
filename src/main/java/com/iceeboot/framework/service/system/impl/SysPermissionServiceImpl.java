@@ -125,6 +125,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
         roleIds.forEach(roleId -> {
             redisTemplate.delete(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId);
         });
+        redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
         return this.updateById(permission);
     }
 

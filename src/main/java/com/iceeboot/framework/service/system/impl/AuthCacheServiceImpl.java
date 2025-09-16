@@ -54,7 +54,6 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     private SysRolePermissionMapper rolePermissionMapper;
 
 
-
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserMenus(Long userId) {
@@ -86,18 +85,18 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         Set<MenuDO> menuSet = new HashSet<>();
         for (Long roleId : roleIds) {
             String roleMenuKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
-            List<MenuDO> roleMenus ;
-            roleMenus= (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
+            List<MenuDO> roleMenus;
+            roleMenus = (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
 
             if (roleMenus != null) {
                 menuSet.addAll(roleMenus);
-            }else {
+            } else {
                 List<Long> menuIds = roleMenuMapper.selectList(
                         new LambdaQueryWrapper<RoleMenuDO>()
                                 .eq(RoleMenuDO::getRoleId, roleId)
                                 .eq(RoleMenuDO::getDelFlag, 0)
                 ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
-                if (menuIds.size()!=0){
+                if (menuIds.size() != 0) {
                     roleMenus = menuMapper.selectList(
                             new LambdaQueryWrapper<MenuDO>()
                                     .in(MenuDO::getId, menuIds)
@@ -131,7 +130,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         // 1. 通过用户ID获取角色列表
         String userRoleKey = CacheConstants.Auth.USER_ROLE + userId;
         List<Long> roleIds = (List<Long>) redisTemplate.opsForValue().get(userRoleKey);
-        
+
         if (roleIds == null || roleIds.isEmpty()) {
             roleIds = userRoleMapper.selectList(
                     new LambdaQueryWrapper<UserRoleDO>()
@@ -140,34 +139,34 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
             redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
-        
+
         // 2. 遍历角色列表，获取每个角色的权限
         Set<Map<String, Object>> permissionSet = new HashSet<>();
         for (Long roleId : roleIds) {
             String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
             List<PermissionDO> rolePermissions;
             List<Map<String, Object>> permissionMaps;
-            rolePermissions= (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
+            rolePermissions = (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
             if (rolePermissions != null) {
                 // 将PermissionDO转换为Map<String, Object>
-                permissionMaps= rolePermissions.stream()
+                permissionMaps = rolePermissions.stream()
                         .map(this::convertPermissionToMap)
                         .collect(Collectors.toList());
                 permissionSet.addAll(permissionMaps);
-            }else {
+            } else {
                 List<Long> permissionIds = rolePermissionMapper.selectList(
                         new LambdaQueryWrapper<RolePermissionDO>()
                                 .eq(RolePermissionDO::getRoleId, roleId)
                                 .eq(RolePermissionDO::getDelFlag, 0)
                 ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
-                if (permissionIds.size()!=0){
+                if (permissionIds.size() != 0) {
                     rolePermissions = permissionMapper.selectList(
                             new LambdaQueryWrapper<PermissionDO>()
                                     .in(PermissionDO::getId, permissionIds)
                                     .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
                                     .eq(PermissionDO::getDelFlag, 0)
                                     .orderByAsc(PermissionDO::getSort));
-                    permissionMaps= rolePermissions.stream()
+                    permissionMaps = rolePermissions.stream()
                             .map(this::convertPermissionToMap)
                             .collect(Collectors.toList());
                     permissionSet.addAll(permissionMaps);
@@ -175,7 +174,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                 }
             }
         }
-        
+
         // 3. 返回去重后的权限列表
         return new ArrayList<>(permissionSet);
     }
@@ -838,6 +837,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             // 从数据库获取所有权限
             List<PermissionDO> permissions = permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
                     .eq(PermissionDO::getDelFlag, 0)
+                    .eq(PermissionDO::getType, "api")
                     .isNotNull(PermissionDO::getPath)
                     .ne(PermissionDO::getPath, ""));
 
@@ -865,7 +865,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     /**
      * URL匹配检查（支持通配符）
      *
-     * @param url 实际请求URL
+     * @param url     实际请求URL
      * @param pattern 匹配模式
      * @return 是否匹配
      */
