@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * 响应结果
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DatabaseQueryResponse {
+public class LLMQueryResponse {
     private boolean success;
     private String message;
     private String data;
@@ -20,8 +20,8 @@ public class DatabaseQueryResponse {
     private Integer totalCount;
     private String errorMessage;
 
-    public static DatabaseQueryResponse success(String data, String executedSql, Integer totalCount) {
-        DatabaseQueryResponse response = new DatabaseQueryResponse();
+    public static LLMQueryResponse success(String data, String executedSql, Integer totalCount) {
+        LLMQueryResponse response = new LLMQueryResponse();
         response.success = true;
         response.message = "查询执行成功";
         response.data = data;
@@ -30,8 +30,8 @@ public class DatabaseQueryResponse {
         return response;
     }
 
-    public static DatabaseQueryResponse error(String errorMessage) {
-        DatabaseQueryResponse response = new DatabaseQueryResponse();
+    public static LLMQueryResponse error(String errorMessage) {
+        LLMQueryResponse response = new LLMQueryResponse();
         response.success = false;
         response.message = "查询执行失败";
         response.errorMessage = errorMessage;

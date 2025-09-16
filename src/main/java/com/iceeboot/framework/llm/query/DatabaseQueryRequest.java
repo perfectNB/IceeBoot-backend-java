@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.iceeboot.framework.llm.model;
+package com.iceeboot.framework.llm.query;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;

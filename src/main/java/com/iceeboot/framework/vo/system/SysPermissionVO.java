@@ -1,9 +1,3 @@
-/**
- * 权限视图对象
- * 
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.vo.system;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
