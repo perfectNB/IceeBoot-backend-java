@@ -1,9 +1,3 @@
-/**
- * 认证控制器
- *
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -71,6 +65,7 @@ public class AuthController {
 
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/user")
+    @RequirePermission(dynamic = true)
     public R<SysUserVO> getCurrentUser() {
         SysUserVO userVO = authService.getCurrentUser();
         return R.ok(userVO);

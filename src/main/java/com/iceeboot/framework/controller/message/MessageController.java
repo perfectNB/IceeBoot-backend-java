@@ -1,10 +1,5 @@
-/**
- * 消息管理控制器
- *
- * @author CodeIcee
- * @date 2025-09-12
- */
 package com.iceeboot.framework.controller.message;
+
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.PageResult;
@@ -18,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 

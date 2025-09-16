@@ -1,11 +1,6 @@
-/**
- * 用户角色关联管理控制器
- *
- * @author CodeIcee
- * @date 2025-08-13
- */
 package com.iceeboot.framework.controller.system;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.core.domain.R;
@@ -36,9 +31,9 @@ public class SysUserRoleController {
     private final ISysUserRoleService userRoleService;
 
 
-
     @Operation(summary = "分页查询用户角色关联列表", description = "根据条件分页查询用户角色关联列表")
     @GetMapping("/page")
+    @RequirePermission(dynamic = true)
     public R<PageResult<UserRoleVO>> getUserRolePage(UserRoleQuery query) {
         PageResult<UserRoleVO> pageResult = userRoleService.getUserRolePage(query);
         return R.ok(pageResult);
@@ -47,6 +42,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "获取用户角色关联详情", description = "根据ID获取用户角色关联详细信息")
     @GetMapping("/{id}")
+    @RequirePermission(dynamic = true)
     public R<UserRoleVO> getUserRoleById(@PathVariable("id") Long id) {
         UserRoleVO userRole = userRoleService.getUserRoleById(id);
         return R.ok(userRole);
@@ -55,6 +51,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "新增用户角色关联", description = "创建新的用户角色关联")
     @PostMapping
+    @RequirePermission(dynamic = true)
     public R<Void> addUserRole(@Validated @RequestBody UserRoleDTO userRoleDTO) {
         boolean success = userRoleService.addUserRole(userRoleDTO);
         return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_CREATE_FAIL);
@@ -63,6 +60,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "更新用户角色关联", description = "更新用户角色关联信息")
     @PutMapping
+    @RequirePermission(dynamic = true)
     public R<Void> updateUserRole(@Validated @RequestBody UserRoleDTO userRoleDTO) {
         boolean success = userRoleService.updateUserRole(userRoleDTO);
         return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_UPDATE_FAIL);
@@ -70,6 +68,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "删除用户角色关联", description = "批量删除用户角色关联")
     @DeleteMapping
+    @RequirePermission(dynamic = true)
     public R<Void> deleteUserRoles(@RequestBody List<Long> ids) {
         boolean success = userRoleService.deleteUserRoles(ids);
         return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_DELETE_FAIL);
@@ -77,6 +76,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "获取用户的角色列表", description = "根据用户ID获取该用户的所有角色ID")
     @GetMapping("/user/{userId}/roles")
+    @RequirePermission(dynamic = true)
     public R<List<Long>> getRoleIdsByUserId(@PathVariable("userId") Long userId) {
         List<Long> roleIds = userRoleService.getRoleIdsByUserId(userId);
         return R.ok(roleIds);
@@ -85,6 +85,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "获取角色的用户列表", description = "根据角色ID获取该角色的所有用户ID")
     @GetMapping("/role/{roleId}/users")
+    @RequirePermission(dynamic = true)
     public R<List<Long>> getUserIdsByRoleId(@PathVariable("roleId") Long roleId) {
         List<Long> userIds = userRoleService.getUserIdsByRoleId(roleId);
         return R.ok(userIds);
@@ -93,6 +94,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "为用户分配角色", description = "为指定用户分配角色列表")
     @PostMapping("/user/{userId}/assign-roles")
+    @RequirePermission(dynamic = true)
     public R<Void> assignRolesToUser(@PathVariable("userId") Long userId, @RequestBody List<Long> roleIds) {
         boolean success = userRoleService.assignRolesToUser(userId, roleIds);
         return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_ASSIGN_FAIL);
@@ -101,6 +103,7 @@ public class SysUserRoleController {
 
     @Operation(summary = "移除用户的所有角色", description = "移除指定用户的所有角色")
     @DeleteMapping("/user/{userId}/roles")
+    @RequirePermission(dynamic = true)
     public R<Void> removeAllRolesByUserId(@PathVariable("userId") Long userId) {
         boolean success = userRoleService.removeAllRolesByUserId(userId);
         return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_REMOVE_FAIL);

@@ -1,9 +1,3 @@
-/**
- * 菜单管理控制器
- *
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -23,6 +17,7 @@ import java.util.List;
 
 /**
  * 菜单管理控制器
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -36,7 +31,6 @@ public class SysMenuController {
     private final ISysMenuService menuService;
 
 
-
     @Operation(summary = "获取菜单树", description = "获取完整的菜单树结构")
     @GetMapping("/tree")
     @RequirePermission(dynamic = true)
@@ -46,10 +40,9 @@ public class SysMenuController {
     }
 
 
-
-
     @Operation(summary = "查询用户菜单列表", description = "根据条件分页查询菜单列表")
     @GetMapping("/user")
+    @RequirePermission(dynamic = true)
     public R<List<SysMenuVO>> getUserMenu() {
         List<SysMenuVO> userMenu = menuService.getUserMenu();
         return R.ok(userMenu);
@@ -58,7 +51,7 @@ public class SysMenuController {
 
     @Operation(summary = "新增菜单", description = "创建新菜单")
     @PostMapping
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<Void> addMenu(@Validated @RequestBody MenuDTO menuDTO) {
         boolean success = menuService.addMenu(menuDTO);
         return success ? R.ok(ResponseMessage.MENU_CREATE_SUCCESS) : R.fail(ResponseMessage.MENU_CREATE_FAIL);
@@ -84,6 +77,7 @@ public class SysMenuController {
 
     @Operation(summary = "修改菜单状态", description = "启用或禁用菜单")
     @PutMapping("/{id}/status")
+    @RequirePermission(dynamic = true)
     public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = menuService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
@@ -92,6 +86,7 @@ public class SysMenuController {
 
     @Operation(summary = "检查菜单名称", description = "检查菜单名称是否已存在")
     @GetMapping("/check/name")
+    @RequirePermission(dynamic = true)
     public R<Boolean> checkName(@RequestParam String name, @RequestParam(required = false) Long excludeId) {
         boolean exists = menuService.existsName(name, excludeId);
         return R.ok(exists);
@@ -100,6 +95,7 @@ public class SysMenuController {
 
     @Operation(summary = "获取子菜单", description = "根据父级ID获取子菜单列表")
     @GetMapping("/children/{parentId}")
+    @RequirePermission(dynamic = true)
     public R<List<SysMenuVO>> getChildrenByParentId(@PathVariable("parentId") Long parentId) {
         List<SysMenuVO> children = menuService.getChildrenByParentId(parentId);
         return R.ok(children);

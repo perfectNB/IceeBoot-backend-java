@@ -1,8 +1,3 @@
-/*
- * @Description: SMS密钥管理控制器
- * @Date: 2025-09-05
- * @Author: CodeIcee
- */
 package com.iceeboot.framework.controller.sms;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -47,13 +42,13 @@ public class SmsKeyController {
         return R.ok(result);
     }
 
-   @Operation(summary = "分页查询SMS密钥列表")
-   @GetMapping("/page")
-   @RequirePermission(dynamic = true)
-   public R<PageResult<SmsKeyVO>> getSmsKeyPage(SmsKeyQuery query) {
-       PageResult<SmsKeyVO> result = smsKeyService.getSmsKeyPage(query);
-       return R.ok(result);
-   }
+    @Operation(summary = "分页查询SMS密钥列表")
+    @GetMapping("/page")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<SmsKeyVO>> getSmsKeyPage(SmsKeyQuery query) {
+        PageResult<SmsKeyVO> result = smsKeyService.getSmsKeyPage(query);
+        return R.ok(result);
+    }
 
     @Operation(summary = "根据ID获取SMS密钥详情")
     @GetMapping("/{id}")
@@ -157,13 +152,13 @@ public class SmsKeyController {
     public R<Map<String, Object>> getProviderConfig(
             @Parameter(description = "SMS厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
-            "provider", provider,
-            "displayName", getProviderDisplayName(provider),
-            "description", getProviderDescription(provider),
-            "authType", getProviderAuthType(provider),
-            "defaultEndpoint", getProviderDefaultEndpoint(provider),
-            "supportedSmsTypes", getSupportedSmsTypes(provider),
-            "supportedFeatures", getSupportedFeatures(provider)
+                "provider", provider,
+                "displayName", getProviderDisplayName(provider),
+                "description", getProviderDescription(provider),
+                "authType", getProviderAuthType(provider),
+                "defaultEndpoint", getProviderDefaultEndpoint(provider),
+                "supportedSmsTypes", getSupportedSmsTypes(provider),
+                "supportedFeatures", getSupportedFeatures(provider)
         );
         return R.ok(config);
     }
@@ -236,12 +231,11 @@ public class SmsKeyController {
      */
     private List<String> getSupportedFeatures(String provider) {
         return switch (provider.toLowerCase()) {
-            case "aliyun", "tencent", "huawei" -> 
-                List.of("单发短信", "批量发送", "模板短信", "状态查询", "余额查询", "验证码短信", "通知短信", "营销短信");
-            case "netease", "ronglian", "qiniu" -> 
-                List.of("单发短信", "批量发送", "模板短信", "状态查询", "验证码短信", "通知短信");
-            default -> 
-                List.of("单发短信", "模板短信", "验证码短信", "通知短信");
+            case "aliyun", "tencent", "huawei" ->
+                    List.of("单发短信", "批量发送", "模板短信", "状态查询", "余额查询", "验证码短信", "通知短信", "营销短信");
+            case "netease", "ronglian", "qiniu" ->
+                    List.of("单发短信", "批量发送", "模板短信", "状态查询", "验证码短信", "通知短信");
+            default -> List.of("单发短信", "模板短信", "验证码短信", "通知短信");
         };
     }
 }

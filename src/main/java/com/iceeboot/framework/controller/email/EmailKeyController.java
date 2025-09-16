@@ -1,8 +1,3 @@
-/*
- * @Description: Email密钥管理控制器
- * @Date: 2025-09-05
- * @Author: CodeIcee
- */
 package com.iceeboot.framework.controller.email;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -47,13 +42,13 @@ public class EmailKeyController {
         return R.ok(result);
     }
 
-   @Operation(summary = "分页查询Email密钥列表")
-   @GetMapping("/page")
-   @RequirePermission(dynamic = true)
-   public R<PageResult<EmailKeyVO>> getEmailKeyPage(EmailKeyQuery query) {
-       PageResult<EmailKeyVO> result = emailKeyService.getEmailKeyPage(query);
-       return R.ok(result);
-   }
+    @Operation(summary = "分页查询Email密钥列表")
+    @GetMapping("/page")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<EmailKeyVO>> getEmailKeyPage(EmailKeyQuery query) {
+        PageResult<EmailKeyVO> result = emailKeyService.getEmailKeyPage(query);
+        return R.ok(result);
+    }
 
     @Operation(summary = "根据ID获取Email密钥详情")
     @GetMapping("/{id}")
@@ -157,14 +152,14 @@ public class EmailKeyController {
     public R<Map<String, Object>> getProviderConfig(
             @Parameter(description = "Email厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
-            "provider", provider,
-            "displayName", getProviderDisplayName(provider),
-            "description", getProviderDescription(provider),
-            "authType", getProviderAuthType(provider),
-            "defaultSmtpHost", getProviderDefaultSmtpHost(provider),
-            "defaultSmtpPort", getProviderDefaultSmtpPort(provider),
-            "supportedEmailTypes", getSupportedEmailTypes(provider),
-            "supportedFeatures", getSupportedFeatures(provider)
+                "provider", provider,
+                "displayName", getProviderDisplayName(provider),
+                "description", getProviderDescription(provider),
+                "authType", getProviderAuthType(provider),
+                "defaultSmtpHost", getProviderDefaultSmtpHost(provider),
+                "defaultSmtpPort", getProviderDefaultSmtpPort(provider),
+                "supportedEmailTypes", getSupportedEmailTypes(provider),
+                "supportedFeatures", getSupportedFeatures(provider)
         );
         return R.ok(config);
     }
@@ -251,12 +246,10 @@ public class EmailKeyController {
      */
     private List<String> getSupportedFeatures(String provider) {
         return switch (provider.toLowerCase()) {
-            case "qq", "netease", "gmail", "outlook", "tencent" -> 
-                List.of("单发邮件", "批量发送", "模板邮件", "附件支持", "HTML格式", "纯文本格式", "抄送", "密送", "优先级设置", "回复地址", "自定义邮件头");
-            case "aliyun" -> 
-                List.of("单发邮件", "批量发送", "模板邮件", "HTML格式", "纯文本格式", "状态查询");
-            default -> 
-                List.of("单发邮件", "纯文本格式");
+            case "qq", "netease", "gmail", "outlook", "tencent" ->
+                    List.of("单发邮件", "批量发送", "模板邮件", "附件支持", "HTML格式", "纯文本格式", "抄送", "密送", "优先级设置", "回复地址", "自定义邮件头");
+            case "aliyun" -> List.of("单发邮件", "批量发送", "模板邮件", "HTML格式", "纯文本格式", "状态查询");
+            default -> List.of("单发邮件", "纯文本格式");
         };
     }
 }

@@ -62,7 +62,7 @@ public class OssFileController {
 
     @Operation(summary = "上传文件")
     @PostMapping("/upload")
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<OssFileVO> uploadFile(@Validated @ModelAttribute OssFileUploadDTO dto) {
         OssFileVO result = ossFileService.uploadFile(dto);
         return R.ok(result);
