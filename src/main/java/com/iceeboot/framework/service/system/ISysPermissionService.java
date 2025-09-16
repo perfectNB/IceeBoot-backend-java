@@ -61,7 +61,7 @@ public interface ISysPermissionService extends IService<PermissionDO> {
      * @param permissionDTO 权限信息
      * @return 是否成功
      */
-    boolean updatePermission(PermissionUpdateDTO dto);
+    boolean updatePermission(PermissionUpdateDTO permissionDTO);
 
     /**
      * 删除权限

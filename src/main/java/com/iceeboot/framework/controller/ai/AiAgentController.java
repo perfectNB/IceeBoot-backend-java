@@ -41,13 +41,6 @@ public class AiAgentController {
         return R.ok(result);
     }
 
-    @Operation(summary = "根据ID获取agents")
-    @GetMapping("/{id}")
-    @RequirePermission(dynamic = true)
-    public R<AiAgentVO> getAgentById(@Parameter(description = "AI代理ID") @PathVariable("id") Long id) {
-        AiAgentVO agent = aiAgentService.getAgentById(id);
-        return R.ok(agent);
-    }
 
     @Operation(summary = "创建agents")
     @PostMapping

@@ -70,6 +70,12 @@ public class MinIOService implements OSSService {
                 
                 MinioClient minioClient = createMinioClient(request);
                 
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(minioClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(request.getContent());
                 
                 PutObjectArgs.Builder putObjectBuilder = PutObjectArgs.builder()
@@ -104,20 +110,112 @@ public class MinIOService implements OSSService {
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, byte[] content) {
-        request.setContent(content);
-        return uploadFile(request);
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                if (content == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "文件内容不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                MinioClient minioClient = createMinioClient(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(minioClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(content);
+                
+                PutObjectArgs.Builder putObjectBuilder = PutObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .stream(inputStream, content.length, -1);
+                
+                if (request.getContentType() != null) {
+                    putObjectBuilder.contentType(request.getContentType());
+                }
+                
+                ObjectWriteResponse response = minioClient.putObject(putObjectBuilder.build());
+                
+                String fileUrl = buildFileUrl(request);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setFileUrl(fileUrl)
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("etag", response.etag(), "versionId", response.versionId() != null ? response.versionId() : ""));
+                        
+            } catch (Exception e) {
+                log.error("MinIO上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, InputStream inputStream) {
-        try {
-            byte[] content = inputStream.readAllBytes();
-            request.setContent(content);
-            return uploadFile(request);
-        } catch (IOException e) {
-            return Mono.just(OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
-                    .setProvider(getProvider()));
-        }
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                if (inputStream == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "输入流不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                byte[] content = inputStream.readAllBytes();
+                
+                MinioClient minioClient = createMinioClient(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(minioClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                ByteArrayInputStream byteInputStream = new ByteArrayInputStream(content);
+                
+                PutObjectArgs.Builder putObjectBuilder = PutObjectArgs.builder()
+                        .bucket(request.getBucketName())
+                        .object(request.getObjectKey())
+                        .stream(byteInputStream, content.length, -1);
+                
+                if (request.getContentType() != null) {
+                    putObjectBuilder.contentType(request.getContentType());
+                }
+                
+                ObjectWriteResponse response = minioClient.putObject(putObjectBuilder.build());
+                
+                String fileUrl = buildFileUrl(request);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setFileUrl(fileUrl)
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime)
+                        .setExtraData(Map.of("etag", response.etag(), "versionId", response.versionId() != null ? response.versionId() : ""));
+                        
+            } catch (IOException e) {
+                return OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } catch (Exception e) {
+                log.error("MinIO上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            }
+        });
     }
     
     @Override
@@ -620,6 +718,61 @@ public class MinIOService implements OSSService {
         return bucketExists(request)
                 .map(response -> response.getSuccess())
                 .onErrorReturn(false);
+    }
+    
+    /**
+     * 确保桶存在，如果不存在则创建
+     * @param minioClient MinIO客户端
+     * @param request OSS请求
+     * @return 操作结果
+     */
+    private OSSResponse ensureBucketExists(MinioClient minioClient, OSSRequest request) {
+        try {
+            // 检查桶是否存在
+            boolean bucketExists = minioClient.bucketExists(
+                BucketExistsArgs.builder()
+                    .bucket(request.getBucketName())
+                    .build()
+            );
+            
+            if (!bucketExists) {
+                log.info("桶 {} 不存在，尝试创建", request.getBucketName());
+                
+                // 尝试创建桶
+                try {
+                    MakeBucketArgs.Builder makeBucketBuilder = MakeBucketArgs.builder()
+                        .bucket(request.getBucketName());
+                    
+                    if (request.getRegion() != null) {
+                        makeBucketBuilder.region(request.getRegion());
+                    }
+                    
+                    minioClient.makeBucket(makeBucketBuilder.build());
+                    log.info("成功创建桶: {}", request.getBucketName());
+                } catch (Exception createException) {
+                    String errorMsg = createException.getMessage();
+                    log.error("创建桶失败: {}", errorMsg, createException);
+                    
+                    // 检查是否是桶名已存在的错误
+                    if (errorMsg.contains("BucketAlreadyExists") || errorMsg.contains("already exists")) {
+                        return OSSResponse.failure("BUCKET_ALREADY_EXISTS", 
+                            String.format("桶名 '%s' 已被其他用户使用，请更换桶名", request.getBucketName()))
+                            .setProvider(getProvider());
+                    } else {
+                        return OSSResponse.failure("CREATE_BUCKET_FAILED", 
+                            String.format("创建桶失败: %s", errorMsg))
+                            .setProvider(getProvider());
+                    }
+                }
+            }
+            
+            return OSSResponse.success().setProvider(getProvider());
+            
+        } catch (Exception e) {
+            log.error("检查桶存在性失败: {}", e.getMessage(), e);
+            return OSSResponse.failure("CHECK_BUCKET_FAILED", "检查桶存在性失败: " + e.getMessage())
+                    .setProvider(getProvider());
+        }
     }
     
     /**

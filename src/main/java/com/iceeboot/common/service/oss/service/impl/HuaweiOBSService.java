@@ -59,6 +59,12 @@ public class HuaweiOBSService implements OSSService {
                 
                 obsClient = createObsClient(request);
                 
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(obsClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
                 ObjectMetadata metadata = new ObjectMetadata();
                 metadata.setContentLength((long) request.getContent().length);
                 if (request.getContentType() != null) {
@@ -101,20 +107,130 @@ public class HuaweiOBSService implements OSSService {
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, byte[] content) {
-        request.setContent(content);
-        return uploadFile(request);
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            ObsClient obsClient = null;
+            
+            try {
+                if (content == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "文件内容不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                obsClient = createObsClient(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(obsClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength((long) content.length);
+                if (request.getContentType() != null) {
+                    metadata.setContentType(request.getContentType());
+                }
+                
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(content);
+                PutObjectRequest putRequest = new PutObjectRequest();
+                putRequest.setBucketName(request.getBucketName());
+                putRequest.setObjectKey(request.getObjectKey());
+                putRequest.setInput(inputStream);
+                putRequest.setMetadata(metadata);
+                PutObjectResult result = obsClient.putObject(putRequest);
+                
+                String fileUrl = buildFileUrl(request);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setFileUrl(fileUrl)
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+                        
+            } catch (Exception e) {
+                log.error("华为云OBS上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (obsClient != null) {
+                    try {
+                        obsClient.close();
+                    } catch (IOException e) {
+                        log.warn("关闭华为云OBS客户端失败: {}", e.getMessage());
+                    }
+                }
+            }
+        });
     }
     
     @Override
     public Mono<OSSResponse> uploadFile(OSSRequest request, InputStream inputStream) {
-        try {
-            byte[] content = inputStream.readAllBytes();
-            request.setContent(content);
-            return uploadFile(request);
-        } catch (IOException e) {
-            return Mono.just(OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
-                    .setProvider(getProvider()));
-        }
+        return Mono.fromCallable(() -> {
+            long startTime = System.currentTimeMillis();
+            ObsClient obsClient = null;
+            
+            try {
+                if (inputStream == null) {
+                    return OSSResponse.failure("INVALID_CONTENT", "输入流不能为空")
+                            .setProvider(getProvider())
+                            .setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                byte[] content = inputStream.readAllBytes();
+                
+                obsClient = createObsClient(request);
+                
+                // 检查桶是否存在，不存在则创建
+                OSSResponse bucketCheckResult = ensureBucketExists(obsClient, request);
+                if (!bucketCheckResult.getSuccess()) {
+                    return bucketCheckResult.setResponseTime(System.currentTimeMillis() - startTime);
+                }
+                
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength((long) content.length);
+                if (request.getContentType() != null) {
+                    metadata.setContentType(request.getContentType());
+                }
+                
+                ByteArrayInputStream byteInputStream = new ByteArrayInputStream(content);
+                PutObjectRequest putRequest = new PutObjectRequest();
+                putRequest.setBucketName(request.getBucketName());
+                putRequest.setObjectKey(request.getObjectKey());
+                putRequest.setInput(byteInputStream);
+                putRequest.setMetadata(metadata);
+                PutObjectResult result = obsClient.putObject(putRequest);
+                
+                String fileUrl = buildFileUrl(request);
+                
+                return OSSResponse.success()
+                        .setProvider(getProvider())
+                        .setFileUrl(fileUrl)
+                        .setBucketName(request.getBucketName())
+                        .setObjectKey(request.getObjectKey())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+                        
+            } catch (IOException e) {
+                return OSSResponse.failure("INVALID_CONTENT", "读取输入流失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } catch (Exception e) {
+                log.error("华为云OBS上传文件失败: {}", e.getMessage(), e);
+                return OSSResponse.failure("UPLOAD_FAILED", "上传失败: " + e.getMessage())
+                        .setProvider(getProvider())
+                        .setResponseTime(System.currentTimeMillis() - startTime);
+            } finally {
+                if (obsClient != null) {
+                    try {
+                        obsClient.close();
+                    } catch (IOException e) {
+                        log.warn("关闭华为云OBS客户端失败: {}", e.getMessage());
+                    }
+                }
+            }
+        });
     }
     
     @Override
@@ -635,6 +751,51 @@ public class HuaweiOBSService implements OSSService {
         return bucketExists(request)
                 .map(response -> response.getSuccess())
                 .onErrorReturn(false);
+    }
+    
+    /**
+     * 确保桶存在，如果不存在则创建
+     * @param obsClient OBS客户端
+     * @param request OSS请求
+     * @return 操作结果
+     */
+    private OSSResponse ensureBucketExists(ObsClient obsClient, OSSRequest request) {
+        try {
+            // 检查桶是否存在
+            boolean bucketExists = obsClient.headBucket(request.getBucketName());
+            if (!bucketExists) {
+                log.info("桶 {} 不存在，尝试创建", request.getBucketName());
+                
+                // 尝试创建桶
+                try {
+                    CreateBucketRequest createRequest = new CreateBucketRequest();
+                    createRequest.setBucketName(request.getBucketName());
+                    obsClient.createBucket(createRequest);
+                    log.info("成功创建桶: {}", request.getBucketName());
+                } catch (Exception createException) {
+                    String errorMsg = createException.getMessage();
+                    log.error("创建桶失败: {}", errorMsg, createException);
+                    
+                    // 检查是否是桶名已存在的错误
+                    if (errorMsg.contains("BucketAlreadyExists") || errorMsg.contains("already exists")) {
+                        return OSSResponse.failure("BUCKET_ALREADY_EXISTS", 
+                            String.format("桶名 '%s' 已被其他用户使用，请更换桶名", request.getBucketName()))
+                            .setProvider(getProvider());
+                    } else {
+                        return OSSResponse.failure("CREATE_BUCKET_FAILED", 
+                            String.format("创建桶失败: %s", errorMsg))
+                            .setProvider(getProvider());
+                    }
+                }
+            }
+            
+            return OSSResponse.success().setProvider(getProvider());
+            
+        } catch (Exception e) {
+            log.error("检查桶存在性失败: {}", e.getMessage(), e);
+            return OSSResponse.failure("CHECK_BUCKET_FAILED", "检查桶存在性失败: " + e.getMessage())
+                    .setProvider(getProvider());
+        }
     }
     
     /**

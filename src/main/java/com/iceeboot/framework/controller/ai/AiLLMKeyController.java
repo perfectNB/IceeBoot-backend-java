@@ -45,8 +45,6 @@ public class AiLLMKeyController {
     }
 
 
-
-
     @Operation(summary = "新增大模型密钥")
     @PostMapping
     @RequirePermission(dynamic = true)
@@ -83,8 +81,6 @@ public class AiLLMKeyController {
     }
 
 
-
-
     @Operation(summary = "批量导入密钥")
     @PostMapping("/batch-import")
     @RequirePermission(dynamic = true)
@@ -101,9 +97,6 @@ public class AiLLMKeyController {
         Map<String, Object> result = aiLLMKeyService.getKeyUsageStats(provider);
         return R.ok(result);
     }
-
-
-
 
 
 }

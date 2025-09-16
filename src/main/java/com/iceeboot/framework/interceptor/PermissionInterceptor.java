@@ -73,13 +73,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (annotation.dynamic()) {
             // 动态权限查询：从Redis中根据URL获取权限编码
             String requestUrl = getRequestUrl(request);
+            //获取在数据库中需要有拦截的接口
             List<String> urlPermissions = authCacheService.getUrlPermissions(requestUrl);
             requiredPermissions = urlPermissions.toArray(new String[0]);
         } else {
             // 静态权限验证：使用注解中指定的权限编码
             requiredPermissions = getRequiredPermissions(annotation);
         }
-        
+        //此请求接口不存在数据库权限表，则不需要拦截
         if (requiredPermissions.length == 0) {
             return true;
         }
@@ -136,11 +137,12 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private String getRequestUrl(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         String contextPath = request.getContextPath();
-        
+
+
 //        // 移除上下文路径
-//        if (StringUtils.hasText(contextPath) && requestURI.startsWith(contextPath)) {
-//            requestURI = requestURI.substring(contextPath.length());
-//        }
+        if (StringUtils.hasText(contextPath) && requestURI.startsWith(contextPath)) {
+            requestURI = requestURI.substring(contextPath.length());
+        }
         
         return requestURI;
     }
