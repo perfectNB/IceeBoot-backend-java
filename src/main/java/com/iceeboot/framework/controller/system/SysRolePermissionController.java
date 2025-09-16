@@ -1,9 +1,3 @@
-/**
- * 角色权限关联管理控制器
- *
- * @author CodeIcee
- * @date 2025-08-13
- */
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;

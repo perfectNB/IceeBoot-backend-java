@@ -6,6 +6,7 @@
 package com.iceeboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
@@ -43,7 +44,7 @@ public class AiChatController {
 
     @Operation(summary = "获取对话会话列表")
     @GetMapping("/sessions")
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<IPage<AiChatSessionVO>> getSessionPage(AiChatSessionQuery query) {
         IPage<AiChatSessionVO> page = aiChatService.getSessionPage(query);
         return R.ok(page);
@@ -52,7 +53,7 @@ public class AiChatController {
 
     @Operation(summary = "创建对话会话")
     @PostMapping("/sessions")
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<AiChatSessionVO> addSession(@Validated @RequestBody AiChatSessionDTO dto) {
         Boolean result = aiChatService.addSession(dto);
         if (result) {

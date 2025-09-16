@@ -1,8 +1,3 @@
-/*
- * @Description: OSS密钥管理控制器
- * @Date: 2025-09-05
- * @Author: CodeIcee
- */
 package com.iceeboot.framework.controller.oss;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -157,12 +152,12 @@ public class OssKeyController {
     public R<Map<String, Object>> getProviderConfig(
             @Parameter(description = "OSS厂商") @PathVariable("provider") String provider) {
         Map<String, Object> config = Map.of(
-            "provider", provider,
-            "displayName", getProviderDisplayName(provider),
-            "description", getProviderDescription(provider),
-            "authType", getProviderAuthType(provider),
-            "defaultEndpoint", getProviderDefaultEndpoint(provider),
-            "supportedFeatures", getSupportedFeatures(provider)
+                "provider", provider,
+                "displayName", getProviderDisplayName(provider),
+                "description", getProviderDescription(provider),
+                "authType", getProviderAuthType(provider),
+                "defaultEndpoint", getProviderDefaultEndpoint(provider),
+                "supportedFeatures", getSupportedFeatures(provider)
         );
         return R.ok(config);
     }
@@ -224,12 +219,11 @@ public class OssKeyController {
      */
     private List<String> getSupportedFeatures(String provider) {
         return switch (provider.toLowerCase()) {
-            case "aliyun", "huawei", "tencent", "minio" -> 
-                List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查", "复制", "移动", "预签名URL", "存储桶管理");
-            case "qiniu" -> 
-                List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查", "复制", "移动", "预签名URL");
-            default -> 
-                List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查");
+            case "aliyun", "huawei", "tencent", "minio" ->
+                    List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查", "复制", "移动", "预签名URL", "存储桶管理");
+            case "qiniu" ->
+                    List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查", "复制", "移动", "预签名URL");
+            default -> List.of("上传", "下载", "删除", "列表", "容量查询", "文件存在检查");
         };
     }
 }

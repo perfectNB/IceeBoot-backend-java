@@ -1,9 +1,3 @@
-/**
- * 权限管理控制器
- *
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -98,9 +92,6 @@ public class SysPermissionController {
         boolean success = permissionService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
     }
-
-
-
 
 
     @Operation(summary = "获取子权限", description = "根据父级ID获取子权限列表")

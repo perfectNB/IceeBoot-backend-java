@@ -71,6 +71,7 @@ public class AiAgentController {
 
     @Operation(summary = "更新代理状态")
     @PutMapping("/{id}/status")
+    @RequirePermission(dynamic = true)
     public R<Void> updateAgentStatus(
             @Parameter(description = "代理ID") @PathVariable("id") Long id,
             @RequestBody Map<String, String> request) {
@@ -83,6 +84,7 @@ public class AiAgentController {
 
     @Operation(summary = "根据平台获取代理列表")
     @GetMapping("/platform/{platform}")
+    @RequirePermission(dynamic = true)
     public R<List<AiAgentVO>> getAgentsByPlatform(@Parameter(description = "平台") @PathVariable("platform") String platform) {
         List<AiAgentVO> agents = aiAgentService.getAgentsByPlatform(platform);
         return R.ok(agents);
@@ -90,6 +92,7 @@ public class AiAgentController {
 
     @Operation(summary = "根据类型获取代理列表")
     @GetMapping("/type/{type}")
+    @RequirePermission(dynamic = true)
     public R<List<AiAgentVO>> getAgentsByType(@Parameter(description = "类型") @PathVariable("type") String type) {
         List<AiAgentVO> agents = aiAgentService.getAgentsByType(type);
         return R.ok(agents);

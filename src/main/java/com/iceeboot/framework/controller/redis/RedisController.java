@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Redis管理控制器
- * 
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -31,9 +31,6 @@ public class RedisController {
 
     private final RedisService redisService;
 
-    /**
-     * 获取Redis键列表
-     */
     @Operation(summary = "获取Redis键列表", description = "分页查询Redis键列表")
     @GetMapping("/keys")
     @RequirePermission(dynamic = true)
@@ -43,32 +40,29 @@ public class RedisController {
         return R.ok(result);
     }
 
-    /**
-     * 获取Redis键详情
-     */
+
     @Operation(summary = "获取Redis键详情", description = "根据键名获取Redis键详情")
     @GetMapping("/keys/{key}")
+    @RequirePermission(dynamic = true)
     public R<RedisKeyVO> getRedisKeyDetail(@PathVariable("key") String key) {
         RedisKeyVO result = redisService.getRedisKeyDetail(key);
         return R.ok(result);
     }
 
-    /**
-     * 创建Redis键
-     */
+
     @Operation(summary = "创建Redis键", description = "创建新的Redis键值对")
     @PostMapping("/keys")
+    @RequirePermission(dynamic = true)
     public R<Void> createRedisKey(@Validated @RequestBody CreateRedisKeyDTO createDTO) {
 
         redisService.createRedisKey(createDTO);
         return R.ok();
     }
 
-    /**
-     * 批量删除Redis键
-     */
+
     @Operation(summary = "批量删除Redis键", description = "根据键名数组批量删除Redis键")
     @DeleteMapping("/keys")
+    @RequirePermission(dynamic = true)
     public R<Void> deleteRedisKeys(@RequestBody List<String> keys) {
         redisService.deleteRedisKeys(keys);
         return R.ok();

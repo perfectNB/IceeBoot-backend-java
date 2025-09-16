@@ -1,9 +1,3 @@
-/**
- * 角色管理控制器
- *
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;
@@ -25,6 +19,7 @@ import java.util.List;
 
 /**
  * 角色管理控制器
+ *
  * @author CodeIcee
  * @date 2025-08-11
  */
@@ -85,7 +80,6 @@ public class SysRoleController {
         boolean success = roleService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
     }
-
 
 
     @Operation(summary = "保存角色权限", description = "为角色分配权限")
