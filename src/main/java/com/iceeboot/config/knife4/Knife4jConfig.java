@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.config;
+package com.iceeboot.config.knife4;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;

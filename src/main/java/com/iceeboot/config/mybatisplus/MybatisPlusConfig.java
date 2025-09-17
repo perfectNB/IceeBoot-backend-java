@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.config;
+package com.iceeboot.config.mybatisplus;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
