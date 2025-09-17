@@ -4,14 +4,14 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.config;
+package com.iceeboot.config.security;
 
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.context.model.SaRequest;
-import com.iceeboot.framework.interceptor.PermissionInterceptor;
+import com.iceeboot.config.interceptor.PermissionInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;

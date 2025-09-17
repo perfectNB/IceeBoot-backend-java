@@ -1,4 +1,4 @@
-package com.iceeboot.framework.config;
+package com.iceeboot.config.task;
 
 import org.quartz.Scheduler;
 import org.springframework.context.annotation.Bean;

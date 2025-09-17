@@ -5,7 +5,7 @@
  * @author CodeIcee
  * @date 2025-09-10
  */
-package com.iceeboot.framework.config;
+package com.iceeboot.config.ai;
 
 import com.iceeboot.framework.llm.query.DatabaseQueryRequest;
 import com.iceeboot.framework.llm.query.LogQueryRequest;

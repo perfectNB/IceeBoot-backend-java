@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.framework.config;
+package com.iceeboot.config.log;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

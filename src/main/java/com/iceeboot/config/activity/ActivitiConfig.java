@@ -1,4 +1,4 @@
-package com.iceeboot.framework.config;
+package com.iceeboot.config.activity;
 
 import org.activiti.engine.*;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;

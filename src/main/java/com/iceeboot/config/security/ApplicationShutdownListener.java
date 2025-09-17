@@ -5,7 +5,7 @@
  * @author CodeIcee
  * @date 2025-09-04
  */
-package com.iceeboot.framework.config;
+package com.iceeboot.config.security;
 
 import com.iceeboot.framework.appender.DatabaseLogAppender;
 import lombok.extern.slf4j.Slf4j;

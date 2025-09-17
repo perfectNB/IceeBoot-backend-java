@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.framework.config;
+package com.iceeboot.config.log;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.iceeboot.framework.appender.DatabaseLogAppender;
