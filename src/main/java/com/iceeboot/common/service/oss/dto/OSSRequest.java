@@ -1,9 +1,3 @@
-/**
- * OSS请求DTO
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.oss.dto;
 
 import lombok.Data;

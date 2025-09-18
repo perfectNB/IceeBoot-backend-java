@@ -1,9 +1,3 @@
-/**
- * Email服务抽象接口
- * 
- * @author CodeIcee
- * @date 2025-09-04
- */
 package com.iceeboot.common.service.email.service;
 
 import com.iceeboot.common.service.email.dto.EmailRequest;

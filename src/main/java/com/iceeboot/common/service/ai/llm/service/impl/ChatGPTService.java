@@ -1,9 +1,3 @@
-/**
- * ChatGPT大模型服务实现类
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service.impl;
 
 import com.iceeboot.common.constant.SystemConstants;

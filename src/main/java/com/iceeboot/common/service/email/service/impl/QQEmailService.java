@@ -1,9 +1,3 @@
-/**
- * QQ邮箱服务实现类
- * 
- * @author CodeIcee
- * @date 2025-09-04
- */
 package com.iceeboot.common.service.email.service.impl;
 
 import com.iceeboot.common.service.email.dto.EmailRequest;

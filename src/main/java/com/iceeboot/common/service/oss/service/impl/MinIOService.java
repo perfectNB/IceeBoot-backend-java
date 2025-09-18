@@ -1,10 +1,4 @@
-/**
- * MinIO服务实现类
- * 使用MinIO官方SDK实现
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
+
 package com.iceeboot.common.service.oss.service.impl;
 
 import com.iceeboot.common.service.oss.dto.OSSCapacityInfo;

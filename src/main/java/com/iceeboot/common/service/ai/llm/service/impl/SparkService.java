@@ -1,11 +1,3 @@
-/**
- * 讯飞星火大模型服务实现类
- * 注意：讯飞星火官方主要使用WebSocket协议，当前HTTP实现仅为架构兼容性
- * 实际使用建议采用WebSocket协议实现
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;

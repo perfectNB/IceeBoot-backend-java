@@ -1,9 +1,3 @@
-/**
- * 邮件模板类
- * 
- * @author CodeIcee
- * @date 2025-09-04
- */
 package com.iceeboot.common.service.email.template;
 
 import lombok.Data;
