@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-13
  */
-package com.iceeboot.framework.interceptor;
+package com.iceeboot.config.interceptor;
 
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.iceeboot.common.annotation.RequirePermission;

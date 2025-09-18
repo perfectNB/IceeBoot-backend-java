@@ -8,7 +8,7 @@ package com.iceeboot.framework.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.iceeboot.framework.config.LogConfig;
+import com.iceeboot.config.log.LogConfig;
 import com.iceeboot.framework.entity.log.LogDO;
 import com.iceeboot.framework.service.log.LogService;
 import io.swagger.v3.oas.annotations.Operation;

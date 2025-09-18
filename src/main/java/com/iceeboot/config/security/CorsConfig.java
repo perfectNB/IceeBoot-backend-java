@@ -1,4 +1,4 @@
-package com.iceeboot.config;
+package com.iceeboot.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
