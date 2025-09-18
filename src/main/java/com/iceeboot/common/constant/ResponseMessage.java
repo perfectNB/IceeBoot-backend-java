@@ -424,7 +424,8 @@ public class ResponseMessage {
     // ==================== 通用错误 ====================
     
     public static final String METHOD_NOT_ALLOWED = "请求方法不允许";
-    
+    public static final String RATE_LIMIE = "您请求的太快了，请等一下哦！";
+
     // ==================== 私有构造函数 ====================
     
     private ResponseMessage() {

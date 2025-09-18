@@ -58,7 +58,7 @@ public class RateLimitAspect {
             // 获取当前访问次数用于异常信息
             int currentCount = rateLimitService.getCurrentCount(limitKey, rateLimit.limitType());
             
-            log.warn("Rate limit exceeded: key={}, type={}, limit={}/{} seconds, current={}", 
+            log.warn("请求频率超限: key={}, type={}, limit={}/{} seconds, current={}",
                 limitKey, rateLimit.limitType(), rateLimit.count(), rateLimit.time(), currentCount);
             
             throw new RateLimitException(
@@ -70,7 +70,7 @@ public class RateLimitAspect {
             );
         }
         
-        log.debug("Rate limit check passed: key={}, type={}, limit={}/{} seconds", 
+        log.debug("速率限制检查通过: key={}, type={}, limit={}/{} seconds",
             limitKey, rateLimit.limitType(), rateLimit.count(), rateLimit.time());
     }
     
@@ -127,7 +127,7 @@ public class RateLimitAspect {
             Long userId = TokenUtils.getCurrentUserId();
             return userId != null ? userId.toString() : null;
         } catch (Exception e) {
-            log.debug("Failed to get user ID from token: {}", e.getMessage());
+            log.debug("速率限制检查通过: {}", e.getMessage());
             return null;
         }
     }
@@ -144,7 +144,7 @@ public class RateLimitAspect {
                 return IpUtils.getClientIp(request);
             }
         } catch (Exception e) {
-            log.debug("Failed to get IP address: {}", e.getMessage());
+            log.debug("获取IP地址失败: {}", e.getMessage());
         }
         return "unknown";
     }

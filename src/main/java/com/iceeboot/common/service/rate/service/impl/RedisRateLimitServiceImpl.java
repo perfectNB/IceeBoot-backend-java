@@ -57,14 +57,14 @@ public class RedisRateLimitServiceImpl implements RateLimitService {
             }
             
             if (!allowed) {
-                log.warn("Rate limit exceeded for key: {}, type: {}, limit: {}/{} seconds", 
+                log.warn("超出密钥的速率限制: {}, type: {}, limit: {}/{} seconds",
                     key, limitType, count, time);
             }
             
             return allowed;
             
         } catch (Exception e) {
-            log.error("Rate limit check failed for key: {}, error: {}", key, e.getMessage(), e);
+            log.error("密钥的速率限制检查失败: {}, error: {}", key, e.getMessage(), e);
             // 发生异常时默认允许访问，避免影响正常业务
             return true;
         }
@@ -78,7 +78,7 @@ public class RedisRateLimitServiceImpl implements RateLimitService {
             Object count = redisUtils.get(redisKey);
             return count != null ? Integer.parseInt(count.toString()) : 0;
         } catch (Exception e) {
-            log.error("Get current count failed for key: {}, error: {}", key, e.getMessage());
+            log.error("获取密钥的当前计数失败: {}, error: {}", key, e.getMessage());
             return 0;
         }
     }
@@ -102,7 +102,7 @@ public class RedisRateLimitServiceImpl implements RateLimitService {
             }
             return 0;
         } catch (Exception e) {
-            log.error("Get reset time failed for key: {}, error: {}", key, e.getMessage());
+            log.error("获取密钥重置时间失败: {}, error: {}", key, e.getMessage());
             return 0;
         }
     }
@@ -114,9 +114,9 @@ public class RedisRateLimitServiceImpl implements RateLimitService {
         try {
             redisUtils.del(redisKey + COUNT_SUFFIX);
             redisUtils.del(redisKey + WINDOW_SUFFIX);
-            log.info("Cleared rate limit for key: {}, type: {}", key, limitType);
+            log.info("已清除密钥的速率限制: {}, type: {}", key, limitType);
         } catch (Exception e) {
-            log.error("Clear rate limit failed for key: {}, error: {}", key, e.getMessage());
+            log.error("密钥清除速率限制失败: {}, error: {}", key, e.getMessage());
         }
     }
     
