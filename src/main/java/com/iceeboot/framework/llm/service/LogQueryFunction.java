@@ -1,10 +1,4 @@
-/**
- * 日志查询 Function Calling 实现
- * 基于 Spring AI Alibaba 的 Function Calling 功能
- * 
- * @author CodeIcee
- * @date 2025-09-16
- */
+
 package com.iceeboot.framework.llm.service;
 
 import com.iceeboot.framework.llm.query.LogQueryRequest;
@@ -22,7 +16,11 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
- * 日志查询函数
+ * 日志查询 Function Calling 实现
+ * 基于 Spring AI Alibaba 的 Function Calling 功能
+ *
+ * @author CodeIcee
+ * @date 2025-09-16
  */
 @Slf4j
 @Component

@@ -1,13 +1,10 @@
-/**
- * 业务异常
- * 
- * @author CodeIcee
- * @date 2025-08-11
- */
 package com.iceeboot.common.exception;
 
 /**
  * 业务异常
+ *
+ * @author CodeIcee
+ * @date 2025-08-11
  */
 public class ServiceException extends RuntimeException {
     
