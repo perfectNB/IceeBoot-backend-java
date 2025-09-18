@@ -1,9 +1,3 @@
-/**
- * OSS服务抽象接口
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.oss.service;
 
 import com.iceeboot.common.service.oss.dto.OSSCapacityInfo;

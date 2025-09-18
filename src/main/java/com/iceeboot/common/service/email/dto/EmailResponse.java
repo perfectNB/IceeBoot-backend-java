@@ -1,9 +1,3 @@
-/**
- * Email响应DTO
- * 
- * @author CodeIcee
- * @date 2025-09-04
- */
 package com.iceeboot.common.service.email.dto;
 
 import lombok.Data;

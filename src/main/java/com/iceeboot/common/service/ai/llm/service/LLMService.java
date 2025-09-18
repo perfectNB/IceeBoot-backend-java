@@ -1,10 +1,3 @@
-/**
- * 大模型服务抽象接口
- * 定义大模型的通用操作方法，使用策略模式
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service;
 
 import com.iceeboot.common.service.ai.llm.dto.LLMRequest;

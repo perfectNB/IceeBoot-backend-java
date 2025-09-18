@@ -1,9 +1,3 @@
-/**
- * SMS配置类
- * 
- * @author CodeIcee
- * @date 2025-01-24
- */
 package com.iceeboot.common.service.sms.config;
 
 import lombok.Data;

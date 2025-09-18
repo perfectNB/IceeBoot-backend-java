@@ -1,10 +1,3 @@
-/**
- * 腾讯云COS服务实现类
- * 使用腾讯云官方SDK实现
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.oss.service.impl;
 
 import com.qcloud.cos.COSClient;

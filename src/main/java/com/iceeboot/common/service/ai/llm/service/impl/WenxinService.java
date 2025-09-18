@@ -1,10 +1,3 @@
-/**
- * 文心一言大模型服务实现类
- * 百度文心一言使用OAuth2.0认证方式，支持流式和非流式输出
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;

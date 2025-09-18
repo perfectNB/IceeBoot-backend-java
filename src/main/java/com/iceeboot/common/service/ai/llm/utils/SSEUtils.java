@@ -1,10 +1,3 @@
-/**
- * SSE（Server-Sent Events）工具类
- * 支持WebFlux流式响应，用于大模型流式输出
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

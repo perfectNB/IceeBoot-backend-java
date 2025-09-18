@@ -1,10 +1,3 @@
-/**
- * Kimi（月之暗面）大模型服务实现类
- * 支持流式输出、非流式输出功能
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;

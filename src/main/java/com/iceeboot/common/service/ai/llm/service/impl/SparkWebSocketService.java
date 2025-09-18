@@ -1,10 +1,3 @@
-/**
- * 讯飞星火大模型WebSocket协议服务实现类（示例）
- * 这是讯飞星火推荐的实现方式
- * 
- * @author CodeIcee
- * @date 2025-09-03
- */
 package com.iceeboot.common.service.ai.llm.service.impl;
 
 import com.iceeboot.common.constant.SystemConstants;
