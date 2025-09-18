@@ -6,10 +6,12 @@
 package com.iceeboot.framework.controller.ai;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.iceeboot.common.annotation.RateLimit;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
+import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
 import com.iceeboot.framework.query.ai.AiChatSessionQuery;
