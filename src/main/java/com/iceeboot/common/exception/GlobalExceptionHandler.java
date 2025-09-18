@@ -91,6 +91,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 限流异常
+     */
+    @ExceptionHandler(RateLimitException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public R<Void> handleRateLimitException(RateLimitException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.warn("请求地址'{}',触发限流: {}, 限制: {}/{} 秒, 当前: {} 次", 
+            requestURI, e.getMessage(), e.getLimitCount(), e.getTimeWindow(), e.getCurrentCount());
+        return R.fail(429, e.getMessage());
+    }
+
+    /**
      * iceeboot自定义异常
      */
     @ExceptionHandler(IceeBootException.class)

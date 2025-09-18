@@ -1,9 +1,4 @@
-/**
- * 日志查询请求参数
- * 
- * @author CodeIcee
- * @date 2025-09-16
- */
+
 package com.iceeboot.framework.llm.query;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
@@ -14,6 +9,9 @@ import lombok.Data;
 
 /**
  * 日志查询请求参数
+ *
+ * @author CodeIcee
+ * @date 2025-09-16
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonClassDescription("日志查询请求参数")
