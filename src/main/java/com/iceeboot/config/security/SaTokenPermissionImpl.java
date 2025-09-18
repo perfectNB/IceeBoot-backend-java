@@ -4,7 +4,7 @@
  * @author CodeIcee
  * @date 2025-08-11
  */
-package com.iceeboot.config;
+package com.iceeboot.config.security;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.iceeboot.framework.service.system.ISysUserService;

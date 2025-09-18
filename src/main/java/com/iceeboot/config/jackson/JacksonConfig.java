@@ -1,4 +1,4 @@
-package com.iceeboot.framework.config;
+package com.iceeboot.config.jackson;
 
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
