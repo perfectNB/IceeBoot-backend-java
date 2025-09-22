@@ -401,8 +401,10 @@ public class LogQueryFunction implements Function<LogQueryRequest, LLMQueryRespo
         formatted.append("📝 日志查询结果：\n");
         formatted.append("═══════════════════════════════════════\n");
         
+        // 完整输出所有日志记录，不进行截断
         for (int i = 0; i < results.size(); i++) {
             Map<String, Object> record = results.get(i);
+            
             formatted.append(String.format("📋 第 %d 条日志：\n", i + 1));
             
             // 格式化每个字段，使用中文标签
@@ -427,10 +429,7 @@ public class LogQueryFunction implements Function<LogQueryRequest, LLMQueryRespo
     private void formatField(StringBuilder sb, String label, Object value) {
         if (value != null && !value.toString().trim().isEmpty()) {
             String displayValue = value.toString();
-            // 限制消息长度，避免过长
-            if (label.contains("消息") && displayValue.length() > 100) {
-                displayValue = displayValue.substring(0, 100) + "...";
-            }
+            // 移除消息长度限制，完整显示所有内容
             sb.append(String.format("%s: %s\n", label, displayValue));
         }
     }
