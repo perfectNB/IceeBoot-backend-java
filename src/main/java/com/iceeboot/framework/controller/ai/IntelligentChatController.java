@@ -127,7 +127,12 @@ public class IntelligentChatController {
                 String response = chatWithFunctionCalling(messages);
                 saveAssistantMessage(request.getSessionId(), response, userId);
 
-                String escaped = response.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+                // 转义JSON字符串中的特殊字符
+                String escaped = response.replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                        .replace("\n", "\\n")
+                        .replace("\r", "\\r")
+                        .replace("\t", "\\t");
                 return Flux.just(
                         "data: {\"content\":\"" + escaped + "\",\"finished\":false}\n\n",
                         "data: {\"finished\":true}\n\n"
@@ -180,7 +185,12 @@ public class IntelligentChatController {
                     // 收集完整内容
                     fullContent.get().append(piece);
 
-                    String escaped = piece.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+                    // 转义JSON字符串中的特殊字符
+                    String escaped = piece.replace("\\", "\\\\")
+                            .replace("\"", "\\\"")
+                            .replace("\n", "\\n")
+                            .replace("\r", "\\r")
+                            .replace("\t", "\\t");
                     return "data: {\"content\":\"" + escaped + "\",\"finished\":false}\n\n";
                 })
                 .doOnComplete(() -> {
