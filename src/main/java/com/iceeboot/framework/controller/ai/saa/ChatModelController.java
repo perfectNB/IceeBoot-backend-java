@@ -2,6 +2,7 @@ package com.iceeboot.framework.controller.ai.saa;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 @Tag(name = "chatModel对话", description = "chatmodel对话")
 @RestController
 @RequestMapping("/v1/saa/")
+@Slf4j
 public class ChatModelController {
     @Resource
     @Qualifier("dashscopeChatModel")
@@ -33,6 +35,7 @@ public class ChatModelController {
     @GetMapping(value = "/chatModel/dochat")
     public String doChat(@RequestParam(name = "msg", defaultValue = "我是你爹") String msg) {
         String result = chatModel.call(msg);
+        log.info("对话内容，{},生成结果{}",msg,result);
         return result;
     }
 

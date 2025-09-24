@@ -2,6 +2,7 @@ package com.iceeboot.framework.controller.ai.saa;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 @Tag(name = "调用ollama", description = "调用ollama里的大模型")
 @RestController
 @RequestMapping("/v1/saa/")
+@Slf4j
 public class OllamaController {
 
 
@@ -30,7 +32,7 @@ public class OllamaController {
     @GetMapping("/ollama/chat")
     public String chat(@RequestParam(name = "msg") String msg) {
         String result = chatModel.call(msg);
-        System.out.println("生成结果：" + result);
+        log.info("对话内容，{},生成结果{}",msg,result);
         return result;
     }
 
