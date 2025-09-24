@@ -37,7 +37,8 @@ public class SaTokenConfig implements WebMvcConfigurer {
         // 注册Sa-Token拦截器，校验规则为从请求头获取token并验证
         registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
-                    .notMatch("/v1/auth/test1")
+                    .notMatch("/v1/auth/test/**")
+                    .notMatch("/v1/saa/**")
                     .notMatch("/v1/chat/ali")
                     .notMatch("/v1/auth/login")
                     .notMatch("/v1/auth/register")
