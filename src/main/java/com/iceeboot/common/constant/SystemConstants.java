@@ -56,6 +56,20 @@ public class SystemConstants {
         public static final String SPARK = "spark";
     }
 
+
+    /**
+     * 大模型厂商常量
+     */
+    public static class SaaModel {
+        /** deepseek v3 */
+        public static final String DEEPSEEK_MODEL = "deepseek-v3";
+
+        /** 千问 */
+        public static final String QWEN_MODEL = "qwen-max";
+
+
+    }
+
     // ==================== 删除标识 ====================
     
     /**
