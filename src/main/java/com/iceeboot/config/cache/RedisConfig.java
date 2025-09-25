@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -47,7 +46,7 @@ public class RedisConfig {
         // 禁用时间戳序列化，使用ISO-8601格式
         om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         
-//        jackson2JsonRedisSerializer.setObjectMapper(om);
+        jackson2JsonRedisSerializer.setObjectMapper(om);
         
         // 使用StringRedisSerializer来序列化和反序列化redis的key值
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
@@ -61,19 +60,6 @@ public class RedisConfig {
         // hash的value序列化方式采用jackson
         template.setHashValueSerializer(jackson2JsonRedisSerializer);
         
-        template.afterPropertiesSet();
-
-
-
-        template.setConnectionFactory(connectionFactory);
-        //设置key序列化方式string
-        template.setKeySerializer(new StringRedisSerializer());
-        //设置value的序列化方式json，使用GenericJackson2JsonRedisSerializer替换默认序列化
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
         template.afterPropertiesSet();
         return template;
     }
