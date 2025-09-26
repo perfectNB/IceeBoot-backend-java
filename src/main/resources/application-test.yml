@@ -4,7 +4,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/zboot?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
     username: ${DB_USERNAME:zboot}
-    password: ${DB_PASSWORD:zboot}
+    password: ${DB_PASSWORD:123456}
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 5
@@ -37,8 +37,9 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:default}
       password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:1}
+      database: ${REDIS_DATABASE:0}
       timeout: 10000
       lettuce:
         pool:
@@ -84,7 +85,18 @@ spring:
       chat:
         model: qwen3:8b
     dashscope:
-      api-key: sk-
+      api-key: sk-4377bcaf115543758ffdcaa7aa7a3a98
+      embedding:
+        options:
+          model: text-embedding-v3
+      chat:
+        options:
+          model: deepseek-r1
+    vectorstore:
+      redis:
+        initialize-schema: true
+        index-name: iceeboot-index
+        prefix: iceeboot-prefix
 
 # 日志配置
 logging:

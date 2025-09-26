@@ -13,7 +13,7 @@ import redis.clients.jedis.JedisPooled;
  * 配置Redis作为向量存储
  *
  * @author CodeIcee
- * @date 2025-01-25
+ * @date 2025-09-25
  */
 @Configuration
 public class VectorStoreConfig {
@@ -52,8 +52,8 @@ public class VectorStoreConfig {
     public VectorStore vectorStore(EmbeddingModel embeddingModel,
                                    JedisPooled jedisPooled) {
         return RedisVectorStore.builder(jedisPooled, embeddingModel)
-                .indexName("custom-index")
-                .prefix("custom-prefix")
+                .indexName("iceeboot-index")
+                .prefix("iceeboot-prefix")
                 .initializeSchema(true)
                 .build();
     }
