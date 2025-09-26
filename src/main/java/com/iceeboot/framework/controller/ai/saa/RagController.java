@@ -13,32 +13,25 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 /**
- * @auther zzyybs@126.com
- * @create 2025-07-30 12:21
- * @Description 知识出处：
- * https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html#_advanced_rag
+ * rag
+ *
+ * @auther CodeIcee
+ * @create 2025-09-25
  */
 @RestController
 @RequestMapping("/v1/saa")
 @Slf4j
-public class RagController
-{
+public class RagController {
     @Resource(name = "qwenChatClient")
     private ChatClient chatClient;
     @Resource
     private VectorStore vectorStore;
 
-    /**
-     * http://localhost:8012/rag4aiops?msg=00000
-     * http://localhost:8012/rag4aiops?msg=C2222
-     * @param msg
-     * @return
-     */
-    @GetMapping("/rag4aiops")
-    public Flux<String> rag(@RequestParam(name = "msg", defaultValue = "锁舞") String msg)
-    {
+
+    @GetMapping("/rag")
+    public Flux<String> rag(@RequestParam(name = "msg", defaultValue = "锁舞") String msg) {
         String systemInfo = """
-                你是一个街舞大师,按照给出的问题给出对应的解释,否则回复找不到信息，再乱问我打死你！！！😠。
+                你是一个街舞大师,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
                 """;
 
         RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
