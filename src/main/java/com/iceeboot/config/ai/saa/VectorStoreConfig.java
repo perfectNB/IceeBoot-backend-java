@@ -13,7 +13,7 @@ import redis.clients.jedis.JedisPooled;
  * 配置Redis作为向量存储
  *
  * @author CodeIcee
- * @date 2025-09-25
+ * @since  2025-09-25
  */
 @Configuration
 public class VectorStoreConfig {
