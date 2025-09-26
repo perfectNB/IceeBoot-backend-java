@@ -285,6 +285,26 @@
             <artifactId>spring-ai-starter-vector-store-redis</artifactId>
         </dependency>
 
+        <!--注意事项（重要）
+    spring-ai-starter-mcp-server-webflux不能和<artifactId>spring-boot-starter-web</artifactId>依赖并存，
+    否则会使用tomcat启动,而不是netty启动，从而导致mcpserver启动失败，但程序运行是正常的，mcp客户端连接不上。
+-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!--mcp-server-webflux-->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
+        </dependency>
+
+        <!-- mcp-clent 依赖 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>

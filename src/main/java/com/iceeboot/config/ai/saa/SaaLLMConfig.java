@@ -7,6 +7,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +48,8 @@ public class SaaLLMConfig {
     public ChatClient deepseekChatClient(@Qualifier("deepseek") ChatModel deepseek) {
         return
                 ChatClient.builder(deepseek)
-                        .defaultOptions(ChatOptions.builder().model(SystemConstants.SaaModel.DEEPSEEK_MODEL).build())
+                        .defaultOptions(ChatOptions.builder().model(SystemConstants.SaaModel.DEEPSEEK_MODEL)
+                                .build())
                         .build();
     }
 
