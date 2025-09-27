@@ -85,7 +85,7 @@ spring:
       chat:
         model: qwen3:8b
     dashscope:
-      api-key: sk-4377bcaf115543758ffdcaa7aa7a3a98
+      api-key: sk-
       embedding:
         options:
           model: text-embedding-v3
