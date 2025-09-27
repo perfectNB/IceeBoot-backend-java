@@ -14,11 +14,17 @@ import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
+import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.iceeboot.framework.query.ai.AiChatSessionQuery;
 import com.iceeboot.framework.query.ai.AiChatMessageQuery;
 import com.iceeboot.framework.service.ai.IAiChatService;
+import com.iceeboot.common.utils.tool.JapanMovieActorTool;
+import com.iceeboot.common.utils.tool.JapanMoviePathTool;
 import com.iceeboot.framework.vo.ai.AiChatSessionVO;
 import com.iceeboot.framework.vo.ai.AiChatMessageVO;
+import jakarta.annotation.Resource;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Flux;
@@ -42,6 +48,9 @@ import java.util.List;
 public class AiChatController {
 
     private final IAiChatService aiChatService;
+
+    @Resource(name = "qwenChatClient")
+    private ChatClient qwenChatClient;
 
 
     @Operation(summary = "获取对话会话列表")
@@ -110,6 +119,38 @@ public class AiChatController {
     public R<PageResult<AiChatMessageVO>> getMessage(AiChatMessageQuery query) {
         PageResult<AiChatMessageVO> result = aiChatService.getMessage(query);
         return R.ok(result);
+    }
+
+    @Operation(summary = "工具调用流式对话")
+    @PostMapping(value = "/tool/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    @RequirePermission(dynamic = true)
+    public Flux<String> toolStreamChat(@Validated @RequestBody StreamChatRequest request) {
+        // 保存用户消息
+        AiChatMessageDTO userMessageDto = new AiChatMessageDTO();
+        userMessageDto.setSessionId(request.getSessionId());
+        userMessageDto.setRole("user");
+        userMessageDto.setContent(request.getContent());
+        aiChatService.sendMessage(userMessageDto);
+
+        // 使用工具调用的ChatClient进行流式对话，直接返回内容流
+        return qwenChatClient.prompt()
+                .user(request.getContent())
+                .tools(new JapanMoviePathTool(), new JapanMovieActorTool())
+                .stream()
+                .content()
+                .collectList() // 收集所有内容片段用于保存
+                .doOnNext(contentList -> {
+                    // 保存AI回复消息
+                    String fullResponse = String.join("", contentList);
+                    if (!fullResponse.trim().isEmpty()) {
+                        AiChatMessageDTO aiMessageDto = new AiChatMessageDTO();
+                        aiMessageDto.setSessionId(request.getSessionId());
+                        aiMessageDto.setRole("assistant");
+                        aiMessageDto.setContent(fullResponse);
+                        aiChatService.sendMessage(aiMessageDto);
+                    }
+                })
+                .flatMapMany(Flux::fromIterable); // 重新转换为流式响应
     }
 
 

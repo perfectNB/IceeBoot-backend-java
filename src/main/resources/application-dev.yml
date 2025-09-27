@@ -85,7 +85,7 @@ spring:
       chat:
         model: qwen3:8b
     dashscope:
-      api-key: sk-4377bcaf115543758ffdcaa7aa7a3a98
+      api-key: sk-
       embedding:
         options:
           model: text-embedding-v3
@@ -98,19 +98,21 @@ spring:
         index-name: iceeboot-index
         prefix: iceeboot-prefix
     mcp:
-#      server:
-#        type: async
-#        name: iceeboot-define-mcp-server
-#        version: 1.0.0
-      client:
+
+      ## 如果没有mcp服务，则注掉下面的配置
+      server:
         type: async
-        request-timeout: 120
-        toolcallback:
-          enabled: true
-        sse:
-          connections:
-            mcp-server1:
-              url: http://localhost:8014
+        name: iceeboot-define-mcp-server
+        version: 1.0.0
+#      client:
+#        type: async
+#        request-timeout: 240
+#        toolcallback:
+#          enabled: true
+#        sse:
+#          connections:
+#            mcp-server1:
+#              url: http://localhost:8014
 
 # 日志配置
 logging:
