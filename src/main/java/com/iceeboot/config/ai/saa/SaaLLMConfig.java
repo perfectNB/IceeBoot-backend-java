@@ -7,6 +7,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,15 @@ public class SaaLLMConfig {
                 .build();
     }
 
+    @Bean(name = "deepseekChatClient")
+    public ChatClient deepseekChatClient(@Qualifier("deepseek") ChatModel deepseek) {
+        return ChatClient.builder(deepseek)
+                .defaultOptions(ToolCallingChatOptions.builder()
+                        .model(SystemConstants.SaaModel.DEEPSEEK_MODEL)
+                        .build())
+                .build();
+    }
+
     @Bean(name = "qwen")
     public ChatModel qwen() {
         return DashScopeChatModel.builder()
@@ -44,22 +54,19 @@ public class SaaLLMConfig {
                 .build();
     }
 
-    @Bean(name = "deepseekChatClient")
-    public ChatClient deepseekChatClient(@Qualifier("deepseek") ChatModel deepseek) {
-        return
-                ChatClient.builder(deepseek)
-                        .defaultOptions(ChatOptions.builder().model(SystemConstants.SaaModel.DEEPSEEK_MODEL)
-                                .build())
-                        .build();
-    }
-
     @Bean(name = "qwenChatClient")
     public ChatClient qwenChatClient(@Qualifier("qwen") ChatModel qwen) {
-        return
-                ChatClient.builder(qwen)
-                        .defaultOptions(ChatOptions.builder().model(SystemConstants.SaaModel.QWEN_MODEL).build())
-                        .build();
+        return ChatClient.builder(qwen)
+                .defaultOptions(ToolCallingChatOptions.builder()
+                        .model(SystemConstants.SaaModel.QWEN_MODEL)
+                        .build())
+                .build();
     }
+
+
+
+
+
 
 
 }
