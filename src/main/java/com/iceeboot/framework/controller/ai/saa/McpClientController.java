@@ -11,16 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 /**
- *
  * @auther CodeIcee
- * @since  2025-09-26
+ * @since 2025-09-26
  */
 
 @RestController
 @RequestMapping("/v1/saa")
 @Slf4j
-public class McpClientController
-{
+public class McpClientController {
     @Resource(name = "qwen")
     private ChatModel qwenChatModel;
 
@@ -29,16 +27,14 @@ public class McpClientController
 
 
     @GetMapping("/mcpclient/chat")
-    public Flux<String> chat(@RequestParam(name = "msg",defaultValue = "北京") String msg)
-    {
-        System.out.println("使用了mcp");
+    public Flux<String> chat(@RequestParam(name = "msg", defaultValue = "北京") String msg) {
+        log.info("使用了mcp");
         return qwenChatClient.prompt(msg).stream().content();
     }
 
     @RequestMapping("/mcpclient/chat2")
-    public Flux<String> chat2(@RequestParam(name = "msg",defaultValue = "北京") String msg)
-    {
-        System.out.println("未使用mcp");
+    public Flux<String> chat2(@RequestParam(name = "msg", defaultValue = "北京") String msg) {
+        log.info("未使用mcp");
         return qwenChatModel.stream(msg);
     }
 }
