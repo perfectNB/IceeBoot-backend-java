@@ -52,7 +52,7 @@ public class ToolCallingController {
     public Flux<String> chat2(@RequestParam(name = "msg", defaultValue = "高市早苗是谁") String msg) {
         return qwenChatClient.prompt()
                 .user(msg)
-                .tools(new JapanMoviePathTool())
+                .tools(new JapanMoviePathTool(), new JapanMovieActorTool())
                 .stream()
                 .content();
     }

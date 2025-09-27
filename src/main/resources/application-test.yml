@@ -98,10 +98,11 @@ spring:
         index-name: iceeboot-index
         prefix: iceeboot-prefix
     mcp:
-      #      server:
-      #        type: async
-      #        name: iceeboot-define-mcp-server
-      #        version: 1.0.0
+      ## 如果没有mcp服务，则注掉下面的配置
+      server:
+        type: async
+        name: iceeboot-define-mcp-server
+        version: 1.0.0
       client:
         type: async
         request-timeout: 120
