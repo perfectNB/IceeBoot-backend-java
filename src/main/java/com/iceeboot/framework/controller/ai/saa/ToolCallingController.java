@@ -50,7 +50,8 @@ public class ToolCallingController {
 
     @GetMapping("/tool/streamChat")
     public Flux<String> chat2(@RequestParam(name = "msg", defaultValue = "高市早苗是谁") String msg) {
-        return qwenChatClient.prompt(msg)
+        return qwenChatClient.prompt()
+                .user(msg)
                 .tools(new JapanMoviePathTool())
                 .stream()
                 .content();
