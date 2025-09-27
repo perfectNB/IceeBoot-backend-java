@@ -38,8 +38,9 @@ public class SaaLLMConfig {
     }
 
     @Bean(name = "deepseekChatClient")
-    public ChatClient deepseekChatClient(@Qualifier("deepseek") ChatModel deepseek) {
+    public ChatClient deepseekChatClient(@Qualifier("deepseek") ChatModel deepseek,ToolCallbackProvider tools) {
         return ChatClient.builder(deepseek)
+                .defaultToolCallbacks(tools.getToolCallbacks())
                 .defaultOptions(ToolCallingChatOptions.builder()
                         .model(SystemConstants.SaaModel.DEEPSEEK_MODEL)
                         .build())
@@ -55,8 +56,9 @@ public class SaaLLMConfig {
     }
 
     @Bean(name = "qwenChatClient")
-    public ChatClient qwenChatClient(@Qualifier("qwen") ChatModel qwen) {
+    public ChatClient qwenChatClient(@Qualifier("qwen") ChatModel qwen,ToolCallbackProvider tools) {
         return ChatClient.builder(qwen)
+                .defaultToolCallbacks(tools.getToolCallbacks())
                 .defaultOptions(ToolCallingChatOptions.builder()
                         .model(SystemConstants.SaaModel.QWEN_MODEL)
                         .build())
