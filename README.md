@@ -14,8 +14,8 @@
     <a href="#"><img src="https://img.shields.io/badge/MyBatis-3.x-red.svg" alt="MyBatis"></a>
     <a href="#"><img src="https://img.shields.io/badge/Sa--Token-1.x-blue.svg" alt="Sa-Token"></a>
     <a href="#"><img src="https://img.shields.io/badge/MySQL-8.0+-orange.svg" alt="MySQL"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Redis-6.0+-red.svg" alt="Redis"></a>
-    <a href="#"><img src="https://img.shields.io/badge/JDK-17+-green.svg" alt="JDK"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Redis Stack 7.0+-red.svg" alt="Redis"></a>
+    <a href="#"><img src="https://img.shields.io/badge/JDK-21+-green.svg" alt="JDK"></a>
   </p>
   <p>
     <a href="#"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
@@ -36,7 +36,7 @@
 在开始使用 IceeBoot 之前，请确保您的开发环境满足以下要求：
 
 ### 🔧 必需环境
-- **JDK 21+**：项目基于 Java 21 开发，需要 JDK 17 或更高版本
+- **JDK 21+**：项目基于 Java 21 开发，需要 JDK 21 或更高版本
 - **Spring Boot 3.5.5**：使用最新的 Spring Boot 3.x 版本
 - **MySQL 8.0+**：主数据库，支持 JSON 字段和全文索引等高级特性
 - **Redis Stack 7.0+**：基于Redis的全栈数据平台，支持向量搜索、时序数据、图数据库等高级特性
