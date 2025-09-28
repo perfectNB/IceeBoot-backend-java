@@ -12,6 +12,8 @@ import com.iceeboot.common.service.ai.llm.dto.LLMResponse;
 import com.iceeboot.common.service.ai.llm.factory.LLMFactory;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import com.iceeboot.common.utils.TokenUtils;
+import com.iceeboot.common.utils.tool.JapanMovieActorTool;
+import com.iceeboot.common.utils.tool.JapanMoviePathTool;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
@@ -26,8 +28,10 @@ import com.iceeboot.framework.service.ai.IAiChatService;
 import com.iceeboot.framework.service.ai.IAiLLMKeyService;
 import com.iceeboot.framework.vo.ai.AiChatSessionVO;
 import com.iceeboot.framework.vo.ai.AiChatMessageVO;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -59,6 +63,9 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
 
     private static final int CACHE_EXPIRE_MINUTES = 30;
+
+    @Resource(name = "qwenChatClient")
+    private ChatClient qwenChatClient;
 
 
     @Override
@@ -137,16 +144,6 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         return sessions.stream().map(this::convertSessionToVO).collect(Collectors.toList());
     }
 
-    @Override
-    public AiChatMessageVO sendMessage(AiChatMessageDTO dto) {
-        AiChatMessageDO message = new AiChatMessageDO();
-        BeanUtils.copyProperties(dto, message);
-
-
-        aiChatMessageMapper.insert(message);
-
-        return convertMessageToVO(message);
-    }
 
     @Override
     public List<AiChatMessageVO> getSessionMessages(Long sessionId) {
@@ -279,6 +276,58 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         });
     }
 
+    @Override
+    public Flux<String> toolStreamChat(StreamChatRequest request) {
+        // 保存用户消息
+        AiChatMessageDTO userMessageDto = new AiChatMessageDTO();
+        userMessageDto.setSessionId(request.getSessionId());
+        userMessageDto.setRole("user");
+        userMessageDto.setContent(request.getContent());
+        AiChatMessageDO message = new AiChatMessageDO();
+        BeanUtils.copyProperties(userMessageDto, message);
+        Long userId = TokenUtils.getCurrentUserId();
+        aiChatMessageMapper.insert(message);
+
+
+        // 用于收集完整响应内容
+        StringBuilder fullContent = new StringBuilder();
+
+
+        return qwenChatClient.prompt()
+                .user(request.getContent())
+                .tools(new JapanMoviePathTool(), new JapanMovieActorTool())
+                .stream()
+                .content()
+                .doOnNext(content -> {
+                    // 收集响应内容
+                    if (content != null) {
+                        fullContent.append(content);
+                    }
+                })
+                .doOnComplete(() -> {
+                    // 流式响应完成，保存完整的助手回复
+                    String content = fullContent.toString();
+                    if (!content.trim().isEmpty()) {
+                        AiChatMessageDTO aiMessageDto = new AiChatMessageDTO();
+
+                        aiMessageDto.setSessionId(request.getSessionId());
+                        log.info("保存助手回复消息，长度: {}", content.length());
+                        aiMessageDto.setRole("assistant");
+                        aiMessageDto.setContent(content);
+                        aiMessageDto.setUserId(userId);
+                        convertMessage(aiMessageDto);
+                    }
+                })
+                .doOnError(error -> {
+                    // 保存错误信息
+                    AiChatMessageDTO errorMessageDto = new AiChatMessageDTO();
+                    errorMessageDto.setSessionId(request.getSessionId());
+                    errorMessageDto.setRole("assistant");
+                    errorMessageDto.setContent("网络错误");
+                    convertMessage(errorMessageDto);
+                });
+    }
+
     /**
      * 从缓存获取会话信息
      */
@@ -405,5 +454,14 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         // 设置时间戳，使用创建时间
         vo.setTimestamp(message.getCreateTime());
         return vo;
+    }
+
+    public AiChatMessageVO convertMessage(AiChatMessageDTO dto) {
+        AiChatMessageDO message = new AiChatMessageDO();
+        BeanUtils.copyProperties(dto, message);
+        message.setCreateBy(dto.getUserId().toString());
+        message.setUpdateBy(dto.getUserId().toString());
+        aiChatMessageMapper.insert(message);
+        return convertMessageToVO(message);
     }
 }
