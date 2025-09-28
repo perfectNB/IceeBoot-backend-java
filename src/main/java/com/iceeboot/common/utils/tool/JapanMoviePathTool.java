@@ -18,6 +18,7 @@ public class JapanMoviePathTool {
      */
     @Tool(description = "获取不同类型电影的地址", returnDirect = false)
     public String movePath(String name) {
+
         Map<String, String> map = Map.of(
                 "搜查官", "地址为：https://baike.baidu.com/item/%E6%B2%B3%E5%8C%97%E5%BD%A9%E4%BC%BD/64480389",
                 "逃犯", "地址为：https://www.bilibili.com/opus/933433845263368438",

@@ -40,6 +40,7 @@ public class RoleUserTool {
      */
     @Tool(description = "根据角色名称查询该角色下的用户", returnDirect = false)
     public String getRoleUsers(String roleName) {
+        log.info("触发tool：根据角色名称查询该角色下的用户");
         try {
             // 根据角色名称查找角色
             LambdaQueryWrapper<RoleDO> roleWrapper = new LambdaQueryWrapper<>();
