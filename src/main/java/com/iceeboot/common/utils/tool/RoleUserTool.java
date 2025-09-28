@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author CodeIcee
- * @date 2025/09/28
+ * @date 2025-09-28
  */
 @Component
 @Slf4j

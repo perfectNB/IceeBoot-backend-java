@@ -12,10 +12,7 @@ import com.iceeboot.common.service.ai.llm.dto.LLMResponse;
 import com.iceeboot.common.service.ai.llm.factory.LLMFactory;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import com.iceeboot.common.utils.TokenUtils;
-import com.iceeboot.common.utils.tool.JapanMovieActorTool;
-import com.iceeboot.common.utils.tool.JapanMoviePathTool;
-import com.iceeboot.common.utils.tool.RoleUserTool;
-import com.iceeboot.common.utils.tool.UserRoleTool;
+import com.iceeboot.common.utils.tool.*;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
@@ -69,6 +66,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     private final JapanMovieActorTool japanMovieActorTool;
     private final RoleUserTool roleUserTool;
     private final UserRoleTool userRoleTool;
+    private final UserMenuAndPermissionTool userMenuAndPermissionTool;
 
 
     private static final int CACHE_EXPIRE_MINUTES = 30;
@@ -313,7 +311,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
                 .tools(japanMoviePathTool,
                         japanMovieActorTool,
                         roleUserTool,
-                        userRoleTool
+                        userRoleTool,
+                        userMenuAndPermissionTool
                 )
                 .stream()
                 .content()
