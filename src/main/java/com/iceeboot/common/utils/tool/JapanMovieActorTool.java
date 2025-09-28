@@ -15,7 +15,7 @@ public class JapanMovieActorTool {
      * true 返回结果不走大模型
      * false 走大模型
      */
-    @Tool(description = "获取人物的介绍", returnDirect = true)
+    @Tool(description = "获取人物的介绍", returnDirect = false)
     public String moveActor(String name) {
         Map<String, String> map = Map.of(
                 "河北彩花", "河北人，喜欢采花",

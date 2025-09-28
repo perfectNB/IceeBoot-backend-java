@@ -72,13 +72,7 @@ public interface IAiChatService extends IService<AiChatSessionDO> {
      */
     List<AiChatSessionVO> getSessionsByUserId(Long userId);
 
-    /**
-     * 发送消息
-     * 
-     * @param dto 消息信息
-     * @return 消息详情
-     */
-    AiChatMessageVO sendMessage(AiChatMessageDTO dto);
+
 
     /**
      * 获取会话消息列表
@@ -111,4 +105,12 @@ public interface IAiChatService extends IService<AiChatSessionDO> {
      * @return 流式响应
      */
     Flux<LLMResponse> streamChat(StreamChatRequest request);
+
+    /**
+     * 流式对话
+     *
+     * @param request 工具调用流式对话
+     * @return 流式响应
+     */
+    Flux<String> toolStreamChat(StreamChatRequest request);
 }
