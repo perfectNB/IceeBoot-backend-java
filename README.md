@@ -36,10 +36,10 @@
 在开始使用 IceeBoot 之前，请确保您的开发环境满足以下要求：
 
 ### 🔧 必需环境
-- **JDK 17+**：项目基于 Java 17 开发，需要 JDK 17 或更高版本
-- **Spring Boot 3.3.4**：使用最新的 Spring Boot 3.x 版本
+- **JDK 21+**：项目基于 Java 21 开发，需要 JDK 17 或更高版本
+- **Spring Boot 3.5.5**：使用最新的 Spring Boot 3.x 版本
 - **MySQL 8.0+**：主数据库，支持 JSON 字段和全文索引等高级特性
-- **Redis 6.0+**：缓存和会话存储，支持 Stream 等新特性
+- **Redis Stack 7.0+**：基于Redis的全栈数据平台，支持向量搜索、时序数据、图数据库等高级特性
 - **Maven 3.6+**：项目构建和依赖管理工具
 
 ### 🛠️ 开发工具（推荐）
@@ -121,13 +121,15 @@ iceeboot 采用了当前最主流和成熟的技术栈，确保项目的稳定�
 
 ### AI与智能化
 - **Spring AI Alibaba 1.0.0-M5.1**：阿里云官方Spring AI实现，深度集成通义千问等AI模型
+- **RAG (检索增强生成)**：支持知识库检索增强，提供更准确的AI回答
+- **MCP (Model Context Protocol)**：支持AI模型上下文协议，实现智能体间的通信
 - **Function Calling**：支持AI函数调用，实现智能数据库查询等功能
 - **WebFlux Reactive**：支持AI模型的流式响应和异步处理
 
 ### 数据持久化
 - **MyBatis-Plus 3.5.9**：MyBatis的增强版本，提供代码生成、分页、性能分析等功能
 - **MySQL Connector 8.0.33**：MySQL官方驱动，支持最新的MySQL 8.0特性
-- **Spring Data Redis**：Redis集成，支持缓存、会话存储和分布式锁
+- **Spring Data Redis Stack**：Redis Stack集成，支持缓存、会话存储、向量搜索和分布式锁
 - **Spring Data MongoDB**：MongoDB文档数据库支持
 - **Spring Data Elasticsearch**：全文搜索和数据分析支持
 
@@ -263,9 +265,15 @@ public Function<DatabaseQueryRequest, DatabaseQueryResponse> databaseQuery(
 - **结果缓存**：对AI模型的响应结果进行缓存，提升响应速度和降低成本
 - **错误重试**：智能的错误处理和重试机制，确保服务稳定性
 
-## 🤖 Agent智能体支持
+## 🤖 Agent智能体与MCP支持
 
-iceeboot 引入了先进的Agent智能体技术，支持构建和集成智能化的业务流程：
+iceeboot 引入了先进的Agent智能体技术和MCP协议，支持构建和集成智能化的业务流程：
+
+### MCP (Model Context Protocol) 支持
+- **MCP Server端**：提供标准的MCP服务接口，支持AI模型间的上下文共享
+- **MCP Client端**：集成多种MCP客户端，可连接外部MCP服务
+- **灵活配置**：如果没有需要的MCP Client，可以在配置文件中注释掉相关配置
+- **协议标准**：完全遵循MCP协议规范，确保与其他MCP兼容系统的互操作性
 
 ### 支持的Agent平台
 - **Coze**：字节跳动推出的AI Bot开发平台，支持快速构建智能对话机器人
@@ -276,6 +284,12 @@ iceeboot 引入了先进的Agent智能体技术，支持构建和集成智能化
 - **多模态交互**：支持文本、语音、图像等多种交互方式
 - **知识库集成**：可以接入企业知识库，提供专业领域的智能问答
 - **API调用能力**：Agent可以调用系统API，实现业务操作的自动化
+
+### RAG (检索增强生成) 功能
+- **向量数据库**：基于Redis Stack的向量搜索能力，支持高效的语义检索
+- **知识库管理**：支持多种格式的文档导入和知识库构建
+- **智能检索**：结合语义搜索和关键词搜索，提供更准确的信息检索
+- **上下文增强**：将检索到的相关信息作为上下文，增强AI模型的回答质量
 
 ## 🔧 第三方服务集成
 
@@ -411,58 +425,151 @@ iceeboot 项目目前处于快速发展阶段，虽然开发时间不到一个�
 ## 📁 项目结构
 
 ```
-iceeboot-backend-java/
+zboot-backend-java/
 ├── 📁 src/
 │   ├── 📁 main/
 │   │   ├── 📁 java/
 │   │   │   └── 📁 com/iceeboot/
 │   │   │       ├── 📁 common/                    # 通用模块
-│   │   │       │   ├── 📁 config/               # 配置类
+│   │   │       │   ├── 📁 annotation/           # 注解定义
+│   │   │       │   ├── 📁 aspect/               # 切面处理
 │   │   │       │   ├── 📁 constant/             # 常量定义
+│   │   │       │   ├── 📁 core/                 # 核心基础类
+│   │   │       │   ├── 📁 enums/                # 枚举定义
 │   │   │       │   ├── 📁 exception/            # 异常处理
 │   │   │       │   ├── 📁 service/              # 通用服务
 │   │   │       │   │   ├── 📁 ai/               # AI服务集成
+│   │   │       │   │   │   ├── 📁 agent/        # AI智能体服务
+│   │   │       │   │   │   ├── 📁 llm/          # 大语言模型服务
+│   │   │       │   │   │   └── 📁 mcp/          # MCP协议服务
 │   │   │       │   │   ├── 📁 email/            # 邮件服务
+│   │   │       │   │   ├── 📁 oss/              # 对象存储服务
+│   │   │       │   │   ├── 📁 rate/             # 限流服务
+│   │   │       │   │   └── 📁 sms/              # 短信服务
+│   │   │       │   └── 📁 utils/                # 工具类
+│   │   │       │       └── 📁 tool/             # Spring AI工具类
+│   │   │       ├── 📁 config/                   # 配置模块
+│   │   │       │   ├── 📁 activity/             # 工作流配置
+│   │   │       │   ├── 📁 ai/                   # AI配置
+│   │   │       │   │   └── 📁 saa/              # Spring AI Alibaba配置
+│   │   │       │   ├── 📁 cache/                # Redis Stack配置
+│   │   │       │   ├── 📁 interceptor/          # 拦截器配置
+│   │   │       │   ├── 📁 jackson/              # JSON配置
+│   │   │       │   ├── 📁 knife4/               # API文档配置
+│   │   │       │   ├── 📁 log/                  # 日志配置
+│   │   │       │   ├── 📁 mybatisplus/          # MyBatis Plus配置
+│   │   │       │   ├── 📁 security/             # 安全配置
+│   │   │       │   ├── 📁 task/                 # 定时任务配置
+│   │   │       │   └── 📁 thread/               # 线程池配置
+│   │   │       ├── 📁 framework/                # 框架核心模块
+│   │   │       │   ├── 📁 appender/             # 日志追加器
+│   │   │       │   ├── 📁 controller/           # 控制器层
+│   │   │       │   │   ├── 📁 ai/               # AI相关控制器
+│   │   │       │   │   ├── 📁 dashboard/        # 仪表盘控制器
+│   │   │       │   │   ├── 📁 email/            # 邮件控制器
+│   │   │       │   │   ├── 📁 log/              # 日志控制器
+│   │   │       │   │   ├── 📁 message/          # 消息控制器
+│   │   │       │   │   ├── 📁 oss/              # 对象存储控制器
+│   │   │       │   │   ├── 📁 redis/            # Redis控制器
+│   │   │       │   │   ├── 📁 sms/              # 短信控制器
+│   │   │       │   │   ├── 📁 system/           # 系统控制器
+│   │   │       │   │   ├── 📁 task/             # 任务控制器
+│   │   │       │   │   └── 📁 workflow/         # 工作流控制器
+│   │   │       │   ├── 📁 dto/                  # 数据传输对象
+│   │   │       │   │   ├── 📁 create/           # 创建DTO
+│   │   │       │   │   └── 📁 update/           # 更新DTO
+│   │   │       │   ├── 📁 entity/               # 实体类
+│   │   │       │   │   ├── 📁 activity/         # 工作流实体
+│   │   │       │   │   ├── 📁 ai/               # AI相关实体
+│   │   │       │   │   ├── 📁 email/            # 邮件实体
+│   │   │       │   │   ├── 📁 knowledge/        # 知识库实体(RAG)
+│   │   │       │   │   ├── 📁 log/              # 日志实体
+│   │   │       │   │   ├── 📁 message/          # 消息实体
+│   │   │       │   │   ├── 📁 oss/              # 对象存储实体
+│   │   │       │   │   ├── 📁 sms/              # 短信实体
+│   │   │       │   │   ├── 📁 system/           # 系统实体
+│   │   │       │   │   └── 📁 task/             # 任务实体
+│   │   │       │   ├── 📁 job/                  # 定时任务
+│   │   │       │   ├── 📁 mapper/               # 数据访问层
+│   │   │       │   │   ├── 📁 ai/               # AI相关Mapper
+│   │   │       │   │   ├── 📁 email/            # 邮件Mapper
+│   │   │       │   │   ├── 📁 log/              # 日志Mapper
+│   │   │       │   │   ├── 📁 message/          # 消息Mapper
+│   │   │       │   │   ├── 📁 oss/              # 对象存储Mapper
+│   │   │       │   │   ├── 📁 sms/              # 短信Mapper
+│   │   │       │   │   └── 📁 system/           # 系统Mapper
+│   │   │       │   ├── 📁 query/                # 查询对象
+│   │   │       │   │   ├── 📁 ai/               # AI查询对象
+│   │   │       │   │   ├── 📁 email/            # 邮件查询对象
+│   │   │       │   │   ├── 📁 log/              # 日志查询对象
+│   │   │       │   │   ├── 📁 message/          # 消息查询对象
+│   │   │       │   │   ├── 📁 oss/              # 对象存储查询对象
+│   │   │       │   │   ├── 📁 redis/            # Redis查询对象
+│   │   │       │   │   ├── 📁 sms/              # 短信查询对象
+│   │   │       │   │   └── 📁 system/           # 系统查询对象
+│   │   │       │   ├── 📁 service/              # 服务层
+│   │   │       │   │   ├── 📁 ai/               # AI服务层
+│   │   │       │   │   ├── 📁 dashboard/        # 仪表盘服务
+│   │   │       │   │   ├── 📁 database/         # 数据库服务
+│   │   │       │   │   ├── 📁 email/            # 邮件服务
+│   │   │       │   │   ├── 📁 log/              # 日志服务
+│   │   │       │   │   ├── 📁 message/          # 消息服务
+│   │   │       │   │   ├── 📁 oss/              # 对象存储服务
+│   │   │       │   │   ├── 📁 redis/            # Redis服务
 │   │   │       │   │   ├── 📁 sms/              # 短信服务
-│   │   │       │   │   └── 📁 oss/              # 对象存储服务
-│   │   │       │   └── 📁 util/                 # 工具类
+│   │   │       │   │   ├── 📁 system/           # 系统服务
+│   │   │       │   │   ├── 📁 task/             # 任务服务
+│   │   │       │   │   └── 📁 workflow/         # 工作流服务
+│   │   │       │   └── 📁 vo/                   # 视图对象
+│   │   │       │       ├── 📁 ai/               # AI视图对象
+│   │   │       │       ├── 📁 dashboard/        # 仪表盘视图对象
+│   │   │       │       ├── 📁 email/            # 邮件视图对象
+│   │   │       │       ├── 📁 log/              # 日志视图对象
+│   │   │       │       ├── 📁 message/          # 消息视图对象
+│   │   │       │       ├── 📁 oss/              # 对象存储视图对象
+│   │   │       │       ├── 📁 redis/            # Redis视图对象
+│   │   │       │       ├── 📁 sms/              # 短信视图对象
+│   │   │       │       └── 📁 system/           # 系统视图对象
 │   │   │       ├── 📁 generator/                # 代码生成器
 │   │   │       │   ├── 📄 CodeGenerator.java    # 核心生成器
-│   │   │       │   └── 📁 templates/            # 代码模板
-│   │   │       ├── 📁 project/                  # 业务模块
-│   │   │       │   └── 📁 iceeboot_test/           # 示例业务模块
-│   │   │       │       ├── 📁 controller/       # 控制器层
-│   │   │       │       ├── 📁 service/          # 服务层
-│   │   │       │       │   └── 📁 impl/         # 服务实现
-│   │   │       │       ├── 📁 mapper/           # 数据访问层
-│   │   │       │       ├── 📁 entity/           # 实体类
-│   │   │       │       ├── 📁 dto/              # 数据传输对象
-│   │   │       │       │   ├── 📁 create/       # 创建DTO
-│   │   │       │       │   └── 📁 update/       # 更新DTO
-│   │   │       │       ├── 📁 vo/               # 视图对象
-│   │   │       │       └── 📁 query/            # 查询对象
-│   │   │       └── 📄 iceebootApplication.java     # 启动类
+│   │   │       │   └── 📄 CodeGeneratorTest.java # 生成器测试
+│   │   │       └── 📄 IceeBootApplication.java  # 启动类
 │   │   └── 📁 resources/
 │   │       ├── 📄 application.yml               # 主配置文件
 │   │       ├── 📄 application-dev.yml           # 开发环境配置
+│   │       ├── 📄 application-local.yml         # 本地环境配置
 │   │       ├── 📄 application-prod.yml          # 生产环境配置
+│   │       ├── 📄 application-test.yml          # 测试环境配置
+│   │       ├── 📄 banner.txt                    # 启动横幅
+│   │       ├── 📁 assets/                       # 静态资源
+│   │       │   ├── 📁 img/                      # 图片资源
+│   │       │   └── 📁 log/                      # 日志资源
 │   │       ├── 📁 mapper/                       # MyBatis映射文件
-│   │       ├── 📁 templates/                    # 代码生成模板
-│   │       │   ├── 📄 controller.btl
-│   │       │   ├── 📄 service.btl
-│   │       │   ├── 📄 serviceImpl.btl
-│   │       │   ├── 📄 mapper.btl
-│   │       │   ├── 📄 entity.btl
-│   │       │   ├── 📄 createDto.btl
-│   │       │   ├── 📄 updateDto.btl
-│   │       │   ├── 📄 vo.btl
-│   │       │   ├── 📄 query.btl
-│   │       │   └── 📄 mapperXml.btl
-│   │       └── 📁 static/                       # 静态资源
+│   │       │   ├── 📁 ai/                       # AI相关映射
+│   │       │   ├── 📁 email/                    # 邮件映射
+│   │       │   ├── 📁 log/                      # 日志映射
+│   │       │   ├── 📁 message/                  # 消息映射
+│   │       │   ├── 📁 oss/                      # 对象存储映射
+│   │       │   ├── 📁 sms/                      # 短信映射
+│   │       │   └── 📁 system/                   # 系统映射
+│   │       ├── 📁 sql/                          # SQL脚本
+│   │       │   ├── 📄 quartz_tables_mysql.sql  # Quartz表结构
+│   │       │   └── 📄 schema.sql                # 数据库结构
+│   │       └── 📁 templates/                    # 代码生成模板
+│   │           ├── 📄 controller.btl
+│   │           ├── 📄 createDto.btl
+│   │           ├── 📄 dto.btl
+│   │           ├── 📄 entity.btl
+│   │           ├── 📄 mapper.btl
+│   │           ├── 📄 mapperXml.btl
+│   │           ├── 📄 query.btl
+│   │           ├── 📄 service.btl
+│   │           ├── 📄 serviceImpl.btl
+│   │           ├── 📄 updateDto.btl
+│   │           └── 📄 vo.btl
 │   └── 📁 test/                                 # 测试代码
 │       └── 📁 java/
 ├── 📁 logs/                                     # 日志文件
-├── 📁 disabled/                                 # 禁用模块示例
 ├── 📄 pom.xml                                   # Maven配置文件
 ├── 📄 README.md                                 # 项目说明文档
 ├── 📄 api.md                                    # API文档

@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * @author CodeIcee
- * @date 2025/9/26
+ * @date 2025-09-26
  */
 @Component
 public class JapanMoviePathTool {
