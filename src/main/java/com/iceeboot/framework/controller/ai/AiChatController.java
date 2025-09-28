@@ -4,28 +4,21 @@
  * @Author: CodeIcee
  */
 package com.iceeboot.framework.controller.ai;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.iceeboot.common.annotation.RateLimit;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
-import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
-import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.iceeboot.framework.query.ai.AiChatSessionQuery;
 import com.iceeboot.framework.query.ai.AiChatMessageQuery;
 import com.iceeboot.framework.service.ai.IAiChatService;
-import com.iceeboot.common.utils.tool.JapanMovieActorTool;
-import com.iceeboot.common.utils.tool.JapanMoviePathTool;
 import com.iceeboot.framework.vo.ai.AiChatSessionVO;
 import com.iceeboot.framework.vo.ai.AiChatMessageVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Flux;

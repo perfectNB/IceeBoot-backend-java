@@ -14,6 +14,8 @@ import com.iceeboot.common.service.ai.llm.service.LLMService;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.common.utils.tool.JapanMovieActorTool;
 import com.iceeboot.common.utils.tool.JapanMoviePathTool;
+import com.iceeboot.common.utils.tool.RoleUserTool;
+import com.iceeboot.common.utils.tool.UserRoleTool;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
@@ -32,6 +34,9 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -60,12 +65,19 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     private final IAiLLMKeyService aiLLMKeyService;
     private final LLMFactory llmFactory;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final JapanMoviePathTool japanMoviePathTool;
+    private final JapanMovieActorTool japanMovieActorTool;
+    private final RoleUserTool roleUserTool;
+    private final UserRoleTool userRoleTool;
 
 
     private static final int CACHE_EXPIRE_MINUTES = 30;
 
     @Resource(name = "qwenChatClient")
     private ChatClient qwenChatClient;
+
+    @Resource
+    private VectorStore vectorStore;
 
 
     @Override
@@ -291,11 +303,18 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         // 用于收集完整响应内容
         StringBuilder fullContent = new StringBuilder();
-
+        RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
+                .documentRetriever(VectorStoreDocumentRetriever.builder().vectorStore(vectorStore).build())
+                .build();
 
         return qwenChatClient.prompt()
                 .user(request.getContent())
-                .tools(new JapanMoviePathTool(), new JapanMovieActorTool())
+                .advisors(advisor)
+                .tools(japanMoviePathTool,
+                        japanMovieActorTool,
+                        roleUserTool,
+                        userRoleTool
+                )
                 .stream()
                 .content()
                 .doOnNext(content -> {

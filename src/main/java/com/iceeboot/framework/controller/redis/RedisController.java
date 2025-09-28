@@ -36,7 +36,7 @@ public class RedisController {
     @Operation(summary = "获取Redis键列表", description = "分页查询Redis键列表")
     @GetMapping("/keys")
     @RequirePermission(dynamic = true)
-    @RateLimit(count = 1, time = 60, limitType = RateLimitType.USER)
+//    @RateLimit(count = 1, time = 60, limitType = RateLimitType.USER)
     public R<PageResult<RedisKeyVO>> getRedisKeys(RedisQuery query) {
         log.info("获取Redis键列表");
         PageResult<RedisKeyVO> result = redisService.getRedisKeys(query);
