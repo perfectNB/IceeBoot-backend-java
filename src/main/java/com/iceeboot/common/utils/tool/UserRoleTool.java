@@ -35,6 +35,7 @@ public class UserRoleTool {
      */
     @Tool(description = "通过用户昵称或用户名查询用户拥有的角色", returnDirect = false)
     public String getUserRoles(String name) {
+        log.info("触发tool:通过用户昵称或用户名查询用户拥有的角色");
         try {
             if (name == null || name.trim().isEmpty()) {
                 return "请提供有效的用户昵称或用户名";
@@ -70,6 +71,9 @@ public class UserRoleTool {
             return "用户 '" + name + "' 拥有的角色: " + String.join(", ", roleNames);
         } catch (Exception e) {
             log.error("查询用户角色时发生错误: {}", e.getMessage(), e);
+            if (e.getMessage().contains("Expected one result (or null)")){
+                return "昵称为"+name+ "的用户存在2个或者以上，请您用用户名来查询，保证唯一性";
+            }
             return "查询用户角色时发生错误: " + e.getMessage();
         }
     }
