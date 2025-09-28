@@ -1,6 +1,7 @@
 package com.iceeboot.common.utils.tool;
 
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import java.util.Map;
  * @author CodeIcee
  * @date 2025/9/26
  */
+@Component
 public class JapanMoviePathTool {
 
     /**

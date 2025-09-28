@@ -162,21 +162,39 @@ public class RedisServiceImpl implements RedisService {
         RedisKeyVO vo = new RedisKeyVO();
         vo.setKey(key);
         
-        // 获取类型
-        String type = redisTemplate.type(key).code();
-        vo.setType(type);
-        
-        // 根据类型获取值
-        Object value = getValueByType(key, type);
-        vo.setValue(value);
-        
-        // 获取TTL
-        Long expire = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-        vo.setTtl(expire);
-        
-        // 计算大小（估算）
-        String valueStr = value != null ? value.toString() : "";
-        vo.setSize(String.valueOf(valueStr.getBytes().length));
+        try {
+            // 检查key是否存在
+            if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+                vo.setType("none");
+                vo.setValue(null);
+                vo.setTtl(-2L); // -2表示key不存在
+                vo.setSize("0");
+                return vo;
+            }
+            
+            // 获取类型
+            String type = redisTemplate.type(key).code();
+            vo.setType(type);
+            
+            // 根据类型获取值
+            Object value = getValueByType(key, type);
+            vo.setValue(value);
+            
+            // 获取TTL
+            Long expire = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+            vo.setTtl(expire);
+            
+            // 计算大小（估算）
+            String valueStr = value != null ? value.toString() : "";
+            vo.setSize(String.valueOf(valueStr.getBytes().length));
+            
+        } catch (Exception e) {
+            // 处理Redis异常，返回错误信息
+            vo.setType("error");
+            vo.setValue("获取失败: " + e.getMessage());
+            vo.setTtl(-1L);
+            vo.setSize("0");
+        }
         
         return vo;
     }
