@@ -425,7 +425,7 @@ iceeboot 项目目前处于快速发展阶段，虽然开发时间不到一个�
 ## 📁 项目结构
 
 ```
-zboot-backend-java/
+iceeboot-backend-java/
 ├── 📁 src/
 │   ├── 📁 main/
 │   │   ├── 📁 java/
