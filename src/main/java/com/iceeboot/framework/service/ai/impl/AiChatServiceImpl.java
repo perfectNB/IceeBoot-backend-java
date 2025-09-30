@@ -301,13 +301,10 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         // 用于收集完整响应内容
         StringBuilder fullContent = new StringBuilder();
-        RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
-                .documentRetriever(VectorStoreDocumentRetriever.builder().vectorStore(vectorStore).build())
-                .build();
+
 
         return qwenChatClient.prompt()
                 .user(request.getContent())
-                .advisors(advisor)
                 .tools(japanMoviePathTool,
                         japanMovieActorTool,
                         roleUserTool,
