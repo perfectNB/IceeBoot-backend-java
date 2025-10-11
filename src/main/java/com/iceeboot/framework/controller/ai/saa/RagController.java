@@ -31,7 +31,7 @@ public class RagController {
     @GetMapping("/rag")
     public Flux<String> rag(@RequestParam(name = "msg", defaultValue = "锁舞") String msg) {
         String systemInfo = """
-                你是一个街舞大师,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
+                你是剧本杀dm,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
                 """;
 
         RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
