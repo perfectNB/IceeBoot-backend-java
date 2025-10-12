@@ -23,7 +23,7 @@ spring:
   application:
     name: iceeboot-backend-java
   profiles:
-    active: ${APP_PROFILE:dev}
+    active: ${APP_PROFILE:local}
   main:
     allow-bean-definition-overriding: true
   # 优雅关闭超时时间
