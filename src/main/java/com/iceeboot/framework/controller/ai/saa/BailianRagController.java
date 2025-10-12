@@ -17,14 +17,13 @@ import reactor.core.publisher.Flux;
 
 /**
  * @auther CodeIcee
- * @since  2025-10-11
+ * @since 2025-10-11
  */
 @Tag(name = "调用百炼知识库", description = "调用百炼知识库")
 @RestController
 @RequestMapping("/v1/saa/bailian")
 @Slf4j
-public class BailianRagController
-{
+public class BailianRagController {
     @Resource(name = "qwenChatClient")
     private ChatClient qwenChatClient;
     @Resource
@@ -32,8 +31,7 @@ public class BailianRagController
 
 
     @GetMapping("/chat")
-    public Flux<String> chat(@RequestParam(name = "msg",defaultValue = "有哪些剧本杀") String msg)
-    {
+    public Flux<String> chat(@RequestParam(name = "msg", defaultValue = "有哪些剧本杀") String msg) {
         // 百炼 RAG 构建器
         DocumentRetriever retriever = new DashScopeDocumentRetriever(dashScopeApi,
                 DashScopeDocumentRetrieverOptions.builder()
