@@ -301,7 +301,13 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         // 用于收集完整响应内容
         StringBuilder fullContent = new StringBuilder();
+        String systemInfo = """
+                你是一个剧本杀的DM,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
+                """;
 
+        RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
+                .documentRetriever(VectorStoreDocumentRetriever.builder().vectorStore(vectorStore).build())
+                .build();
 
         return qwenChatClient.prompt()
                 .user(request.getContent())
@@ -311,6 +317,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
                         userRoleTool,
                         userMenuAndPermissionTool
                 )
+                .system(systemInfo)
+                .advisors(advisor)
                 .stream()
                 .content()
                 .doOnNext(content -> {
