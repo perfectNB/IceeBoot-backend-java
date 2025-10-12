@@ -4,6 +4,10 @@
  * @Author: CodeIcee
  */
 package com.iceeboot.framework.controller.ai;
+import com.alibaba.cloud.ai.advisor.DocumentRetrievalAdvisor;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetriever;
+import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
@@ -19,6 +23,7 @@ import com.iceeboot.framework.vo.ai.AiChatMessageVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Flux;
@@ -46,6 +51,9 @@ public class AiChatController {
 
     @Resource(name = "qwenChatClient")
     private ChatClient qwenChatClient;
+
+    @Resource
+    private DashScopeApi dashScopeApi;
 
 
     @Operation(summary = "获取对话会话列表")
@@ -119,7 +127,19 @@ public class AiChatController {
     @Operation(summary = "工具调用流式对话")
     @PostMapping(value = "/tool/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> toolStreamChat(@Validated @RequestBody StreamChatRequest request) {
-        return aiChatService.toolStreamChat(request);
+//        return aiChatService.toolStreamChat(request);
+        // 百炼 RAG 构建器
+        DocumentRetriever retriever = new DashScopeDocumentRetriever(dashScopeApi,
+                DashScopeDocumentRetrieverOptions.builder()
+                        .withIndexName("剧本杀天眼") // 知识库名称
+                        .build()
+        );
+
+        return qwenChatClient.prompt()
+                .user(request.getContent())
+                .advisors(new DocumentRetrievalAdvisor(retriever))
+                .stream()
+                .content();
     }
 
 
