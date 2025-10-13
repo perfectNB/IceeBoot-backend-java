@@ -87,7 +87,7 @@ public class AiChatController {
     @Operation(summary = "清空对话消息", description = "根据会话ID物理删除该会话下的所有消息")
     @DeleteMapping("/clear/{sessionId}")
     @RequirePermission(dynamic = true)
-    public R<Void> clearSessionMessages(@PathVariable Long sessionId) {
+    public R<Void> clearSessionMessages(@PathVariable("sessionId") Long sessionId) {
         boolean success = aiChatService.clearSessionMessages(sessionId);
         return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
     }
