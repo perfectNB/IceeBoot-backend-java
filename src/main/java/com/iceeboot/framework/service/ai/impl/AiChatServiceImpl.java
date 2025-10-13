@@ -1,11 +1,16 @@
 package com.iceeboot.framework.service.ai.impl;
 
+import com.alibaba.cloud.ai.advisor.DocumentRetrievalAdvisor;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetriever;
+import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iceeboot.common.constant.CacheConstants;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.service.ai.llm.dto.LLMRequest;
 import com.iceeboot.common.service.ai.llm.dto.LLMResponse;
@@ -32,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.BeanUtils;
@@ -77,6 +83,9 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     @Resource
     private VectorStore vectorStore;
 
+    @Resource
+    private DashScopeApi dashScopeApi;
+
 
     @Override
     public IPage<AiChatSessionVO> getSessionPage(AiChatSessionQuery query) {
@@ -89,6 +98,12 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         if (StringUtils.hasText(query.getModelName())) {
             wrapper.like(AiChatSessionDO::getModelName, query.getModelName());
+        }
+
+        if (query.getType()==null){
+            wrapper.eq(AiChatSessionDO::getType, SystemConstants.chat.LLMCHAT);
+        }else{
+            wrapper.eq(AiChatSessionDO::getType, query.getType());
         }
 
         Long userId = TokenUtils.getCurrentUserId();
@@ -125,6 +140,9 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
     public Boolean addSession(AiChatSessionDTO dto) {
         AiChatSessionDO session = new AiChatSessionDO();
         BeanUtils.copyProperties(dto, session);
+        if (session.getType() == null){
+            session.setType(SystemConstants.chat.LLMCHAT);
+        }
         return this.save(session);
     }
 
@@ -301,10 +319,6 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         // 用于收集完整响应内容
         StringBuilder fullContent = new StringBuilder();
-        String systemInfo = """
-                你是一个剧本杀的DM,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
-                """;
-
         RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
                 .documentRetriever(VectorStoreDocumentRetriever.builder().vectorStore(vectorStore).build())
                 .build();
@@ -317,7 +331,6 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
                         userRoleTool,
                         userMenuAndPermissionTool
                 )
-                .system(systemInfo)
                 .advisors(advisor)
                 .stream()
                 .content()
@@ -333,6 +346,62 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
                     if (!content.trim().isEmpty()) {
                         AiChatMessageDTO aiMessageDto = new AiChatMessageDTO();
 
+                        aiMessageDto.setSessionId(request.getSessionId());
+                        log.info("保存助手回复消息，长度: {}", content.length());
+                        aiMessageDto.setRole("assistant");
+                        aiMessageDto.setContent(content);
+                        aiMessageDto.setUserId(userId);
+                        convertMessage(aiMessageDto);
+                    }
+                })
+                .doOnError(error -> {
+                    // 保存错误信息
+                    AiChatMessageDTO errorMessageDto = new AiChatMessageDTO();
+                    errorMessageDto.setSessionId(request.getSessionId());
+                    errorMessageDto.setRole("assistant");
+                    errorMessageDto.setContent("网络错误");
+                    convertMessage(errorMessageDto);
+                });
+    }
+
+    @Override
+    public Flux<String> ragStreamChat(StreamChatRequest request) {
+        // 保存用户消息
+        AiChatMessageDTO userMessageDto = new AiChatMessageDTO();
+        userMessageDto.setSessionId(request.getSessionId());
+        userMessageDto.setRole("user");
+        userMessageDto.setContent(request.getContent());
+        AiChatMessageDO message = new AiChatMessageDO();
+        BeanUtils.copyProperties(userMessageDto, message);
+        Long userId = TokenUtils.getCurrentUserId();
+        aiChatMessageMapper.insert(message);
+
+        // 用于收集完整响应内容
+        StringBuilder fullContent = new StringBuilder();
+
+        DocumentRetriever retriever = new DashScopeDocumentRetriever(dashScopeApi,
+                DashScopeDocumentRetrieverOptions.builder()
+                        .withIndexName("剧本杀天眼") // 知识库名称
+                        .build()
+        );
+
+        return qwenChatClient.prompt()
+                .user(request.getContent())
+                .system("你是一个剧本杀的DM，我会询问你有关剧本杀里的内容，你根据知识库里的内容来回答，如果没有对应消息，则回复，没有查询到对应的消息😠")
+                .advisors(new DocumentRetrievalAdvisor(retriever))
+                .stream()
+                .content()
+                .doOnNext(content -> {
+                    // 收集响应内容
+                    if (content != null) {
+                        fullContent.append(content);
+                    }
+                })
+                .doOnComplete(() -> {
+                    // 流式响应完成，保存完整的助手回复
+                    String content = fullContent.toString();
+                    if (!content.trim().isEmpty()) {
+                        AiChatMessageDTO aiMessageDto = new AiChatMessageDTO();
                         aiMessageDto.setSessionId(request.getSessionId());
                         log.info("保存助手回复消息，长度: {}", content.length());
                         aiMessageDto.setRole("assistant");

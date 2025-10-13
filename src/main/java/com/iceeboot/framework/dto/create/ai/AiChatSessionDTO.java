@@ -27,6 +27,9 @@ public class AiChatSessionDTO {
     @Schema(description = "模型名称")
     private String modelName;
 
+    @Schema(description = "会话类型")
+    private Integer type;
+
 
 
 }

@@ -25,4 +25,7 @@ public class AiChatSessionQuery extends BaseQuery {
     @Schema(description = "模型名称")
     private String modelName;
 
+    @Schema(description = "模型类型 1AI大模型 2Rag")
+    private Integer type;
+
 }
