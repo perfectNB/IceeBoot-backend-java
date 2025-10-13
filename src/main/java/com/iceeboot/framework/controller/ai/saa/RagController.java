@@ -29,9 +29,9 @@ public class RagController {
 
 
     @GetMapping("/rag")
-    public Flux<String> rag(@RequestParam(name = "msg", defaultValue = "锁舞") String msg) {
+    public Flux<String> rag(@RequestParam(name = "msg", defaultValue = "剧本杀") String msg) {
         String systemInfo = """
-                你是剧本杀dm,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
+                你是一个剧本杀的DM,按照给出的问题给出对应的解释,如果找不到对应的信息，就回复暂无信息😠
                 """;
 
         RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
