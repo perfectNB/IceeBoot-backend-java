@@ -387,7 +387,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
 
         return qwenChatClient.prompt()
                 .user(request.getContent())
-                .system("你是一个剧本杀的DM，我会询问你有关剧本杀里的内容，你根据知识库里的内容来回答，如果没有对应消息，则回复，没有查询到对应的消息😠")
+                .system("你是一个剧本杀的DM，我会询问你有关剧本杀里的内容，你必须详细阅读知识库，最后根据知识库里的内容来回答，不要出现类似“则需要玩家通过游戏中的线索和互动来进一步推理和发现。”的话，如果没有对应消息，则回复，没有查询到对应的消息😠")
                 .advisors(new DocumentRetrievalAdvisor(retriever))
                 .stream()
                 .content()
