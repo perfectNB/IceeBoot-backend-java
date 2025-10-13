@@ -84,6 +84,14 @@ public class AiChatController {
         return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
     }
 
+    @Operation(summary = "清空对话消息", description = "根据会话ID物理删除该会话下的所有消息")
+    @DeleteMapping("/clear/{sessionId}")
+    @RequirePermission(dynamic = true)
+    public R<Void> clearSessionMessages(@PathVariable Long sessionId) {
+        boolean success = aiChatService.clearSessionMessages(sessionId);
+        return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+    }
+
     @Operation(summary = "流式对话")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 //    @RequirePermission(dynamic = true)
@@ -127,20 +135,17 @@ public class AiChatController {
     @Operation(summary = "工具调用流式对话")
     @PostMapping(value = "/tool/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> toolStreamChat(@Validated @RequestBody StreamChatRequest request) {
-//        return aiChatService.toolStreamChat(request);
-        // 百炼 RAG 构建器
-        DocumentRetriever retriever = new DashScopeDocumentRetriever(dashScopeApi,
-                DashScopeDocumentRetrieverOptions.builder()
-                        .withIndexName("剧本杀天眼") // 知识库名称
-                        .build()
-        );
+        return aiChatService.toolStreamChat(request);
+    }
 
-        return qwenChatClient.prompt()
-                .user(request.getContent())
-                .advisors(new DocumentRetrievalAdvisor(retriever))
-                .stream()
-                .content();
+
+
+    @Operation(summary = "rag知识库流式对话")
+    @PostMapping(value = "/rag/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> ragStreamChat(@Validated @RequestBody StreamChatRequest request) {
+        return aiChatService.ragStreamChat(request);
     }
 
 
 }
+

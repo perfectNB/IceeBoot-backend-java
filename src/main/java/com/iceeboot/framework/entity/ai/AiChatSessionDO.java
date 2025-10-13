@@ -35,4 +35,8 @@ public class AiChatSessionDO extends IceeBootDO {
     @Schema(description = "密钥ID")
     @TableField("key_id")
     private Long keyId;
+
+    @Schema(description = "对话类型 1 AI大模型 2 Rag知识库")
+    @TableField("type")
+    private Integer type;
 }

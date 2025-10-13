@@ -107,10 +107,19 @@ public interface IAiChatService extends IService<AiChatSessionDO> {
     Flux<LLMResponse> streamChat(StreamChatRequest request);
 
     /**
-     * 流式对话
+     * 工具调用流式对话
      *
      * @param request 工具调用流式对话
      * @return 流式响应
      */
     Flux<String> toolStreamChat(StreamChatRequest request);
+
+
+    /**
+     * rag知识库调用流式对话
+     *
+     * @param request rag知识库调用流式对话
+     * @return 流式响应
+     */
+    Flux<String> ragStreamChat(StreamChatRequest request);
 }

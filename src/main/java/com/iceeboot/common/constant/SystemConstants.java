@@ -316,6 +316,16 @@ public class SystemConstants {
         public static final String UNKNOWN = "unknown";
     }
 
+
+    public static class chat {
+        /** 大模型 */
+        public static final Integer LLMCHAT = 1;
+
+        /** rag */
+        public static final Integer RAGCHAT = 2;
+
+    }
+
     // ==================== 私有构造函数 ====================
     
     private SystemConstants() {
