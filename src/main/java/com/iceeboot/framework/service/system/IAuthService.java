@@ -10,6 +10,8 @@ import com.iceeboot.framework.dto.create.system.LoginDTO;
 import com.iceeboot.framework.vo.system.LoginVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * 认证服务接口
  * 
@@ -47,12 +49,28 @@ public interface IAuthService {
     LoginVO refresh(String refreshToken);
 
     /**
-     * 微信登录
+     * 获取微信授权URL（带state参数）
+     *
+     * @return 微信授权URL
+     */
+    String getWechatAuthUrl();
+
+    /**
+     * 微信OAuth回调处理（由微信服务器调用）
      *
      * @param code 微信授权码
-     * @return 登录结果
+     * @param state state参数（用于防CSRF攻击）
+     * @return 重定向到前端的URL（携带ticket）
      */
-    LoginVO wechatLogin(String code);
+    String handleWechatCallback(String code, String state) throws UnsupportedEncodingException;
+    
+    /**
+     * 使用ticket换取登录信息
+     *
+     * @param ticket 临时登录凭证
+     * @return 登录结果（包含token和用户信息）
+     */
+    LoginVO exchangeTicket(String ticket);
     
     /**
      * 检查登录状态

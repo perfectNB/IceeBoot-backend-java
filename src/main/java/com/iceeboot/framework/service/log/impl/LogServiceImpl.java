@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.framework.dto.create.log.LogClearDTO;
-
 import com.iceeboot.framework.entity.log.LogDO;
 import com.iceeboot.framework.mapper.log.LogMapper;
 import com.iceeboot.framework.query.log.LogQuery;

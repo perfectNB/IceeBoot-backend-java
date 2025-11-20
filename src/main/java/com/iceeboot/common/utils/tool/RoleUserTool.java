@@ -8,7 +8,6 @@ import com.iceeboot.framework.service.system.ISysUserRoleService;
 import com.iceeboot.framework.service.system.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

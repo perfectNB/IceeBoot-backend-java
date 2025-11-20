@@ -5,6 +5,7 @@ import com.iceeboot.common.exception.RateLimitException;
 import com.iceeboot.common.service.rate.service.RateLimitService;
 import com.iceeboot.common.utils.IpUtils;
 import com.iceeboot.common.utils.TokenUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 
 /**

@@ -8,6 +8,7 @@ package com.iceeboot.config.log;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.iceeboot.framework.appender.DatabaseLogAppender;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -15,8 +16,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PreDestroy;
 
 /**
  * 日志追加器配置类

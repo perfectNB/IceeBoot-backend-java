@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * 认证控制器
  *
@@ -75,20 +77,33 @@ public class AuthController {
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
     @PostMapping("/refresh")
     @RequirePermission(dynamic = true)
-    public R<LoginVO> refresh(@RequestParam String refreshToken) {
+    public R<LoginVO> refresh(@RequestParam(name = "refreshToken") String refreshToken) {
         LoginVO loginVO = authService.refresh(refreshToken);
         return R.ok(loginVO);
     }
 
-
-    @Operation(summary = "微信登录", description = "使用微信授权码登录")
-    @PostMapping("/wechat")
-    @RequirePermission(dynamic = true)
-    public R<LoginVO> wechatLogin(@RequestParam String code) {
-        LoginVO loginVO = authService.wechatLogin(code);
-        return R.ok(loginVO);
+    @Operation(summary = "获取微信扫码登录授权URL", description = "返回微信OAuth授权URL，前端使用该URL生成二维码或跳转")
+    @GetMapping("/wechat/auth-url")
+    public R<String> getWechatAuthUrl() {
+        String authUrl = authService.getWechatAuthUrl();
+        return R.ok(authUrl);
     }
 
+    @Operation(summary = "微信OAuth回调接口", description = "由微信服务器调用，处理授权码并重定向到前端")
+    @GetMapping("/wechat/callback")
+    public String handleWechatCallback(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "state", required = false) String state) throws UnsupportedEncodingException {
+        String redirectUrl = authService.handleWechatCallback(code, state);
+        return "redirect:" + redirectUrl;
+    }
+
+    @Operation(summary = "使用ticket换取登录信息", description = "前端使用ticket换取accessToken和用户信息")
+    @PostMapping("/wechat/exchange-ticket")
+    public R<LoginVO> exchangeTicket(@RequestParam(name = "ticket") String ticket) {
+        LoginVO loginVO = authService.exchangeTicket(ticket);
+        return R.ok(loginVO);
+    }
 
     @Operation(summary = "检查登录状态", description = "检查当前用户是否已登录")
     @GetMapping("/check")

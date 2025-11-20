@@ -3,6 +3,7 @@ package com.iceeboot.common.utils;
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.stp.StpUtil;
+import com.iceeboot.common.exception.IceeBootException;
 import org.springframework.util.StringUtils;
 
 /**
@@ -92,6 +93,27 @@ public class TokenUtils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 检查当前登录用户ID是否和查询资源的创建人id相同
+     *
+     * @return 用户ID，如果未登录则返回null
+     */
+    public static Boolean checkUserId(Long objectId) {
+        String token = getToken();
+        if (token == null) {
+            throw new IceeBootException("不存在token");
+        }
+
+        Object loginId = StpUtil.getLoginIdByToken(token);
+        if (loginId != null) {
+            Long userId = Long.valueOf(loginId.toString());
+            if (objectId!=userId){
+                throw new IceeBootException("这不属于您的资源");
+            }
+        }
+        return true;
     }
     
     /**

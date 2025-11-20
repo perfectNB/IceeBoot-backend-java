@@ -10,17 +10,7 @@ package com.iceeboot.common.service.ai.llm.factory;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
-import com.iceeboot.common.service.ai.llm.service.impl.DeepSeekService;
-import com.iceeboot.common.service.ai.llm.service.impl.ChatGPTService;
-import com.iceeboot.common.service.ai.llm.service.impl.ClaudeService;
-import com.iceeboot.common.service.ai.llm.service.impl.GeminiService;
-import com.iceeboot.common.service.ai.llm.service.impl.WenxinService;
-import com.iceeboot.common.service.ai.llm.service.impl.QwenService;
-import com.iceeboot.common.service.ai.llm.service.impl.MoonshotService;
-import com.iceeboot.common.service.ai.llm.service.impl.GrokService;
-import com.iceeboot.common.service.ai.llm.service.impl.ZhipuService;
-import com.iceeboot.common.service.ai.llm.service.impl.BaichuanService;
-import com.iceeboot.common.service.ai.llm.service.impl.SparkService;
+import com.iceeboot.common.service.ai.llm.service.impl.*;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;

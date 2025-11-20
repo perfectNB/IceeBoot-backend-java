@@ -2,10 +2,10 @@ package com.iceeboot.framework.dto.update.ai;
 
 import com.iceeboot.framework.dto.create.ai.AiChatMessageDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
 import java.util.List;
 
 /**

@@ -557,7 +557,7 @@ public class AliyunEmailService implements EmailService {
             
             // 设置附件文件名
             try {
-                attachmentPart.setFileName(javax.mail.internet.MimeUtility.encodeText(attachment.getFileName()));
+                attachmentPart.setFileName(MimeUtility.encodeText(attachment.getFileName()));
             } catch (java.io.UnsupportedEncodingException e) {
                 attachmentPart.setFileName(attachment.getFileName());
             }

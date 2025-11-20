@@ -5,9 +5,9 @@ import com.iceeboot.common.core.domain.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * 消息查询对象

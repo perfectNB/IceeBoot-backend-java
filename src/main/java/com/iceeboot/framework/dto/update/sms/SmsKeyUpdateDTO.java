@@ -1,9 +1,8 @@
 package com.iceeboot.framework.dto.update.sms;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
  * SMS密钥更新数据传输对象

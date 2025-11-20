@@ -6,9 +6,8 @@
  */
 package com.iceeboot.framework.dto.create.system;
 
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
  * 登录数据传输对象

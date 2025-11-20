@@ -7,9 +7,9 @@
 package com.iceeboot.framework.mapper.system;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.iceeboot.framework.entity.system.UserDO;
 import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.entity.system.RoleDO;
+import com.iceeboot.framework.entity.system.UserDO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;

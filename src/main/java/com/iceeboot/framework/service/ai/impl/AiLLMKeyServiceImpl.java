@@ -15,6 +15,7 @@ import com.iceeboot.framework.mapper.ai.AiLLMKeyMapper;
 import com.iceeboot.framework.query.ai.AiLLMKeyQuery;
 import com.iceeboot.framework.service.ai.IAiLLMKeyService;
 import com.iceeboot.framework.vo.ai.AiLLMKeyVO;
+import com.iceeboot.framework.vo.ai.AiLLMProviderVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -24,7 +25,6 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import com.iceeboot.framework.vo.ai.AiLLMProviderVO;
 
 /**
  * AI大模型密钥服务实现类

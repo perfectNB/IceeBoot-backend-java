@@ -1,11 +1,10 @@
 package com.iceeboot.framework.dto.create.ai;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.experimental.Accessors;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  * 流式对话请求实体类

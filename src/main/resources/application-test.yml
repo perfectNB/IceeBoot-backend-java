@@ -176,3 +176,17 @@ knife4j:
     enable-group: true
   cors: false
   production: false
+
+YunGouOS:
+  mchId: xxx
+  key: xxx
+  ## 支付回掉
+  notifyUrl: http://127.0.0.1:9001/iceeboot/api/v1/pay/callback
+  ## 前端地址（微信授权后重定向到前端）
+  frontendUrl: http://127.0.0.1:5137
+  ## 微信OAuth回调地址（后端接口，由微信服务器调用）
+  wechatCallbackUrl: http://127.0.0.1:9001/iceeboot/api/v1/auth/wechat/callback
+  ## State密钥（用于生成state参数，防CSRF攻击）
+  stateSecret: iceeboot-wechat-login-state-secret-2025
+  ## 登录ticket有效期（秒）
+  ticketExpireSeconds: 120

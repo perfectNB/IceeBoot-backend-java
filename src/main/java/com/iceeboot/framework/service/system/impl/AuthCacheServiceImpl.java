@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.Arrays;
 
 /**
  * 认证缓存服务实现类
@@ -76,7 +75,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             roleIds = userRoleMapper.selectList(
                     new LambdaQueryWrapper<UserRoleDO>()
                             .eq(UserRoleDO::getUserId, userId)
-                            .eq(UserRoleDO::getDelFlag, 0)
+                            .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
             ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
             redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
@@ -94,14 +93,14 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                 List<Long> menuIds = roleMenuMapper.selectList(
                         new LambdaQueryWrapper<RoleMenuDO>()
                                 .eq(RoleMenuDO::getRoleId, roleId)
-                                .eq(RoleMenuDO::getDelFlag, 0)
+                                .eq(RoleMenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
                 if (menuIds.size() != 0) {
                     roleMenus = menuMapper.selectList(
                             new LambdaQueryWrapper<MenuDO>()
                                     .in(MenuDO::getId, menuIds)
                                     .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                                    .eq(MenuDO::getDelFlag, 0)
+                                    .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                                     .orderByAsc(MenuDO::getSort));
                     menuSet.addAll(roleMenus);
                     redisTemplate.opsForValue().set(
@@ -135,7 +134,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
             roleIds = userRoleMapper.selectList(
                     new LambdaQueryWrapper<UserRoleDO>()
                             .eq(UserRoleDO::getUserId, userId)
-                            .eq(UserRoleDO::getDelFlag, 0)
+                            .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
             ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
             redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
@@ -157,14 +156,14 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                 List<Long> permissionIds = rolePermissionMapper.selectList(
                         new LambdaQueryWrapper<RolePermissionDO>()
                                 .eq(RolePermissionDO::getRoleId, roleId)
-                                .eq(RolePermissionDO::getDelFlag, 0)
+                                .eq(RolePermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
                 if (permissionIds.size() != 0) {
                     rolePermissions = permissionMapper.selectList(
                             new LambdaQueryWrapper<PermissionDO>()
                                     .in(PermissionDO::getId, permissionIds)
                                     .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                                    .eq(PermissionDO::getDelFlag, 0)
+                                    .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                                     .orderByAsc(PermissionDO::getSort));
                     permissionMaps = rolePermissions.stream()
                             .map(this::convertPermissionToMap)
@@ -430,7 +429,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<Map<String, Object>> loadAllMenusFromDB() {
         List<MenuDO> menus = menuMapper.selectList(new LambdaQueryWrapper<MenuDO>()
-                .eq(MenuDO::getDelFlag, 0)
+                .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 .orderByAsc(MenuDO::getSort));
         return buildMenuTree(menus);
     }
@@ -440,7 +439,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<Map<String, Object>> loadAllPermissionsFromDB() {
         List<PermissionDO> permissions = permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
-                .eq(PermissionDO::getDelFlag, 0));
+                .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
         return permissions.stream().map(this::convertPermissionToMap).collect(Collectors.toList());
     }
 
@@ -449,7 +448,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<RoleDO> loadAllRolesFromDB() {
         return roleMapper.selectList(new LambdaQueryWrapper<RoleDO>()
-                .eq(RoleDO::getDelFlag, 0));
+                .eq(RoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
     }
 
     /**
@@ -457,7 +456,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<UserRoleDO> loadAllUserRolesFromDB() {
         return userRoleMapper.selectList(new LambdaQueryWrapper<UserRoleDO>()
-                .eq(UserRoleDO::getDelFlag, 0));
+                .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
     }
 
     /**
@@ -465,7 +464,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<RoleMenuDO> loadAllRoleMenusFromDB() {
         return roleMenuMapper.selectList(new LambdaQueryWrapper<RoleMenuDO>()
-                .eq(RoleMenuDO::getDelFlag, 0));
+                .eq(RoleMenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
     }
 
     /**
@@ -473,7 +472,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
      */
     private List<RolePermissionDO> loadAllRolePermissionsFromDB() {
         return rolePermissionMapper.selectList(new LambdaQueryWrapper<RolePermissionDO>()
-                .eq(RolePermissionDO::getDelFlag, 0));
+                .eq(RolePermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
     }
 
     /**
@@ -836,7 +835,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         try {
             // 从数据库获取所有权限
             List<PermissionDO> permissions = permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
-                    .eq(PermissionDO::getDelFlag, 0)
+                    .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                     .eq(PermissionDO::getType, "api")
                     .isNotNull(PermissionDO::getPath)
                     .ne(PermissionDO::getPath, ""));

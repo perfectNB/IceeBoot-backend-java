@@ -2,8 +2,8 @@ package com.iceeboot.framework.controller.ai;
 
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
-import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
+import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.ai.AiAgentDTO;
 import com.iceeboot.framework.dto.update.ai.AiAgentUpdateDTO;
 import com.iceeboot.framework.query.ai.AiAgentQuery;

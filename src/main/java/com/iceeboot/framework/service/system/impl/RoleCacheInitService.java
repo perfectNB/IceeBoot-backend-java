@@ -10,16 +10,8 @@ package com.iceeboot.framework.service.system.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.constant.SystemConstants;
-import com.iceeboot.framework.entity.system.MenuDO;
-import com.iceeboot.framework.entity.system.PermissionDO;
-import com.iceeboot.framework.entity.system.RoleDO;
-import com.iceeboot.framework.entity.system.RoleMenuDO;
-import com.iceeboot.framework.entity.system.RolePermissionDO;
-import com.iceeboot.framework.service.system.ISysMenuService;
-import com.iceeboot.framework.service.system.ISysPermissionService;
-import com.iceeboot.framework.service.system.ISysRoleMenuService;
-import com.iceeboot.framework.service.system.ISysRolePermissionService;
-import com.iceeboot.framework.service.system.ISysRoleService;
+import com.iceeboot.framework.entity.system.*;
+import com.iceeboot.framework.service.system.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -82,7 +74,7 @@ public class RoleCacheInitService implements ApplicationRunner {
         List<RoleDO> activeRoles = roleService.list(
             new LambdaQueryWrapper<RoleDO>()
                 .eq(RoleDO::getStatus, SystemConstants.Status.ACTIVE)
-                .eq(RoleDO::getDelFlag, 0)
+                .eq(RoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 .orderByAsc(RoleDO::getSort)
         );
         
@@ -114,7 +106,7 @@ public class RoleCacheInitService implements ApplicationRunner {
         List<Long> permissionIds = rolePermissionService.list(
             new LambdaQueryWrapper<RolePermissionDO>()
                 .eq(RolePermissionDO::getRoleId, roleId)
-                .eq(RolePermissionDO::getDelFlag, 0)
+                .eq(RolePermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
         ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
         
         if (!permissionIds.isEmpty()) {
@@ -123,7 +115,7 @@ public class RoleCacheInitService implements ApplicationRunner {
                 new LambdaQueryWrapper<PermissionDO>()
                     .in(PermissionDO::getId, permissionIds)
                     .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                    .eq(PermissionDO::getDelFlag, 0)
+                    .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                     .orderByAsc(PermissionDO::getSort)
             );
             
@@ -158,7 +150,7 @@ public class RoleCacheInitService implements ApplicationRunner {
         List<Long> menuIds = roleMenuService.list(
             new LambdaQueryWrapper<RoleMenuDO>()
                 .eq(RoleMenuDO::getRoleId, roleId)
-                .eq(RoleMenuDO::getDelFlag, 0)
+                .eq(RoleMenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
         ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
         
         if (!menuIds.isEmpty()) {
@@ -167,7 +159,7 @@ public class RoleCacheInitService implements ApplicationRunner {
                 new LambdaQueryWrapper<MenuDO>()
                     .in(MenuDO::getId, menuIds)
                     .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                    .eq(MenuDO::getDelFlag, 0)
+                    .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                     .orderByAsc(MenuDO::getSort)
             );
             

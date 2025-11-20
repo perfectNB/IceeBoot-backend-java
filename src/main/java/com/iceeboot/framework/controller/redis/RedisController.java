@@ -1,19 +1,17 @@
 package com.iceeboot.framework.controller.redis;
 
-import com.iceeboot.common.annotation.RateLimit;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.core.domain.R;
-import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.redis.CreateRedisKeyDTO;
 import com.iceeboot.framework.query.redis.RedisQuery;
 import com.iceeboot.framework.service.redis.RedisService;
 import com.iceeboot.framework.vo.redis.RedisKeyVO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

@@ -6,9 +6,9 @@
  */
 package com.iceeboot.framework.dto.create.system;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 /**

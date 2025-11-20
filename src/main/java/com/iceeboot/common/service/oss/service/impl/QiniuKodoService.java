@@ -1,20 +1,26 @@
 package com.iceeboot.common.service.oss.service.impl;
 
 import com.google.gson.Gson;
-import com.qiniu.common.QiniuException;
-import com.qiniu.http.Response;
-import com.qiniu.storage.*;
-import com.qiniu.storage.model.DefaultPutRet;
-import com.qiniu.storage.model.FileInfo;
-import com.qiniu.util.Auth;
 import com.iceeboot.common.service.oss.dto.OSSCapacityInfo;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.OSSService;
+import com.qiniu.common.QiniuException;
+import com.qiniu.http.Response;
+import com.qiniu.storage.BucketManager;
+import com.qiniu.storage.Configuration;
+import com.qiniu.storage.Region;
+import com.qiniu.storage.UploadManager;
+import com.qiniu.storage.model.DefaultPutRet;
+import com.qiniu.storage.model.FileInfo;
+import com.qiniu.util.Auth;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
