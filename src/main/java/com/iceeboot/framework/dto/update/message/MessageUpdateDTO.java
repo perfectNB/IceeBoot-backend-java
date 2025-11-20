@@ -7,10 +7,9 @@
 package com.iceeboot.framework.dto.update.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * 消息更新数据传输对象

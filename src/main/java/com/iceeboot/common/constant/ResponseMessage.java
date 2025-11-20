@@ -5,7 +5,7 @@ package com.iceeboot.common.constant;
  * 统一管理所有API返回的消息内容
  * 
  * @author CodeIcee
- * @since 2025-08-11
+ * @data 2025-08-11
  */
 public class ResponseMessage {
 

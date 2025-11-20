@@ -59,6 +59,12 @@ public class CacheConstants {
          /** 用户角色缓存键 */
         public static final String USER_ROLE = "user:role:";
         
+        /** 微信登录state缓存键前缀（用于防CSRF攻击） */
+        public static final String WECHAT_STATE = "auth:wechat:state:";
+        
+        /** 微信登录ticket缓存键前缀（临时登录凭证） */
+        public static final String WECHAT_TICKET = "auth:wechat:ticket:";
+        
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;
 
@@ -79,5 +85,23 @@ public class CacheConstants {
         
         /** 字典数据缓存键前缀 */
         public static final String DICT_DATA_KEY = "business:dict:";
+    }
+    
+    /**
+     * 支付相关缓存键
+     */
+    public static class Pay {
+        
+        /** 支付二维码请求限制缓存键前缀 */
+        public static final String QR_LIMIT = "pay:qr:limit:";
+        
+        /** 支付订单临时标记缓存键前缀（防止重复回调） */
+        public static final String PAY_ORDER_TEMP = "pay:order:temp:";
+        
+        /** 支付配置缓存键 */
+        public static final String PAYMENT_CONFIG = "pay:config:";
+        
+        /** 缓存过期时间（分钟） */
+        public static final long CACHE_EXPIRE_TIME = 30;
     }
 }

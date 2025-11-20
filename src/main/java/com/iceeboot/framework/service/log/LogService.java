@@ -9,7 +9,6 @@ package com.iceeboot.framework.service.log;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.framework.dto.create.log.LogClearDTO;
-
 import com.iceeboot.framework.entity.log.LogDO;
 import com.iceeboot.framework.query.log.LogQuery;
 import com.iceeboot.framework.vo.log.LogVO;

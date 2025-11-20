@@ -8,9 +8,9 @@ package com.iceeboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.iceeboot.common.core.domain.PageResult;
+import com.iceeboot.framework.dto.create.system.RoleDTO;
 import com.iceeboot.framework.dto.update.system.RoleUpdateDTO;
 import com.iceeboot.framework.entity.system.RoleDO;
-import com.iceeboot.framework.dto.create.system.RoleDTO;
 import com.iceeboot.framework.query.system.SysRoleQuery;
 import com.iceeboot.framework.vo.system.SysRoleVO;
 
@@ -140,4 +140,12 @@ public interface ISysRoleService extends IService<RoleDO> {
      * @return 是否成功
      */
     boolean saveRoleMenus(Long roleId, List<Long> menuIds);
+
+    /**
+     * 获取默认角色列表
+     * 用于新用户注册时自动分配角色
+     *
+     * @return 默认角色列表
+     */
+    List<RoleDO> getDefaultRoles();
 }

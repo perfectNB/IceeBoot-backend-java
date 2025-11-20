@@ -7,9 +7,8 @@
 package com.iceeboot.framework.dto.create.system;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * 用户角色关联数据传输对象

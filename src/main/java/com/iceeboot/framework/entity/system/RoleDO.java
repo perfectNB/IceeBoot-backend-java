@@ -6,13 +6,12 @@
  */
 package com.iceeboot.framework.entity.system;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.iceeboot.common.core.domain.IceeBootDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 /**
  * 系统角色实体类
@@ -46,7 +45,7 @@ public class RoleDO extends IceeBootDO {
     @TableField("sort")
     private Integer sort;
 
-    @Schema(description = "权限列表")
-    @TableField(exist = false)
-    private List<String> permissions;
+    @Schema(description = "是否为注册默认角色")
+    @TableField("default_role")
+    private Integer defaultRole;
 }

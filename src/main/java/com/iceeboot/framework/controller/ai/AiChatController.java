@@ -4,33 +4,30 @@
  * @Author: CodeIcee
  */
 package com.iceeboot.framework.controller.ai;
-import com.alibaba.cloud.ai.advisor.DocumentRetrievalAdvisor;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetriever;
-import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
-import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
+import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.ai.AiChatSessionDTO;
 import com.iceeboot.framework.dto.create.ai.StreamChatRequest;
-import com.iceeboot.framework.query.ai.AiChatSessionQuery;
 import com.iceeboot.framework.query.ai.AiChatMessageQuery;
+import com.iceeboot.framework.query.ai.AiChatSessionQuery;
 import com.iceeboot.framework.service.ai.IAiChatService;
-import com.iceeboot.framework.vo.ai.AiChatSessionVO;
 import com.iceeboot.framework.vo.ai.AiChatMessageVO;
-import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.rag.retrieval.search.DocumentRetriever;
-import org.springframework.http.MediaType;
-import org.springframework.validation.annotation.Validated;
-import reactor.core.publisher.Flux;
+import com.iceeboot.framework.vo.ai.AiChatSessionVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 

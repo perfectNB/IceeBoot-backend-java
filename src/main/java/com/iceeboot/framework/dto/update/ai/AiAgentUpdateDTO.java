@@ -1,9 +1,8 @@
 package com.iceeboot.framework.dto.update.ai;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
  * AI代理更新数据传输对象

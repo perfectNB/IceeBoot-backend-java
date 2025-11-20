@@ -2,8 +2,8 @@ package com.iceeboot.framework.controller.email;
 
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.constant.ResponseMessage;
-import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.core.domain.PageResult;
+import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.email.EmailKeyDTO;
 import com.iceeboot.framework.dto.update.email.EmailKeyUpdateDTO;
 import com.iceeboot.framework.query.email.EmailKeyQuery;

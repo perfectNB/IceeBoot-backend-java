@@ -1,11 +1,10 @@
 package com.iceeboot.framework.dto.create.oss;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * OSS文件上传数据传输对象

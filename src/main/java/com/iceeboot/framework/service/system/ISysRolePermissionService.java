@@ -8,8 +8,8 @@ package com.iceeboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.iceeboot.common.core.domain.PageResult;
-import com.iceeboot.framework.entity.system.RolePermissionDO;
 import com.iceeboot.framework.dto.create.system.RolePermissionDTO;
+import com.iceeboot.framework.entity.system.RolePermissionDO;
 import com.iceeboot.framework.query.system.RolePermissionQuery;
 import com.iceeboot.framework.vo.system.RolePermissionVO;
 

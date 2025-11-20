@@ -6,17 +6,17 @@
  */
 package com.iceeboot.config.security;
 
+import cn.dev33.satoken.context.SaHolder;
+import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.dev33.satoken.context.SaHolder;
-import cn.dev33.satoken.context.model.SaRequest;
 import com.iceeboot.config.interceptor.PermissionInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.util.StringUtils;
 
 /**
  * Sa-Token配置类
@@ -38,6 +38,9 @@ public class SaTokenConfig implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
                     .notMatch("/v1/auth/test/**")
+                    .notMatch("/v1/auth/wechat/auth-url")
+                    .notMatch("/v1/auth/wechat/callback")
+                    .notMatch("/v1/auth/wechat/exchange-ticket")
                     .notMatch("/v1/saa/**")
                     .notMatch("/v1/chat/ali")
                     .notMatch("/v1/auth/login")

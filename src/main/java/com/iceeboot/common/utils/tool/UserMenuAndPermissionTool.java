@@ -1,17 +1,12 @@
 package com.iceeboot.common.utils.tool;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.iceeboot.framework.entity.system.RoleDO;
 import com.iceeboot.framework.entity.system.UserDO;
-import com.iceeboot.framework.service.system.ISysRoleService;
 import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.system.SysUserVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author CodeIcee

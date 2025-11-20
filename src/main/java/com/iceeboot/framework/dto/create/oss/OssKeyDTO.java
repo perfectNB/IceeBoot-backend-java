@@ -1,9 +1,8 @@
 package com.iceeboot.framework.dto.create.oss;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
  * OSS密钥数据传输对象

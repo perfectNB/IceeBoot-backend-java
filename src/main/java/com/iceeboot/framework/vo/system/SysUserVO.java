@@ -1,14 +1,13 @@
 package com.iceeboot.framework.vo.system;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.iceeboot.framework.entity.system.RoleDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import com.iceeboot.framework.entity.system.RoleDO;
 
 /**
  * 用户视图对象

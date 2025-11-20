@@ -8,10 +8,10 @@ package com.iceeboot.framework.service.system;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.iceeboot.common.core.domain.PageResult;
-import com.iceeboot.framework.dto.update.system.PermissionUpdateDTO;
-import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.dto.create.system.PermissionDTO;
 import com.iceeboot.framework.dto.create.system.SysPermissionQueryDTO;
+import com.iceeboot.framework.dto.update.system.PermissionUpdateDTO;
+import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.vo.system.SysPermissionVO;
 
 import java.util.List;

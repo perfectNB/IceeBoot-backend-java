@@ -1,9 +1,4 @@
-/**
- * 系统权限服务实现类
- * 
- * @author CodeIcee
- * @date 2025-08-11
- */
+
 package com.iceeboot.framework.service.system.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,10 +11,10 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.framework.dto.create.system.PermissionDTO;
+import com.iceeboot.framework.dto.create.system.SysPermissionQueryDTO;
 import com.iceeboot.framework.dto.update.system.PermissionUpdateDTO;
 import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.mapper.system.SysPermissionMapper;
-import com.iceeboot.framework.dto.create.system.SysPermissionQueryDTO;
 import com.iceeboot.framework.service.system.ISysPermissionService;
 import com.iceeboot.framework.service.system.ISysRolePermissionService;
 import com.iceeboot.framework.vo.system.SysPermissionVO;

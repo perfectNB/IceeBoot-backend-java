@@ -22,7 +22,6 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;

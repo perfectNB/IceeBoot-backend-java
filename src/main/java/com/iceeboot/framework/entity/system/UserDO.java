@@ -6,15 +6,16 @@
  */
 package com.iceeboot.framework.entity.system;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.iceeboot.common.core.domain.IceeBootDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 系统用户实体类
@@ -26,6 +27,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_user")
 @Schema(description = "用户")
+@Accessors(chain = true)
 public class UserDO extends IceeBootDO {
 
     @Schema(description = "用户名")
@@ -65,19 +67,12 @@ public class UserDO extends IceeBootDO {
     @TableField("last_login_ip")
     private String lastLoginIp;
 
-    @Schema(description = "微信openid")
-    @TableField("wechat_openid")
-    private String wechatOpenid;
+    @Schema(description = "openid")
+    @TableField("openid")
+    private String openid;
 
-    @Schema(description = "微信unionid")
-    @TableField("wechat_unionid")
-    private String wechatUnionid;
+    @Schema(description = "unionid")
+    @TableField("unionid")
+    private String unionid;
 
-    @Schema(description = "角色列表")
-    @TableField(exist = false)
-    private List<String> roles;
-
-    @Schema(description = "权限列表")
-    @TableField(exist = false)
-    private List<String> permissions;
 }

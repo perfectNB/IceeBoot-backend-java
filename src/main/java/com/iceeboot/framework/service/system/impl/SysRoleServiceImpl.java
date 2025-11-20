@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.core.domain.PageResult;
@@ -22,22 +23,16 @@ import com.iceeboot.framework.entity.system.RoleDO;
 import com.iceeboot.framework.entity.system.UserRoleDO;
 import com.iceeboot.framework.mapper.system.SysRoleMapper;
 import com.iceeboot.framework.query.system.SysRoleQuery;
-import com.iceeboot.framework.service.system.ISysMenuService;
-import com.iceeboot.framework.service.system.ISysPermissionService;
-import com.iceeboot.framework.service.system.ISysRoleMenuService;
-import com.iceeboot.framework.service.system.ISysRolePermissionService;
-import com.iceeboot.framework.service.system.ISysRoleService;
-import com.iceeboot.framework.service.system.ISysUserRoleService;
-import com.iceeboot.framework.vo.system.SysRoleVO;
+import com.iceeboot.framework.service.system.*;
+import com.iceeboot.framework.vo.system.SysMenuVO;
 import com.iceeboot.framework.vo.system.SysPermissionVO;
-import com.iceeboot.common.constant.CacheConstants;
+import com.iceeboot.framework.vo.system.SysRoleVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import com.iceeboot.framework.vo.system.SysMenuVO;
 
 import java.util.Collections;
 import java.util.List;
@@ -278,7 +273,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
                         new LambdaQueryWrapper<PermissionDO>()
                                 .in(PermissionDO::getId, permissionIds)
                                 .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(PermissionDO::getDelFlag, 0)
+                                .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                                 .orderByAsc(PermissionDO::getSort)
                 );
             }
@@ -317,7 +312,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
                         new LambdaQueryWrapper<MenuDO>()
                                 .in(MenuDO::getId, menuIds)
                                 .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(MenuDO::getDelFlag, 0)
+                                .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                                 .orderByAsc(MenuDO::getSort)
                 );
             }
@@ -330,5 +325,16 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         } catch (Exception e) {
             throw new RuntimeException("保存角色菜单失败", e);
         }
+    }
+
+    @Override
+    public List<RoleDO> getDefaultRoles() {
+        return this.list(
+                new LambdaQueryWrapper<RoleDO>()
+                        .eq(RoleDO::getDefaultRole, 1)
+                        .eq(RoleDO::getStatus, SystemConstants.Status.ACTIVE)
+                        .eq(RoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
+                        .orderByAsc(RoleDO::getSort)
+        );
     }
 }

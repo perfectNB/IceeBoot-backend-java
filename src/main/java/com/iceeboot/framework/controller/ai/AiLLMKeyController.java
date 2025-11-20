@@ -11,13 +11,13 @@ import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.ai.AiLLMKeyDTO;
 import com.iceeboot.framework.dto.update.ai.AiLLMKeyUpdateDTO;
 import com.iceeboot.framework.service.ai.IAiLLMKeyService;
+import com.iceeboot.framework.vo.ai.AiLLMProviderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.iceeboot.framework.vo.ai.AiLLMProviderVO;
 
 import java.util.List;
 import java.util.Map;

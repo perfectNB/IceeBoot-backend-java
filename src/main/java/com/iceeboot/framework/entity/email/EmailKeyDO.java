@@ -6,7 +6,8 @@
  */
 package com.iceeboot.framework.entity.email;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.iceeboot.common.core.domain.IceeBootDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
