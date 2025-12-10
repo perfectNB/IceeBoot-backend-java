@@ -17,14 +17,14 @@
       <option name="url" value="https://maven.aliyun.com/repository/gradle-plugin" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="aliyun-google" />
-      <option name="name" value="aliyun-google" />
-      <option name="url" value="https://maven.aliyun.com/repository/google" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="spring-milestones" />
       <option name="name" value="Spring Milestones" />
       <option name="url" value="https://repo.spring.io/milestone" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="aliyun-google" />
+      <option name="name" value="aliyun-google" />
+      <option name="url" value="https://maven.aliyun.com/repository/google" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="aliyun-public" />

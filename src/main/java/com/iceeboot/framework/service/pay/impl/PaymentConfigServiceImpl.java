@@ -50,7 +50,6 @@ public class PaymentConfigServiceImpl extends ServiceImpl<PaymentConfigMapper, P
                 .eq(StringUtils.hasText(query.getStatus()), PaymentConfigDO::getStatus, query.getStatus())
                 .ge(query.getMinAmount() != null, PaymentConfigDO::getAmount, query.getMinAmount())
                 .le(query.getMaxAmount() != null, PaymentConfigDO::getAmount, query.getMaxAmount())
-                .orderByAsc(PaymentConfigDO::getSort)
                 .orderByDesc(PaymentConfigDO::getCreateTime);
 
         // 分页查询
@@ -72,7 +71,7 @@ public class PaymentConfigServiceImpl extends ServiceImpl<PaymentConfigMapper, P
         List<PaymentConfigDO> configs = this.list(
                 new LambdaQueryWrapper<PaymentConfigDO>()
                         .eq(PaymentConfigDO::getStatus, SystemConstants.Status.ACTIVE)
-                        .orderByAsc(PaymentConfigDO::getSort)
+
         );
 
         return configs.stream()

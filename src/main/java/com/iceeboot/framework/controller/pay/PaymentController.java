@@ -1,9 +1,3 @@
-/**
- * 支付控制器
- * 
- * @author CodeIcee
- * @date 2025-11-19
- */
 package com.iceeboot.framework.controller.pay;
 
 import com.iceeboot.common.core.domain.PageResult;
@@ -40,13 +34,6 @@ public class PaymentController {
     @Autowired
     private IPaymentConfigService paymentConfigService;
 
-    @Operation(summary = "获取支付配置列表", description = "获取所有启用的支付配置")
-    @GetMapping("/configs")
-    public R<List<PaymentConfigVO>> getActiveConfigs() {
-        List<PaymentConfigVO> configs = paymentConfigService.getAllActiveConfigs();
-        return R.ok(configs);
-    }
-
     @Operation(summary = "获取支付二维码", description = "根据支付配置ID创建支付订单并返回二维码")
     @GetMapping("/create-qr/{configId}")
     public R<String> createPaymentQR(@PathVariable("configId") Long configId) {
@@ -58,6 +45,13 @@ public class PaymentController {
     @PostMapping("/callback")
     public String handlePaymentCallback(HttpServletRequest request) {
         return payRecordService.handlePaymentCallback(request);
+    }
+
+    @Operation(summary = "获取支付配置列表", description = "获取所有启用的支付配置")
+    @GetMapping("/configs")
+    public R<List<PaymentConfigVO>> getActiveConfigs() {
+        List<PaymentConfigVO> configs = paymentConfigService.getAllActiveConfigs();
+        return R.ok(configs);
     }
 
     @Operation(summary = "查询支付记录", description = "分页查询用户的支付记录")

@@ -15,6 +15,8 @@ import com.iceeboot.common.annotation.DataPermission;
 import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
+import com.iceeboot.common.service.pay.factory.PayFactory;
+import com.iceeboot.common.service.pay.service.PayService;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.entity.pay.PayRecordDO;
 import com.iceeboot.framework.entity.pay.PaymentConfigDO;
@@ -65,6 +67,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private PayFactory strategyFactory;
 
     /** 支付方式：微信 */
     private static final Integer PAY_TYPE_WECHAT = 1;
@@ -150,7 +155,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         // 获取支付配置
         PaymentConfigDO config = paymentConfigService.getById(configId);
         if (config == null) {
-            throw new IceeBootException("支付配置不存在");
+            throw new IceeBootException("不存在该支付配置");
         }
 
         // 生成商户订单号
@@ -265,8 +270,14 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
             if (updated) {
                 log.info("支付回调 - 订单支付成功，订单号：{}，平台订单号：{}", outTradeNo, orderNo);
                 
-                // TODO: 这里可以添加支付成功后的业务逻辑
-                // 例如：增加用户余额、开通会员等
+                // 执行支付成功后的业务逻辑（使用策略模式）
+                try {
+                    executePaymentStrategy(payRecord);
+                } catch (Exception e) {
+                    log.error("支付回调 - 执行业务策略失败，订单号：{}，错误：{}", outTradeNo, e.getMessage(), e);
+                    // 业务逻辑失败不影响支付成功回调
+                    // 可以考虑加入重试队列或人工处理
+                }
                 
                 // 删除临时标记
                 redisTemplate.delete(tempKey);
@@ -288,6 +299,66 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         log.info("删除支付记录，IDs：{}", ids);
         
         return this.removeByIds(ids);
+    }
+
+    /**
+     * 执行支付策略
+     * 根据支付配置的payCode找到对应的策略实现类并执行
+     * 
+     * @param payRecord 支付记录
+     */
+    private void executePaymentStrategy(PayRecordDO payRecord) {
+        log.info("执行支付策略 - 开始，支付记录ID: {}", payRecord.getId());
+        
+        // 1. 获取支付配置
+        Long configId = payRecord.getConfigId();
+        if (configId == null) {
+            log.warn("执行支付策略 - 支付配置ID为空，跳过策略执行");
+            return;
+        }
+        
+        PaymentConfigDO config = paymentConfigService.getById(configId);
+        if (config == null) {
+            log.error("执行支付策略 - 找不到支付配置，configId: {}", configId);
+            return;
+        }
+        
+        // 2. 获取策略编码
+        String payCode = config.getPayCode();
+        if (!StringUtils.hasText(payCode)) {
+            log.warn("执行支付策略 - 支付配置未设置payCode，跳过策略执行，configId: {}", configId);
+            return;
+        }
+        
+        // 3. 检查策略是否存在
+        if (!strategyFactory.hasStrategy(payCode)) {
+            log.error("执行支付策略 - 未找到策略实现，payCode: {}", payCode);
+            return;
+        }
+        
+        // 4. 获取用户ID
+        Long userId = Long.valueOf(payRecord.getCreateBy());
+        if (userId == null) {
+            log.error("执行支付策略 - 用户ID为空");
+            return;
+        }
+        
+        // 5. 获取策略实例并执行
+        try {
+            PayService strategy = strategyFactory.getStrategy(payCode);
+            log.info("执行支付策略 - 找到策略: {}, 描述: {}", 
+                    strategy.getStrategyCode(), strategy.getDescription());
+            
+            // 执行业务逻辑
+            strategy.execute(userId, payRecord);
+            
+            log.info("执行支付策略 - 完成，策略: {}, 用户ID: {}", payCode, userId);
+            
+        } catch (Exception e) {
+            log.error("执行支付策略 - 执行失败，payCode: {}, 用户ID: {}, 错误: {}", 
+                    payCode, userId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
