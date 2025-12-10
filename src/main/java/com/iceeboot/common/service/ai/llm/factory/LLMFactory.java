@@ -11,6 +11,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import com.iceeboot.common.service.ai.llm.service.impl.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.Set;
  * @author CodeIcee
  * @date 2025-09-03
  */
+@Slf4j
 @Component
 public class LLMFactory {
     
@@ -73,6 +75,9 @@ public class LLMFactory {
         
         // 讯飞星火
         serviceMap.put(SystemConstants.LLMProvider.SPARK, new SparkService());
+
+        log.info("LLMFactory 初始化完成");
+        log.info("大模型策略工厂初始化完成，共注册 {} 个策略: {}", serviceMap.size(), serviceMap.keySet());
     }
     
     /**

@@ -39,12 +39,14 @@ public class PaymentConfigDO extends IceeBootDO {
     @TableField("description")
     private String description;
 
+    @Schema(description = "支付策略编码（对应PaymentStrategy实现类的策略编码）")
+    @TableField("pay_code")
+    private String payCode;
+
     @Schema(description = "状态（active-启用，inactive-禁用）")
     @TableField("status")
     private String status;
 
-    @Schema(description = "排序")
-    @TableField("sort")
-    private Integer sort;
+
 }
 
