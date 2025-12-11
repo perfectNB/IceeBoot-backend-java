@@ -20,7 +20,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "支付配置数据传输对象")
-public class PaymentConfigDTO {
+public class PayConfigDTO {
 
     @Schema(description = "配置名称", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "配置名称不能为空")
@@ -34,8 +34,8 @@ public class PaymentConfigDTO {
     @Schema(description = "配置描述")
     private String description;
 
-    @Schema(description = "状态（active-启用，inactive-禁用）")
-    private String status;
+    @Schema(description = "策略code")
+    private String payCode;
 
     @Schema(description = "排序")
     private Integer sort;

@@ -7,7 +7,7 @@
 package com.iceeboot.framework.mapper.pay;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.iceeboot.framework.entity.pay.PaymentConfigDO;
+import com.iceeboot.framework.entity.pay.PayConfigDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,7 +17,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2025-11-19
  */
 @Mapper
-public interface PaymentConfigMapper extends BaseMapper<PaymentConfigDO> {
+public interface PayConfigMapper extends BaseMapper<PayConfigDO> {
 
 }
 
