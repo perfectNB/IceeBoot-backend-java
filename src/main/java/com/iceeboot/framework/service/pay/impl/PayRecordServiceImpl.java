@@ -11,20 +11,21 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.iceeboot.common.annotation.DataPermission;
 import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.pay.factory.PayFactory;
 import com.iceeboot.common.service.pay.service.PayService;
 import com.iceeboot.common.utils.TokenUtils;
+import com.iceeboot.framework.entity.pay.PayConfigDO;
 import com.iceeboot.framework.entity.pay.PayRecordDO;
-import com.iceeboot.framework.entity.pay.PaymentConfigDO;
 import com.iceeboot.framework.mapper.pay.PayRecordMapper;
 import com.iceeboot.framework.query.pay.PayRecordQuery;
+import com.iceeboot.framework.service.pay.IPayConfigService;
 import com.iceeboot.framework.service.pay.IPayRecordService;
-import com.iceeboot.framework.service.pay.IPaymentConfigService;
+import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.pay.PayRecordVO;
+import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.util.PaySignUtil;
 import com.yungouos.pay.wxpay.WxPay;
 import lombok.extern.slf4j.Slf4j;
@@ -63,13 +64,16 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     private String notifyUrl;
 
     @Autowired
-    private IPaymentConfigService paymentConfigService;
+    private IPayConfigService paymentConfigService;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private PayFactory strategyFactory;
+
+    @Autowired
+    private ISysUserService sysUserService;
 
     /** 支付方式：微信 */
     private static final Integer PAY_TYPE_WECHAT = 1;
@@ -117,7 +121,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     }
 
     @Override
-    @DataPermission  // 自动检查返回值的createBy字段是否等于当前用户ID
+//    @DataPermission
     public PayRecordVO getPayRecordById(Long id) {
         log.info("根据ID获取支付记录详情，ID：{}", id);
         PayRecordDO payRecord = this.getById(id);
@@ -153,7 +157,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         redisTemplate.opsForValue().set(redisKey, "1", 5, TimeUnit.SECONDS);
 
         // 获取支付配置
-        PaymentConfigDO config = paymentConfigService.getById(configId);
+        PayConfigDO config = paymentConfigService.getById(configId);
         if (config == null) {
             throw new IceeBootException("不存在该支付配置");
         }
@@ -317,7 +321,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
             return;
         }
         
-        PaymentConfigDO config = paymentConfigService.getById(configId);
+        PayConfigDO config = paymentConfigService.getById(configId);
         if (config == null) {
             log.error("执行支付策略 - 找不到支付配置，configId: {}", configId);
             return;
@@ -387,9 +391,23 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         
         // 获取支付配置名称
         if (payRecord.getConfigId() != null) {
-            PaymentConfigDO config = paymentConfigService.getById(payRecord.getConfigId());
+            PayConfigDO config = paymentConfigService.getById(payRecord.getConfigId());
             if (config != null) {
                 vo.setConfigName(config.getConfigName());
+            }
+        }
+        
+        // 获取用户名
+        if (StrUtil.isNotBlank(payRecord.getCreateBy())) {
+            try {
+                Long userId = Long.valueOf(payRecord.getCreateBy());
+                vo.setUserId(userId);
+                SysUserVO user = sysUserService.getUserById(userId);
+                if (user != null) {
+                    vo.setUsername(user.getUsername());
+                }
+            } catch (NumberFormatException e) {
+                log.warn("无法解析用户ID: {}", payRecord.getCreateBy());
             }
         }
         

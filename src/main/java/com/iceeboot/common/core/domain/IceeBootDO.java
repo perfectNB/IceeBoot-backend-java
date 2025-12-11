@@ -5,9 +5,11 @@
  */
 package com.iceeboot.common.core.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -50,33 +52,8 @@ public class IceeBootDO implements Serializable {
     private LocalDateTime updateTime;
 
     @Schema(description = "删除标志")
-    @TableLogic
     @TableField(value = "del_flag")
-    @JsonIgnore
     private Integer delFlag;
 
-    @Schema(description = "页码")
-    @TableField(exist = false)
-    @JsonIgnore
-    private Integer pageNumber;
 
-    @Schema(description = "每页数量")
-    @TableField(exist = false)
-    @JsonIgnore
-    private Integer pageSize;
-
-    @Schema(description = "搜索关键字")
-    @TableField(exist = false)
-    @JsonIgnore
-    private String keyword;
-
-    @Schema(description = "排序字段")
-    @TableField(exist = false)
-    @JsonIgnore
-    private String orderBy;
-
-    @Schema(description = "排序方向")
-    @TableField(exist = false)
-    @JsonIgnore
-    private String orderDirection;
 }

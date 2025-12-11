@@ -35,5 +35,5 @@ public class OssBucketUpdateDTO {
     private String description;
 
     @Schema(description = "状态（active-激活，inactive-禁用）")
-    private String status;
+    private String active;
 }

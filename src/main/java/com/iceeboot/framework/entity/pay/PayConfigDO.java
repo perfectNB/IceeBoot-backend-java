@@ -1,6 +1,6 @@
 /**
  * 支付配置实体类
- * 
+ *
  * @author CodeIcee
  * @date 2025-11-19
  */
@@ -16,16 +16,16 @@ import lombok.experimental.Accessors;
 
 /**
  * 支付配置实体类
- * 
+ *
  * @author CodeIcee
  * @date 2025-11-19
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("t_payment_config")
+@TableName("t_pay_config")
 @Schema(description = "支付配置")
 @Accessors(chain = true)
-public class PaymentConfigDO extends IceeBootDO {
+public class PayConfigDO extends IceeBootDO {
 
     @Schema(description = "配置名称")
     @TableField("config_name")
@@ -43,7 +43,11 @@ public class PaymentConfigDO extends IceeBootDO {
     @TableField("pay_code")
     private String payCode;
 
-    @Schema(description = "状态（active-启用，inactive-禁用）")
+    @Schema(description = "排序")
+    @TableField("sort")
+    private Integer sort;
+
+    @Schema(description = "状态（active-激活，inactive-禁用）")
     @TableField("status")
     private String status;
 

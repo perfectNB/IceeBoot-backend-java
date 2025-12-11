@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @Schema(description = "支付配置视图对象")
-public class PaymentConfigVO {
+public class PayConfigVO {
 
     @Schema(description = "ID")
     private Long id;
@@ -36,6 +36,9 @@ public class PaymentConfigVO {
 
     @Schema(description = "配置描述")
     private String description;
+
+    @Schema(description = "支付策略代")
+    private String payCode;
 
     @Schema(description = "状态（active-启用，inactive-禁用）")
     private String status;
