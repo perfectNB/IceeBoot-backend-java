@@ -202,7 +202,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     public boolean addMenu(MenuDTO menuDTO) {
         // 检查菜单名称是否重复
         if (existsName(menuDTO.getName(), null)) {
-            throw new IceeBootException(ResponseMessage.MENU_NAME_EXISTS);
+            throw new IceeBootException(ResponseMessage.Menu.MENU_NAME_EXISTS);
         }
 
         MenuDO menu = new MenuDO();
@@ -214,7 +214,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
     public boolean updateMenu(MenuUpdateDTO menuDTO) {
         // 检查菜单名称是否重复
         if (existsName(menuDTO.getName(), menuDTO.getId())) {
-            throw new IceeBootException(ResponseMessage.MENU_NAME_EXISTS);
+            throw new IceeBootException(ResponseMessage.Menu.MENU_NAME_EXISTS);
         }
 
         MenuDO menu = new MenuDO();

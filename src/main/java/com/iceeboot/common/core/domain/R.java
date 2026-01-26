@@ -127,7 +127,7 @@ public class R<T> implements Serializable {
      * @return 成功消息
      */
     public static <T> R<T> ok() {
-        return new R<>(SUCCESS, ResponseMessage.SUCCESS);
+        return new R<>(SUCCESS, ResponseMessage.Common.SUCCESS);
     }
 
     /**
@@ -136,7 +136,7 @@ public class R<T> implements Serializable {
      * @return 成功消息
      */
     public static <T> R<T> ok(T result) {
-        return new R<>(SUCCESS, ResponseMessage.SUCCESS, result);
+        return new R<>(SUCCESS, ResponseMessage.Common.SUCCESS, result);
     }
 
     /**
@@ -166,7 +166,7 @@ public class R<T> implements Serializable {
      * @return 错误消息
      */
     public static <T> R<T> fail() {
-        return new R<>(FAIL, ResponseMessage.FAIL);
+        return new R<>(FAIL, ResponseMessage.Common.FAIL);
     }
 
     /**
@@ -229,7 +229,7 @@ public class R<T> implements Serializable {
      * @return 未授权消息
      */
     public static <T> R<T> unauthorized() {
-        return new R<>(UNAUTHORIZED, ResponseMessage.UNAUTHORIZED);
+        return new R<>(UNAUTHORIZED, ResponseMessage.Common.UNAUTHORIZED);
     }
 
     /**
@@ -248,7 +248,7 @@ public class R<T> implements Serializable {
      * @return 禁止访问消息
      */
     public static <T> R<T> forbidden() {
-        return new R<>(FORBIDDEN, ResponseMessage.FORBIDDEN);
+        return new R<>(FORBIDDEN, ResponseMessage.Common.FORBIDDEN);
     }
 
     /**
@@ -286,7 +286,7 @@ public class R<T> implements Serializable {
      * @return 参数错误消息
      */
     public static <T> R<T> badRequest() {
-        return new R<>(BAD_REQUEST, ResponseMessage.BAD_REQUEST);
+        return new R<>(BAD_REQUEST, ResponseMessage.Common.BAD_REQUEST);
     }
 
     /**

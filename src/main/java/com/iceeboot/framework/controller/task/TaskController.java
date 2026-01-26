@@ -53,7 +53,7 @@ public class TaskController {
     @RequirePermission(dynamic = true)
     public R<Void> createTask(@Validated @RequestBody TaskDTO taskDTO) {
         boolean success = taskService.createTask(taskDTO);
-        return success ? R.ok(ResponseMessage.TASK_CREATE_SUCCESS) : R.fail(ResponseMessage.TASK_CREATE_FAIL);
+        return success ? R.ok(ResponseMessage.Task.TASK_CREATE_SUCCESS) : R.fail(ResponseMessage.Task.TASK_CREATE_FAIL);
     }
 
 
@@ -71,7 +71,7 @@ public class TaskController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteTasks(@RequestBody List<Long> ids) {
         boolean success = taskService.deleteTasks(ids);
-        return success ? R.ok(ResponseMessage.TASK_DELETE_SUCCESS) : R.fail(ResponseMessage.TASK_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Task.TASK_DELETE_SUCCESS) : R.fail(ResponseMessage.Task.TASK_DELETE_FAIL);
     }
 
 

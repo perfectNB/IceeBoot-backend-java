@@ -50,7 +50,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addLLMKey(@Validated @RequestBody AiLLMKeyDTO dto) {
         Boolean result = aiLLMKeyService.addLLMKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.CREATE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.AiLlm.AI_LLM_CREATE_FAIL);
     }
 
     @Operation(summary = "更新大模型密钥", description = "更新大模型密钥信息")
@@ -58,7 +58,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateLLMKey(@Validated @RequestBody AiLLMKeyUpdateDTO dto) {
         Boolean result = aiLLMKeyService.updateLLMKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.AiLlm.AI_LLM_UPDATE_FAIL);
     }
 
     @Operation(summary = "删除大模型密钥")
@@ -66,7 +66,7 @@ public class AiLLMKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteLLMKey(@RequestBody List<Long> ids) {
         Boolean result = aiLLMKeyService.deleteLLMKey(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.AiLlm.AI_LLM_DELETE_FAIL);
     }
 
     @Operation(summary = "更新大模型密钥状态")
@@ -77,7 +77,7 @@ public class AiLLMKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = aiLLMKeyService.updateLLMKeyStatus(id, status);
-        return result ? R.ok() : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.AiLlm.AI_LLM_STATUS_UPDATE_FAIL);
     }
 
 

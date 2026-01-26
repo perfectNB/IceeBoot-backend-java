@@ -64,7 +64,7 @@ public class SysPermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> addPermission(@Validated @RequestBody PermissionDTO dto) {
         boolean success = permissionService.addPermission(dto);
-        return success ? R.ok(ResponseMessage.PERMISSION_CREATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_CREATE_FAIL);
+        return success ? R.ok(ResponseMessage.Permission.PERMISSION_CREATE_SUCCESS) : R.fail(ResponseMessage.Permission.PERMISSION_CREATE_FAIL);
     }
 
 
@@ -73,7 +73,7 @@ public class SysPermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> updatePermission(@Validated @RequestBody PermissionUpdateDTO dto) {
         boolean success = permissionService.updatePermission(dto);
-        return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Permission.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.Permission.PERMISSION_UPDATE_FAIL);
     }
 
 
@@ -82,7 +82,7 @@ public class SysPermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> deletePermissions(@RequestBody List<Long> ids) {
         boolean success = permissionService.deletePermissions(ids);
-        return success ? R.ok(ResponseMessage.PERMISSION_DELETE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Permission.PERMISSION_DELETE_SUCCESS) : R.fail(ResponseMessage.Permission.PERMISSION_DELETE_FAIL);
     }
 
 
@@ -90,7 +90,7 @@ public class SysPermissionController {
     @PutMapping("/{id}/status")
     public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = permissionService.updateStatus(id, status);
-        return success ? R.ok(ResponseMessage.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.PERMISSION_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Permission.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.Permission.PERMISSION_UPDATE_FAIL);
     }
 
 

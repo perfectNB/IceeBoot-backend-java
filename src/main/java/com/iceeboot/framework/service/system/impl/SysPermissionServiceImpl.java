@@ -99,7 +99,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     public boolean addPermission(PermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), null)) {
-            throw new IceeBootException(ResponseMessage.PERMISSION_CODE_EXISTS);
+            throw new IceeBootException(ResponseMessage.Permission.PERMISSION_CODE_EXISTS);
         }
 
         PermissionDO permission = new PermissionDO();
@@ -111,7 +111,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     public boolean updatePermission(PermissionUpdateDTO dto) {
         // 检查权限编码是否重复
         if (existsCode(dto.getCode(), dto.getId())) {
-            throw new IceeBootException(ResponseMessage.PERMISSION_CODE_EXISTS);
+            throw new IceeBootException(ResponseMessage.Permission.PERMISSION_CODE_EXISTS);
         }
 
         PermissionDO permission = new PermissionDO();

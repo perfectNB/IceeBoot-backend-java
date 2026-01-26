@@ -44,7 +44,7 @@ public class MessageController {
     @RequirePermission(dynamic = true)
     public R<Void> addMessage(@Validated @RequestBody MessageDTO messageDTO) {
         boolean success = messageService.addMessage(messageDTO);
-        return success ? R.ok(ResponseMessage.MESSAGE_CREATE_SUCCESS) : R.fail(ResponseMessage.MESSAGE_CREATE_FAIL);
+        return success ? R.ok(ResponseMessage.Message.MESSAGE_CREATE_SUCCESS) : R.fail(ResponseMessage.Message.MESSAGE_CREATE_FAIL);
     }
 
     @Operation(summary = "更新消息", description = "更新消息")
@@ -52,7 +52,7 @@ public class MessageController {
     @RequirePermission(dynamic = true)
     public R<Void> updateMessage(@RequestBody List<Long> ids) {
         boolean success = messageService.updateMessage(ids);
-        return success ? R.ok(ResponseMessage.MESSAGE_UPDATE_SUCCESS) : R.fail(ResponseMessage.MESSAGE_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Message.MESSAGE_UPDATE_SUCCESS) : R.fail(ResponseMessage.Message.MESSAGE_UPDATE_FAIL);
     }
 
     @Operation(summary = "全部已读", description = "全部已读")
@@ -60,7 +60,7 @@ public class MessageController {
     @RequirePermission(dynamic = true)
     public R<Void> updateMessage() {
         boolean success = messageService.allRead();
-        return success ? R.ok(ResponseMessage.MESSAGE_UPDATE_SUCCESS) : R.fail(ResponseMessage.MESSAGE_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Message.MESSAGE_UPDATE_SUCCESS) : R.fail(ResponseMessage.Message.MESSAGE_UPDATE_FAIL);
     }
 
 
@@ -69,7 +69,7 @@ public class MessageController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteMessages(@RequestBody List<Long> ids) {
         boolean success = messageService.deleteMessages(ids);
-        return success ? R.ok(ResponseMessage.MESSAGE_DELETE_SUCCESS) : R.fail(ResponseMessage.MESSAGE_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Message.MESSAGE_DELETE_SUCCESS) : R.fail(ResponseMessage.Message.MESSAGE_DELETE_FAIL);
     }
 
     @Operation(summary = "获取消息统计信息", description = "获取当前用户的未读、已读、总消息数量")
