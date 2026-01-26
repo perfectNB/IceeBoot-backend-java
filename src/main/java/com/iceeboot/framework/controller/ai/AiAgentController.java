@@ -50,7 +50,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail(ResponseMessage.CREATE_FAIL);
+        return R.fail(ResponseMessage.Ai.CREATE_FAIL);
     }
 
     @Operation(summary = "更新agents", description = "更新agents信息")
@@ -58,7 +58,7 @@ public class AiAgentController {
     @RequirePermission(dynamic = true)
     public R<Void> updateAgent(@Validated @RequestBody AiAgentUpdateDTO dto) {
         Boolean result = aiAgentService.updateAgent(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.UPDATE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.Ai.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除agents")
@@ -66,7 +66,7 @@ public class AiAgentController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteAgent(@RequestBody List<Long> ids) {
         Boolean result = aiAgentService.deleteAgent(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+        return result ? R.ok() : R.fail(ResponseMessage.Ai.DELETE_FAIL);
     }
 
     @Operation(summary = "更新代理状态")
@@ -79,7 +79,7 @@ public class AiAgentController {
         if (result) {
             return R.ok();
         }
-        return R.fail(ResponseMessage.STATUS_UPDATE_FAIL_AI);
+        return R.fail(ResponseMessage.Ai.STATUS_UPDATE_FAIL_AI);
     }
 
     @Operation(summary = "根据平台获取代理列表")

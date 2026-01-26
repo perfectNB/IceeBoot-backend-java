@@ -70,7 +70,7 @@ public class AiChatController {
         if (result) {
             return R.ok();
         }
-        return R.fail(ResponseMessage.CREATE_FAIL);
+        return R.fail(ResponseMessage.Ai.CREATE_FAIL);
     }
 
 
@@ -78,7 +78,7 @@ public class AiChatController {
     @DeleteMapping
     public R<Void> deleteLogs(@RequestBody List<Long> ids) {
         boolean success = aiChatService.deleteSession(ids);
-        return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.Ai.DELETE_FAIL);
     }
 
     @Operation(summary = "清空对话消息", description = "根据会话ID物理删除该会话下的所有消息")
@@ -86,7 +86,7 @@ public class AiChatController {
     @RequirePermission(dynamic = true)
     public R<Void> clearSessionMessages(@PathVariable("sessionId") Long sessionId) {
         boolean success = aiChatService.clearSessionMessages(sessionId);
-        return success ? R.ok() : R.fail(ResponseMessage.DELETE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.Ai.DELETE_FAIL);
     }
 
     @Operation(summary = "流式对话")

@@ -54,7 +54,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> addRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
         boolean success = rolePermissionService.addRolePermission(rolePermissionDTO);
-        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_CREATE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_RELATION_CREATE_FAIL);
     }
 
 
@@ -63,7 +63,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> updateRolePermission(@Validated @RequestBody RolePermissionDTO rolePermissionDTO) {
         boolean success = rolePermissionService.updateRolePermission(rolePermissionDTO);
-        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_UPDATE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_RELATION_UPDATE_FAIL);
     }
 
 
@@ -72,7 +72,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteRolePermissions(@RequestBody List<Long> ids) {
         boolean success = rolePermissionService.deleteRolePermissions(ids);
-        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_RELATION_DELETE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_RELATION_DELETE_FAIL);
     }
 
 
@@ -99,7 +99,7 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> assignPermissionsToRole(@PathVariable("roleId") Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
-        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_ASSIGN_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_ASSIGN_FAIL);
     }
 
 
@@ -108,6 +108,6 @@ public class SysRolePermissionController {
     @RequirePermission(dynamic = true)
     public R<Void> removeAllPermissionsByRoleId(@PathVariable("roleId") Long roleId) {
         boolean success = rolePermissionService.removeAllPermissionsByRoleId(roleId);
-        return success ? R.ok() : R.fail(ResponseMessage.ROLE_PERMISSION_REMOVE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_REMOVE_FAIL);
     }
 }

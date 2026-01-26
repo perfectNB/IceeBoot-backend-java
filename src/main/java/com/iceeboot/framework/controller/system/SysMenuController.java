@@ -54,7 +54,7 @@ public class SysMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> addMenu(@Validated @RequestBody MenuDTO menuDTO) {
         boolean success = menuService.addMenu(menuDTO);
-        return success ? R.ok(ResponseMessage.MENU_CREATE_SUCCESS) : R.fail(ResponseMessage.MENU_CREATE_FAIL);
+        return success ? R.ok(ResponseMessage.Menu.MENU_CREATE_SUCCESS) : R.fail(ResponseMessage.Menu.MENU_CREATE_FAIL);
     }
 
 
@@ -63,7 +63,7 @@ public class SysMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> updateMenu(@Validated @RequestBody MenuUpdateDTO menuDTO) {
         boolean success = menuService.updateMenu(menuDTO);
-        return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Menu.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.Menu.MENU_UPDATE_FAIL);
     }
 
     @Operation(summary = "删除菜单", description = "批量删除菜单")
@@ -71,7 +71,7 @@ public class SysMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteMenus(@RequestBody List<Long> ids) {
         boolean success = menuService.deleteMenus(ids);
-        return success ? R.ok(ResponseMessage.MENU_DELETE_SUCCESS) : R.fail(ResponseMessage.MENU_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Menu.MENU_DELETE_SUCCESS) : R.fail(ResponseMessage.Menu.MENU_DELETE_FAIL);
     }
 
 
@@ -80,7 +80,7 @@ public class SysMenuController {
     @RequirePermission(dynamic = true)
     public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = menuService.updateStatus(id, status);
-        return success ? R.ok(ResponseMessage.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.MENU_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Menu.MENU_UPDATE_SUCCESS) : R.fail(ResponseMessage.Menu.MENU_UPDATE_FAIL);
     }
 
 

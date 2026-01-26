@@ -54,7 +54,7 @@ public class SysUserRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> addUserRole(@Validated @RequestBody UserRoleDTO userRoleDTO) {
         boolean success = userRoleService.addUserRole(userRoleDTO);
-        return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_CREATE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.UserRole.USER_ROLE_RELATION_CREATE_FAIL);
     }
 
 
@@ -63,7 +63,7 @@ public class SysUserRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> updateUserRole(@Validated @RequestBody UserRoleDTO userRoleDTO) {
         boolean success = userRoleService.updateUserRole(userRoleDTO);
-        return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_UPDATE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.UserRole.USER_ROLE_RELATION_UPDATE_FAIL);
     }
 
     @Operation(summary = "删除用户角色关联", description = "批量删除用户角色关联")
@@ -71,7 +71,7 @@ public class SysUserRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteUserRoles(@RequestBody List<Long> ids) {
         boolean success = userRoleService.deleteUserRoles(ids);
-        return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_RELATION_DELETE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.UserRole.USER_ROLE_RELATION_DELETE_FAIL);
     }
 
     @Operation(summary = "获取用户的角色列表", description = "根据用户ID获取该用户的所有角色ID")
@@ -97,7 +97,7 @@ public class SysUserRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> assignRolesToUser(@PathVariable("userId") Long userId, @RequestBody List<Long> roleIds) {
         boolean success = userRoleService.assignRolesToUser(userId, roleIds);
-        return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_ASSIGN_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.UserRole.USER_ROLE_ASSIGN_FAIL);
     }
 
 
@@ -106,6 +106,6 @@ public class SysUserRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> removeAllRolesByUserId(@PathVariable("userId") Long userId) {
         boolean success = userRoleService.removeAllRolesByUserId(userId);
-        return success ? R.ok() : R.fail(ResponseMessage.USER_ROLE_REMOVE_FAIL);
+        return success ? R.ok() : R.fail(ResponseMessage.UserRole.USER_ROLE_REMOVE_FAIL);
     }
 }

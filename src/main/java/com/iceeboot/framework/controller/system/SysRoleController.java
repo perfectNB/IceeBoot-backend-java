@@ -53,7 +53,7 @@ public class SysRoleController {
 //    @RequirePermission(dynamic = true)
     public R<Void> addRole(@Validated @RequestBody RoleDTO roleDTO) {
         boolean success = roleService.addRole(roleDTO);
-        return success ? R.ok(ResponseMessage.ROLE_CREATE_SUCCESS) : R.fail(ResponseMessage.ROLE_CREATE_FAIL);
+        return success ? R.ok(ResponseMessage.Role.ROLE_CREATE_SUCCESS) : R.fail(ResponseMessage.Role.ROLE_CREATE_FAIL);
     }
 
     @Operation(summary = "更新角色", description = "更新角色信息")
@@ -62,7 +62,7 @@ public class SysRoleController {
     public R<Void> updateRole(@PathVariable("id") Long id, @Validated @RequestBody RoleUpdateDTO dto) {
         dto.setId(id);
         boolean success = roleService.updateRole(dto);
-        return success ? R.ok(ResponseMessage.ROLE_UPDATE_SUCCESS) : R.fail(ResponseMessage.ROLE_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.Role.ROLE_UPDATE_SUCCESS) : R.fail(ResponseMessage.Role.ROLE_UPDATE_FAIL);
     }
 
     @Operation(summary = "删除角色", description = "批量删除角色")
@@ -70,7 +70,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteRoles(@RequestBody List<Long> ids) {
         boolean success = roleService.deleteRoles(ids);
-        return success ? R.ok(ResponseMessage.ROLE_DELETE_SUCCESS) : R.fail(ResponseMessage.ROLE_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Role.ROLE_DELETE_SUCCESS) : R.fail(ResponseMessage.Role.ROLE_DELETE_FAIL);
     }
 
     @Operation(summary = "修改角色状态", description = "启用或禁用角色")
@@ -78,7 +78,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = roleService.updateStatus(id, status);
-        return success ? R.ok(ResponseMessage.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.STATUS_UPDATE_FAIL);
+        return success ? R.ok(ResponseMessage.User.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.User.STATUS_UPDATE_FAIL);
     }
 
 
@@ -87,7 +87,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> saveRolePermissions(@PathVariable("roleId") Long roleId, @RequestBody List<Long> permissionIds) {
         boolean success = roleService.saveRolePermissions(roleId, permissionIds);
-        return success ? R.ok(ResponseMessage.ROLE_PERMISSION_ASSIGN_SUCCESS) : R.fail(ResponseMessage.ROLE_PERMISSION_ASSIGN_FAIL);
+        return success ? R.ok(ResponseMessage.RolePermission.ROLE_PERMISSION_ASSIGN_SUCCESS) : R.fail(ResponseMessage.RolePermission.ROLE_PERMISSION_ASSIGN_FAIL);
     }
 
     @Operation(summary = "保存角色菜单", description = "为角色分配菜单")
@@ -95,7 +95,7 @@ public class SysRoleController {
     @RequirePermission(dynamic = true)
     public R<Void> saveRoleMenus(@PathVariable("roleId") Long roleId, @RequestBody List<Long> menuIds) {
         boolean success = roleService.saveRoleMenus(roleId, menuIds);
-        return success ? R.ok(ResponseMessage.ROLE_MENU_ASSIGN_SUCCESS) : R.fail(ResponseMessage.ROLE_MENU_ASSIGN_FAIL);
+        return success ? R.ok(ResponseMessage.RoleMenu.ROLE_MENU_ASSIGN_SUCCESS) : R.fail(ResponseMessage.RoleMenu.ROLE_MENU_ASSIGN_FAIL);
     }
 
     @Operation(summary = "获取全部角色", description = "获取全部角色")

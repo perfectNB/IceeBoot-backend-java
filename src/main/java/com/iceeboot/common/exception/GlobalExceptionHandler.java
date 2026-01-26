@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotPermissionException(NotPermissionException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',权限码校验失败'{}'", requestURI, e.getMessage());
-        return R.forbidden(ResponseMessage.FORBIDDEN);
+        return R.forbidden(ResponseMessage.Common.FORBIDDEN);
     }
 
     /**
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotRoleException(NotRoleException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',角色权限校验失败'{}'", requestURI, e.getMessage());
-        return R.forbidden(ResponseMessage.FORBIDDEN);
+        return R.forbidden(ResponseMessage.Common.FORBIDDEN);
     }
 
     /**
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleNotLoginException(NotLoginException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, e.getMessage());
-        return R.unauthorized(ResponseMessage.UNAUTHORIZED);
+        return R.unauthorized(ResponseMessage.Common.UNAUTHORIZED);
     }
 
     /**
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
                                                         HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',不支持'{}'请求", requestURI, e.getMethod());
-        return R.fail(ResponseMessage.METHOD_NOT_ALLOWED);
+        return R.fail(ResponseMessage.Common.METHOD_NOT_ALLOWED);
     }
 
     /**
@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
         String requestURI = request.getRequestURI();
         log.warn("请求地址'{}',触发限流: {}, 限制: {}/{} 秒, 当前: {} 次", 
             requestURI, e.getMessage(), e.getLimitCount(), e.getTimeWindow(), e.getCurrentCount());
-        return R.fail(ResponseMessage.RATE_LIMIE);
+        return R.fail(ResponseMessage.Common.RATE_LIMIE);
     }
 
     /**
@@ -131,7 +131,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生未知异常.", requestURI, e);
-        return R.fail(ResponseMessage.SYSTEM_ERROR);
+        return R.fail(ResponseMessage.Common.SYSTEM_ERROR);
     }
 
     /**
@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleException(Exception e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生系统异常.", requestURI, e);
-        return R.fail(ResponseMessage.SYSTEM_ERROR);
+        return R.fail(ResponseMessage.Common.SYSTEM_ERROR);
     }
 
     /**
@@ -193,6 +193,6 @@ public class GlobalExceptionHandler {
     public R<Void> handleNoHandlerFoundException(NoHandlerFoundException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',无法找到该资源.", requestURI, e);
-        return R.notFound(ResponseMessage.NOT_FOUND);
+        return R.notFound(ResponseMessage.Common.NOT_FOUND);
     }
 }

@@ -99,13 +99,13 @@ public class AuthServiceImpl implements IAuthService {
 
         // 参数校验
         if (!StringUtils.hasText(loginDTO.getUsername()) || !StringUtils.hasText(loginDTO.getPassword())) {
-            throw new IceeBootException(ResponseMessage.USERNAME_OR_PASSWORD_EMPTY);
+            throw new IceeBootException(ResponseMessage.Auth.USERNAME_OR_PASSWORD_EMPTY);
         }
 
         // 查询用户
         UserDO user = userService.getUserByUsername(loginDTO.getUsername());
         if (user == null) {
-            throw new IceeBootException(ResponseMessage.USER_NOT_EXIST);
+            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
         }
 
         // 检查用户状态
@@ -116,7 +116,7 @@ public class AuthServiceImpl implements IAuthService {
 
         // 验证密码
         if (!PasswordUtil.matches(loginDTO.getPassword(), user.getPassword())) {
-            throw new IceeBootException(ResponseMessage.PASSWORD_ERROR);
+            throw new IceeBootException(ResponseMessage.Auth.PASSWORD_ERROR);
         }
 
         // 更新最后登录信息

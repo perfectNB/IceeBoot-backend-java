@@ -36,7 +36,7 @@ public class AuthController {
     @RequirePermission(dynamic = true)
     public R<LoginVO> test1() {
 
-        return R.ok(ResponseMessage.SYSTEM_WELCOME);
+        return R.ok(ResponseMessage.Common.SYSTEM_WELCOME);
     }
 
     @Operation(summary = "test2", description = "test")
