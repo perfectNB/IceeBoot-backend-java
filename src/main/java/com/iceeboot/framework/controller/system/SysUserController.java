@@ -80,7 +80,7 @@ public class SysUserController {
     @Operation(summary = "重置密码", description = "重置用户密码")
     @PutMapping("/{id}/password")
     @RequirePermission(dynamic = true)
-    public R<Void> resetPassword(@PathVariable("id") Long id, @RequestParam String newPassword) {
+    public R<Void> resetPassword(@PathVariable("id") Long id, @RequestParam("newPassword") String newPassword) {
         boolean success = userService.resetPassword(id, newPassword);
         return success ? R.ok(ResponseMessage.User.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.User.PASSWORD_RESET_FAIL);
     }
