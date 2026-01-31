@@ -60,6 +60,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
                         
                         // 打印请求路径用于调试
                         System.out.println("Sa-Token拦截器检查请求: " + request.getUrl());
+
+                        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                            return;
+                        }
                         
                         // 从请求头获取token
                         String token = getTokenFromRequest(request);
