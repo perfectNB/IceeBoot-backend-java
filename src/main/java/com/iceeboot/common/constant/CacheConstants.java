@@ -64,6 +64,9 @@ public class CacheConstants {
         
         /** 微信登录ticket缓存键前缀（临时登录凭证） */
         public static final String WECHAT_TICKET = "auth:wechat:ticket:";
+
+        /** 刷新令牌缓存键前缀 */
+        public static final String REFRESH_TOKEN = "auth:refresh:token:";
         
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;

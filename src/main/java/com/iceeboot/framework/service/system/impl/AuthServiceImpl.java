@@ -72,6 +72,12 @@ public class AuthServiceImpl implements IAuthService {
     @Value("${YunGouOS.ticketExpireSeconds}")
     private Integer ticketExpireSeconds;
 
+    @Value("${YunGouOS.stateExpireSeconds:300}")
+    private Integer stateExpireSeconds;
+
+    @Value("${iceeboot.auth.refresh-token-expire-seconds:604800}")
+    private Long refreshTokenExpireSeconds;
+
     @Autowired
     private ISysUserService userService;
 
@@ -126,6 +132,8 @@ public class AuthServiceImpl implements IAuthService {
         // 生成token
         StpUtil.login(user.getId());
         String accessToken = StpUtil.getTokenValue();
+        String refreshToken = generateRefreshToken();
+        storeRefreshToken(user.getId(), refreshToken);
 
         // 获取token信息
         long tokenTimeout = StpUtil.getTokenTimeout();
@@ -144,7 +152,7 @@ public class AuthServiceImpl implements IAuthService {
         // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setAccessToken(accessToken);
-        loginVO.setRefreshToken(accessToken); // 这里可以生成不同的refresh token
+        loginVO.setRefreshToken(refreshToken);
         loginVO.setUser(userVO);
         loginVO.setExpires(tokenTimeout);
         loginVO.setTokenType("Bearer");
@@ -172,22 +180,33 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public LoginVO refresh(String refreshToken) {
-        // 验证refresh token
         if (!StringUtils.hasText(refreshToken)) {
             throw new IceeBootException("刷新令牌不能为空");
         }
 
-        Long userId = StpUtil.getLoginIdAsLong();
+        String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
+        Object cachedUserId = redisTemplate.opsForValue().get(refreshKey);
+        if (cachedUserId == null) {
+            throw new IceeBootException("刷新令牌已失效");
+        }
+
+        Long userId = Long.valueOf(cachedUserId.toString());
         UserDO user = userService.getById(userId);
+        if (user == null) {
+            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
+        }
+        if (!SystemConstants.Status.ACTIVE.equals(user.getStatus())) {
+            throw new IceeBootException("用户已被禁用");
+        }
 
-        // 生成新token
+        StpUtil.login(userId);
         String accessToken = StpUtil.getTokenValue();
-        String newRefreshToken = StpUtil.getTokenValue();
+        String newRefreshToken = generateRefreshToken();
+        storeRefreshToken(userId, newRefreshToken);
+        redisTemplate.delete(refreshKey);
 
-        // 获取用户信息
         SysUserVO userVO = userService.getUserById(user.getId());
 
-        // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setAccessToken(accessToken);
         loginVO.setRefreshToken(newRefreshToken);
@@ -202,10 +221,12 @@ public class AuthServiceImpl implements IAuthService {
     public String getWechatAuthUrl() {
         log.info("微信扫码登录 - 生成授权URL");
         
-        // TODO: YunGouOS可能不支持标准OAuth的state参数
-        // 暂时不生成state，直接使用空的params
         JSONObject params = new JSONObject();
         params.put("timestamp", System.currentTimeMillis());
+        String state = generateState();
+        params.put("state", state);
+        String stateKey = CacheConstants.Auth.WECHAT_STATE + state;
+        redisTemplate.opsForValue().set(stateKey, state, stateExpireSeconds.longValue(), TimeUnit.SECONDS);
         
         // 获取微信授权URL
         String type = "open-url";
@@ -249,29 +270,16 @@ public class AuthServiceImpl implements IAuthService {
     public String handleWechatCallback(String code, String state) throws UnsupportedEncodingException {
         log.info("微信OAuth回调 - 开始处理, code: {}, state: {}", code != null ? "***" : "null", state);
         
-        // 调试：检查state参数
         if (state == null) {
-            log.warn("微信OAuth回调 - state参数为null，YunGouOS可能不支持标准OAuth的state参数");
-        } else {
-            log.info("微信OAuth回调 - 收到state参数: {}", state);
+            log.warn("微信OAuth回调 - state参数为空");
+            return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
         }
         
-        // TODO: YunGouOS可能不支持标准OAuth的state参数，暂时跳过验证
-        // 生产环境需要研究YunGouOS正确的state传递方式或使用其他安全机制
-        /*
-        // 验证state参数（防CSRF攻击）
         if (!verifyState(state)) {
             log.error("微信OAuth回调 - state验证失败，state值: {}", state);
-            // 检查Redis中是否有state
-            if (state != null) {
-                String stateKey = CacheConstants.Auth.WECHAT_STATE + state;
-                Object cachedState = redisTemplate.opsForValue().get(stateKey);
-                log.error("微信OAuth回调 - Redis中的state: {}", cachedState);
-            }
             return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
         }
         log.info("微信OAuth回调 - state验证成功");
-        */
         
         // 验证授权码
         if (!StringUtils.hasText(code)) {
@@ -310,6 +318,8 @@ public class AuthServiceImpl implements IAuthService {
         // 执行登录，生成Sa-Token
         StpUtil.login(user.getId());
         String accessToken = StpUtil.getTokenValue();
+        String refreshToken = generateRefreshToken();
+        storeRefreshToken(user.getId(), refreshToken);
         long tokenTimeout = StpUtil.getTokenTimeout();
         log.info("微信OAuth回调 - 登录成功，userId: {}", user.getId());
         
@@ -326,6 +336,7 @@ public class AuthServiceImpl implements IAuthService {
         JSONObject loginData = new JSONObject();
         loginData.put("userId", user.getId());
         loginData.put("accessToken", accessToken);
+        loginData.put("refreshToken", refreshToken);
         loginData.put("tokenTimeout", tokenTimeout);
         
         redisTemplate.opsForValue().set(
@@ -375,7 +386,7 @@ public class AuthServiceImpl implements IAuthService {
                         .setUsername(random10)
                         .setNickname(nickname)
                         .setAvatar(headimgurl)
-                        .setPassword(Md5Utils.encrypt(System.currentTimeMillis() + ""))
+                        .setPassword(PasswordUtil.encrypt(generateRandomString(20)))
                         .setStatus(SystemConstants.Status.ACTIVE);
                 
                 userService.save(user);
@@ -493,6 +504,7 @@ public class AuthServiceImpl implements IAuthService {
         
         Long userId = loginData.getLong("userId");
         String accessToken = loginData.getString("accessToken");
+        String refreshToken = loginData.getString("refreshToken");
         Long tokenTimeout = loginData.getLong("tokenTimeout");
         
         if (userId == null || !StringUtils.hasText(accessToken)) {
@@ -522,7 +534,11 @@ public class AuthServiceImpl implements IAuthService {
         // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setAccessToken(accessToken);
-        loginVO.setRefreshToken(accessToken); // 这里可以生成不同的refresh token
+        if (!StringUtils.hasText(refreshToken)) {
+            refreshToken = generateRefreshToken();
+            storeRefreshToken(userId, refreshToken);
+        }
+        loginVO.setRefreshToken(refreshToken);
         loginVO.setUser(userVO);
         loginVO.setExpires(tokenTimeout);
         loginVO.setTokenType("Bearer");
@@ -539,6 +555,15 @@ public class AuthServiceImpl implements IAuthService {
             sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
         }
         return sb.toString();
+    }
+
+    private String generateRefreshToken() {
+        return IdUtil.simpleUUID();
+    }
+
+    private void storeRefreshToken(Long userId, String refreshToken) {
+        String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
+        redisTemplate.opsForValue().set(refreshKey, userId, refreshTokenExpireSeconds, TimeUnit.SECONDS);
     }
 
     public static void main(String[] args) {
