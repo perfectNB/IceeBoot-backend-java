@@ -12,7 +12,9 @@ import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
 import com.iceeboot.config.interceptor.PermissionInterceptor;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -24,36 +26,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @date 2025-08-11
  */
 @Configuration
+@ConfigurationProperties(prefix = "iceeboot.auth")
+@Data
 public class SaTokenConfig implements WebMvcConfigurer {
     
     @Autowired
     private PermissionInterceptor permissionInterceptor;
+    
+    private java.util.List<String> excludePaths = new java.util.ArrayList<>();
     
     /**
      * 注册Sa-Token拦截器
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        String[] currentExcludePaths = excludePaths == null ? new String[0] : excludePaths.toArray(new String[0]);
         // 注册Sa-Token拦截器，校验规则为从请求头获取token并验证
         registry.addInterceptor(new SaInterceptor(handle -> {
             SaRouter.match("/**")
-                    .notMatch("/v1/auth/test/**")
-                    .notMatch("/v1/auth/wechat/auth-url")
-                    .notMatch("/v1/auth/wechat/callback")
-                    .notMatch("/v1/auth/wechat/exchange-ticket")
-                    .notMatch("/v1/saa/**")
-                    .notMatch("/v1/chat/ali")
-                    .notMatch("/v1/auth/login")
-                    .notMatch("/v1/auth/register")
-                    .notMatch("/v1/auth/wechat/login")
-                    .notMatch("/v1/auth/captcha")
-                    .notMatch("/health")
-                    .notMatch("/doc.html")
-                    .notMatch("/swagger-ui/**")
-                    .notMatch("/v3/api-docs/**")
-                    .notMatch("/webjars/**")
-                    .notMatch("/favicon.ico")
-                    .notMatch("/error")
+                    .notMatch(currentExcludePaths)
                     .check(r -> {
                         // 获取当前请求
                         SaRequest request = SaHolder.getRequest();
@@ -94,19 +85,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
         // 注册权限拦截器（基于注解的权限验证）
         registry.addInterceptor(permissionInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns(
-                        "/v1/auth/login",
-                        "/v1/auth/register",
-                        "/v1/auth/wechat/login",
-                        "/v1/auth/captcha",
-                        "/health",
-                        "/doc.html",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/webjars/**",
-                        "/favicon.ico",
-                        "/error"
-                );
+                .excludePathPatterns(currentExcludePaths);
     }
     
     /**

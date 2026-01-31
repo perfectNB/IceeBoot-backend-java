@@ -33,6 +33,10 @@ public enum ResultCodeEnum {
      * 未授权
      */
     UNAUTHORIZED(401, "未授权，请重新登录"),
+    
+    REFRESH_TOKEN_INVALID(40101, "刷新令牌已失效"),
+    
+    REFRESH_TOKEN_CONSUMED(40102, "刷新令牌已被使用"),
 
     /**
      * 禁止访问
