@@ -12,8 +12,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 /**
  * 认证控制器
@@ -76,9 +78,16 @@ public class AuthController {
 
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
     @PostMapping("/refresh")
-    @RequirePermission(dynamic = true)
-    public R<LoginVO> refresh(@RequestParam(name = "refreshToken") String refreshToken) {
-        LoginVO loginVO = authService.refresh(refreshToken);
+    public R<LoginVO> refresh(@RequestParam(name = "refreshToken", required = false) String refreshToken,
+                              @RequestBody(required = false) Map<String, Object> body) {
+        String token = refreshToken;
+        if (!StringUtils.hasText(token) && body != null) {
+            Object value = body.get("refreshToken");
+            if (value != null) {
+                token = value.toString();
+            }
+        }
+        LoginVO loginVO = authService.refresh(token);
         return R.ok(loginVO);
     }
 

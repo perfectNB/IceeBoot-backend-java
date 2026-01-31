@@ -13,6 +13,7 @@ import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.constant.SocialConstant;
 import com.iceeboot.common.constant.SystemConstants;
+import com.iceeboot.common.enums.ResultCodeEnum;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.utils.Md5Utils;
 import com.iceeboot.common.utils.PasswordUtil;
@@ -31,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -99,30 +102,36 @@ public class AuthServiceImpl implements IAuthService {
 
     private static final SecureRandom random = new SecureRandom();
 
+    private static final long REFRESH_TOKEN_CONSUMED_TTL_SECONDS = 60L;
+
+    private static final String REFRESH_TOKEN_CONSUME_SCRIPT = "local v = redis.call('GET', KEYS[1]);"
+            + " if v then redis.call('DEL', KEYS[1]); redis.call('SET', KEYS[2], '1', 'EX', ARGV[1]); return v; end;"
+            + " if redis.call('EXISTS', KEYS[2]) == 1 then return 'CONSUMED'; end;"
+            + " return nil;";
 
     @Override
     public LoginVO login(LoginDTO loginDTO) {
 
         // 参数校验
         if (!StringUtils.hasText(loginDTO.getUsername()) || !StringUtils.hasText(loginDTO.getPassword())) {
-            throw new IceeBootException(ResponseMessage.Auth.USERNAME_OR_PASSWORD_EMPTY);
+            throw new IceeBootException(ResultCodeEnum.BAD_REQUEST.getCode(), ResponseMessage.Auth.USERNAME_OR_PASSWORD_EMPTY);
         }
 
         // 查询用户
         UserDO user = userService.getUserByUsername(loginDTO.getUsername());
         if (user == null) {
-            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
+            throw new IceeBootException(ResultCodeEnum.USER_NOT_EXIST.getCode(), ResultCodeEnum.USER_NOT_EXIST.getMessage());
         }
 
         // 检查用户状态
         if (!SystemConstants.Status.ACTIVE.equals(user.getStatus())) {
-            throw new IceeBootException("用户已被禁用");
+            throw new IceeBootException(ResultCodeEnum.USER_DISABLED.getCode(), ResultCodeEnum.USER_DISABLED.getMessage());
         }
 
 
         // 验证密码
         if (!PasswordUtil.matches(loginDTO.getPassword(), user.getPassword())) {
-            throw new IceeBootException(ResponseMessage.Auth.PASSWORD_ERROR);
+            throw new IceeBootException(ResultCodeEnum.LOGIN_ERROR.getCode(), ResultCodeEnum.LOGIN_ERROR.getMessage());
         }
 
         // 更新最后登录信息
@@ -164,6 +173,8 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public void logout() {
+        Long userId = TokenUtils.getCurrentUserId();
+        revokeUserRefreshToken(userId);
         TokenUtils.logout();
     }
 
@@ -181,29 +192,36 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public LoginVO refresh(String refreshToken) {
         if (!StringUtils.hasText(refreshToken)) {
-            throw new IceeBootException("刷新令牌不能为空");
+            throw new IceeBootException(ResultCodeEnum.BAD_REQUEST.getCode(), "刷新令牌不能为空");
         }
 
-        String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
-        Object cachedUserId = redisTemplate.opsForValue().get(refreshKey);
-        if (cachedUserId == null) {
-            throw new IceeBootException("刷新令牌已失效");
+        String consumeResult = consumeRefreshToken(refreshToken);
+        if (!StringUtils.hasText(consumeResult)) {
+            throw new IceeBootException(ResultCodeEnum.REFRESH_TOKEN_INVALID.getCode(), ResultCodeEnum.REFRESH_TOKEN_INVALID.getMessage());
+        }
+        if ("CONSUMED".equals(consumeResult)) {
+            throw new IceeBootException(ResultCodeEnum.REFRESH_TOKEN_CONSUMED.getCode(), ResultCodeEnum.REFRESH_TOKEN_CONSUMED.getMessage());
         }
 
-        Long userId = Long.valueOf(cachedUserId.toString());
+        Long userId;
+        try {
+            userId = Long.valueOf(consumeResult);
+        } catch (NumberFormatException e) {
+            throw new IceeBootException(ResultCodeEnum.REFRESH_TOKEN_INVALID.getCode(), ResultCodeEnum.REFRESH_TOKEN_INVALID.getMessage());
+        }
+
         UserDO user = userService.getById(userId);
         if (user == null) {
-            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
+            throw new IceeBootException(ResultCodeEnum.USER_NOT_EXIST.getCode(), ResultCodeEnum.USER_NOT_EXIST.getMessage());
         }
         if (!SystemConstants.Status.ACTIVE.equals(user.getStatus())) {
-            throw new IceeBootException("用户已被禁用");
+            throw new IceeBootException(ResultCodeEnum.USER_DISABLED.getCode(), ResultCodeEnum.USER_DISABLED.getMessage());
         }
 
         StpUtil.login(userId);
         String accessToken = StpUtil.getTokenValue();
         String newRefreshToken = generateRefreshToken();
         storeRefreshToken(userId, newRefreshToken);
-        redisTemplate.delete(refreshKey);
 
         SysUserVO userVO = userService.getUserById(user.getId());
 
@@ -561,9 +579,55 @@ public class AuthServiceImpl implements IAuthService {
         return IdUtil.simpleUUID();
     }
 
+    private String consumeRefreshToken(String refreshToken) {
+        DefaultRedisScript<String> script = new DefaultRedisScript<>();
+        script.setResultType(String.class);
+        script.setScriptText(REFRESH_TOKEN_CONSUME_SCRIPT);
+
+        String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
+        String consumedKey = CacheConstants.Auth.REFRESH_TOKEN_CONSUMED + refreshToken;
+
+        Object result = redisTemplate.execute(
+                script,
+                new StringRedisSerializer(),
+                new StringRedisSerializer(),
+                List.of(refreshKey, consumedKey),
+                String.valueOf(REFRESH_TOKEN_CONSUMED_TTL_SECONDS)
+        );
+
+        return result != null ? result.toString() : null;
+    }
+
     private void storeRefreshToken(Long userId, String refreshToken) {
+        String userRefreshKey = getUserRefreshTokenKey(userId);
+        Object oldTokenObj = redisTemplate.opsForValue().get(userRefreshKey);
+        if (oldTokenObj != null) {
+            String oldToken = oldTokenObj.toString();
+            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN + oldToken);
+            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN_CONSUMED + oldToken);
+        }
+
         String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
         redisTemplate.opsForValue().set(refreshKey, userId, refreshTokenExpireSeconds, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(userRefreshKey, refreshToken, refreshTokenExpireSeconds, TimeUnit.SECONDS);
+    }
+
+    private void revokeUserRefreshToken(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        String userRefreshKey = getUserRefreshTokenKey(userId);
+        Object oldTokenObj = redisTemplate.opsForValue().get(userRefreshKey);
+        if (oldTokenObj != null) {
+            String oldToken = oldTokenObj.toString();
+            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN + oldToken);
+            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN_CONSUMED + oldToken);
+        }
+        redisTemplate.delete(userRefreshKey);
+    }
+
+    private String getUserRefreshTokenKey(Long userId) {
+        return CacheConstants.Auth.USER_REFRESH_TOKEN + userId;
     }
 
     public static void main(String[] args) {

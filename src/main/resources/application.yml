@@ -183,3 +183,40 @@ iceeboot:
     max-age: 3600
   auth:
     refresh-token-expire-seconds: 604800
+    exclude-paths:
+      - /v1/auth/test/**
+      - /v1/auth/wechat/auth-url
+      - /v1/auth/wechat/callback
+      - /v1/auth/wechat/exchange-ticket
+      - /v1/saa/**
+      - /v1/chat/ali
+      - /v1/auth/login
+      - /v1/auth/refresh
+      - /v1/auth/register
+      - /v1/auth/wechat/login
+      - /v1/auth/captcha
+      - /health
+      - /doc.html
+      - /swagger-ui/**
+      - /v3/api-docs/**
+      - /webjars/**
+      - /favicon.ico
+      - /error
+      - /iceeboot/api/v1/auth/test/**
+      - /iceeboot/api/v1/auth/wechat/auth-url
+      - /iceeboot/api/v1/auth/wechat/callback
+      - /iceeboot/api/v1/auth/wechat/exchange-ticket
+      - /iceeboot/api/v1/saa/**
+      - /iceeboot/api/v1/chat/ali
+      - /iceeboot/api/v1/auth/login
+      - /iceeboot/api/v1/auth/refresh
+      - /iceeboot/api/v1/auth/register
+      - /iceeboot/api/v1/auth/wechat/login
+      - /iceeboot/api/v1/auth/captcha
+      - /iceeboot/api/health
+      - /iceeboot/api/doc.html
+      - /iceeboot/api/swagger-ui/**
+      - /iceeboot/api/v3/api-docs/**
+      - /iceeboot/api/webjars/**
+      - /iceeboot/api/favicon.ico
+      - /iceeboot/api/error
