@@ -7,7 +7,7 @@ import com.iceeboot.common.service.email.factory.EmailFactory;
 import com.iceeboot.common.service.email.service.EmailService;
 import com.iceeboot.framework.dto.create.email.EmailAttachmentDTO;
 import com.iceeboot.framework.dto.create.email.EmailSendDTO;
-import com.iceeboot.framework.dto.create.email.EmailStatusQueryDTO;
+import com.iceeboot.framework.query.email.EmailStatusQuery;
 import com.iceeboot.framework.service.email.IEmailKeyService;
 import com.iceeboot.framework.service.email.IEmailSendService;
 import com.iceeboot.framework.vo.email.EmailKeyVO;
@@ -37,7 +37,7 @@ public class EmailSendServiceImpl implements IEmailSendService {
     }
 
     @Override
-    public EmailResponse queryStatus(EmailStatusQueryDTO dto) {
+    public EmailResponse queryStatus(EmailStatusQuery dto) {
         if (!StringUtils.hasText(dto.getMessageId())) {
             throw new IceeBootException("消息ID不能为空");
         }

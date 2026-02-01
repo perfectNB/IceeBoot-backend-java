@@ -317,6 +317,42 @@ public class SystemConstants {
     }
 
 
+
+    public static class WorkflowValue {
+        public static final String DEFAULT_BPMN_FILE_NAME = "process.bpmn";
+        public static final String DEFAULT_DELETE_REASON = "手动删除";
+        public static final String DEFAULT_END_REASON = "手动结束流程";
+        public static final String CONTENT_TYPE_PNG = "image/png";
+    }
+
+    public static class WorkflowNodeStatus {
+        public static final String ACTIVE = "active";
+        public static final String COMPLETED = "completed";
+        public static final String PENDING = "pending";
+    }
+
+    public static class WorkflowResponseKey {
+        public static final String ID = "id";
+        public static final String KEY = "key";
+        public static final String NAME = "name";
+        public static final String VERSION = "version";
+        public static final String CATEGORY = "category";
+        public static final String DEPLOYMENT_ID = "deploymentId";
+        public static final String RESOURCE_NAME = "resourceName";
+        public static final String DIAGRAM_RESOURCE_NAME = "diagramResourceName";
+        public static final String TENANT_ID = "tenantId";
+        public static final String DEPLOYMENT_TIME = "deploymentTime";
+        public static final String CONTENT_TYPE = "contentType";
+        public static final String DATA = "data";
+        public static final String TYPE = "type";
+        public static final String X = "x";
+        public static final String Y = "y";
+        public static final String WIDTH = "width";
+        public static final String HEIGHT = "height";
+        public static final String STATUS = "status";
+    }
+
+
     public static class chat {
         /** 大模型 */
         public static final Integer LLMCHAT = 1;

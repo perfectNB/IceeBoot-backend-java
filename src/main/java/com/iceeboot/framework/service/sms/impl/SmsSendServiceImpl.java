@@ -5,9 +5,9 @@ import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.factory.SMSFactory;
 import com.iceeboot.common.service.sms.service.SMSService;
-import com.iceeboot.framework.dto.create.sms.SmsBalanceQueryDTO;
+import com.iceeboot.framework.query.sms.SmsBalanceQuery;
 import com.iceeboot.framework.dto.create.sms.SmsSendDTO;
-import com.iceeboot.framework.dto.create.sms.SmsStatusQueryDTO;
+import com.iceeboot.framework.query.sms.SmsStatusQuery;
 import com.iceeboot.framework.service.sms.ISmsKeyService;
 import com.iceeboot.framework.service.sms.ISmsSendService;
 import com.iceeboot.framework.vo.sms.SmsKeyVO;
@@ -34,7 +34,7 @@ public class SmsSendServiceImpl implements ISmsSendService {
     }
 
     @Override
-    public SMSResponse queryStatus(SmsStatusQueryDTO dto) {
+    public SMSResponse queryStatus(SmsStatusQuery dto) {
         if (!StringUtils.hasText(dto.getMessageId())) {
             throw new IceeBootException("消息ID不能为空");
         }
@@ -49,7 +49,7 @@ public class SmsSendServiceImpl implements ISmsSendService {
     }
 
     @Override
-    public SMSResponse queryBalance(SmsBalanceQueryDTO dto) {
+    public SMSResponse queryBalance(SmsBalanceQuery dto) {
         SmsKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
         SMSService smsService = SMSFactory.getService(key.getSmsProvider());
         SMSRequest request = buildRequest(null, key);

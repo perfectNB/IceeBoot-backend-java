@@ -3,9 +3,9 @@ package com.iceeboot.framework.controller.sms;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
-import com.iceeboot.framework.dto.create.sms.SmsBalanceQueryDTO;
+import com.iceeboot.framework.query.sms.SmsBalanceQuery;
 import com.iceeboot.framework.dto.create.sms.SmsSendDTO;
-import com.iceeboot.framework.dto.create.sms.SmsStatusQueryDTO;
+import com.iceeboot.framework.query.sms.SmsStatusQuery;
 import com.iceeboot.framework.service.sms.ISmsSendService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,7 @@ public class SmsController {
     @Operation(summary = "查询短信状态")
     @PostMapping("/status")
     @RequirePermission(dynamic = true)
-    public R<SMSResponse> queryStatus(@Validated @RequestBody SmsStatusQueryDTO dto) {
+    public R<SMSResponse> queryStatus(@Validated @RequestBody SmsStatusQuery dto) {
         SMSResponse result = smsSendService.queryStatus(dto);
         if (Boolean.TRUE.equals(result.getSuccess())) {
             return R.ok(result);
@@ -45,7 +45,7 @@ public class SmsController {
     @Operation(summary = "查询短信余额")
     @PostMapping("/balance")
     @RequirePermission(dynamic = true)
-    public R<SMSResponse> queryBalance(@Validated @RequestBody SmsBalanceQueryDTO dto) {
+    public R<SMSResponse> queryBalance(@Validated @RequestBody SmsBalanceQuery dto) {
         SMSResponse result = smsSendService.queryBalance(dto);
         if (Boolean.TRUE.equals(result.getSuccess())) {
             return R.ok(result);

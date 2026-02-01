@@ -254,6 +254,32 @@ public class ResponseMessage {
         public static final String PERMISSION_TEST_SUPER_ADMIN = "超级管理员操作";
     }
 
+    public static class WorkflowMessage {
+        public static final String PROCESS_DEFINITION_KEY_EMPTY = "流程定义Key不能为空";
+        public static final String START_PROCESS_FAILED = "启动流程实例失败";
+        public static final String TASK_NOT_EXIST_PREFIX = "任务不存在，任务ID: ";
+        public static final String COMPLETE_TASK_FAILED = "完成任务失败";
+        public static final String TASK_ID_EMPTY = "任务ID不能为空";
+        public static final String QUERY_USER_TASKS_FAILED = "查询用户任务失败";
+        public static final String QUERY_CANDIDATE_TASKS_FAILED = "查询候选任务失败";
+        public static final String PROCESS_FILE_EMPTY = "流程文件不能为空";
+        public static final String DEPLOY_PROCESS_FAILED = "部署流程失败";
+        public static final String PROCESS_DEFINITION_NOT_EXIST = "流程定义不存在";
+        public static final String PROCESS_DEFINITION_RESOURCE_NOT_EXIST = "流程定义资源不存在";
+        public static final String GET_DEFINITION_XML_FAILED = "获取流程定义XML失败";
+        public static final String PROCESS_DEFINITION_DIAGRAM_NOT_EXIST = "流程定义图片不存在";
+        public static final String GET_DEFINITION_DIAGRAM_FAILED = "获取流程定义图失败";
+        public static final String PROCESS_INSTANCE_NOT_EXIST = "流程实例不存在";
+        public static final String QUERY_PROCESS_INSTANCE_FAILED = "查询流程实例失败";
+        public static final String DELETE_PROCESS_INSTANCE_FAILED = "删除流程实例失败";
+        public static final String PROCESS_INSTANCE_ID_EMPTY = "流程实例ID不能为空";
+        public static final String PROCESS_ENDED_CHECK_FAILED = "判断流程是否结束失败";
+        public static final String TARGET_ACTIVITY_ID_EMPTY = "目标节点ID不能为空";
+        public static final String JUMP_TASK_FAILED = "跳转任务失败";
+        public static final String JUMP_TASK_NEED_IMPLEMENT = "跳转功能需要根据具体业务需求实现，任务ID: {}, 目标节点: {}";
+        public static final String END_PROCESS_FAILED = "结束流程失败";
+    }
+
     private ResponseMessage() {
         // 工具类，禁止实例化
     }

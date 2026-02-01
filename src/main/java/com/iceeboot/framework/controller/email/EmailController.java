@@ -4,7 +4,7 @@ import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.service.email.dto.EmailResponse;
 import com.iceeboot.framework.dto.create.email.EmailSendDTO;
-import com.iceeboot.framework.dto.create.email.EmailStatusQueryDTO;
+import com.iceeboot.framework.query.email.EmailStatusQuery;
 import com.iceeboot.framework.service.email.IEmailSendService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +33,7 @@ public class EmailController {
     @Operation(summary = "查询邮件状态")
     @PostMapping("/status")
     @RequirePermission(dynamic = true)
-    public R<EmailResponse> queryStatus(@Validated @RequestBody EmailStatusQueryDTO dto) {
+    public R<EmailResponse> queryStatus(@Validated @RequestBody EmailStatusQuery dto) {
         EmailResponse result = emailSendService.queryStatus(dto);
         if (Boolean.TRUE.equals(result.getSuccess())) {
             return R.ok(result);

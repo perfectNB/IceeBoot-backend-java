@@ -1,5 +1,11 @@
 package com.iceeboot.framework.service.workflow;
 
+import com.iceeboot.framework.dto.create.workflow.ProcessDeployDTO;
+import com.iceeboot.framework.dto.create.workflow.ProcessStartDTO;
+import com.iceeboot.framework.dto.update.workflow.ProcessInstanceDeleteDTO;
+import com.iceeboot.framework.dto.update.workflow.TaskCompleteDTO;
+import com.iceeboot.framework.dto.update.workflow.TaskJumpDTO;
+import com.iceeboot.framework.query.workflow.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 
@@ -33,6 +39,8 @@ public interface IWorkflowService {
      */
     ProcessInstance startProcess(String processDefinitionKey, String businessKey, Map<String, Object> variables);
 
+    ProcessInstance startProcess(ProcessStartDTO dto);
+
     /**
      * 完成任务
      * 
@@ -40,6 +48,8 @@ public interface IWorkflowService {
      * @param variables 任务变量
      */
     void completeTask(String taskId, Map<String, Object> variables);
+
+    void completeTask(TaskCompleteDTO dto);
 
     /**
      * 获取用户任务列表
@@ -57,6 +67,16 @@ public interface IWorkflowService {
      */
     List<Task> getCandidateTasks(String candidateUser);
 
+    List<Map<String, Object>> getDefinitions(ProcessDefinitionQuery query);
+
+    Map<String, Object> deployProcess(ProcessDeployDTO dto);
+
+    String getDefinitionXml(String definitionId);
+
+    Map<String, Object> getDefinitionDiagram(String definitionId);
+
+    List<Map<String, Object>> getDefinitionNodes(String definitionId);
+
     /**
      * 获取流程实例
      * 
@@ -65,6 +85,8 @@ public interface IWorkflowService {
      */
     ProcessInstance getProcessInstance(String processInstanceId);
 
+    List<Map<String, Object>> getProcessInstanceNodes(String processInstanceId);
+
     /**
      * 删除流程实例
      * 
@@ -72,6 +94,8 @@ public interface IWorkflowService {
      * @param deleteReason 删除原因
      */
     void deleteProcessInstance(String processInstanceId, String deleteReason);
+
+    void deleteProcessInstance(ProcessInstanceDeleteDTO dto);
 
     /**
      * 判断流程是否结束
@@ -88,6 +112,8 @@ public interface IWorkflowService {
      * @param targetActivityId 目标节点ID
      */
     void jumpToActivity(String taskId, String targetActivityId);
+
+    void jumpToActivity(TaskJumpDTO dto);
 
     /**
      * 结束流程
