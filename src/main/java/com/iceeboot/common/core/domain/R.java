@@ -267,7 +267,7 @@ public class R<T> implements Serializable {
      * @return 资源未找到消息
      */
     public static <T> R<T> notFound() {
-        return new R<>(NOT_FOUND, "请求的资源不存在");
+        return new R<>(NOT_FOUND, ResponseMessage.Common.NOT_FOUND);
     }
 
     /**

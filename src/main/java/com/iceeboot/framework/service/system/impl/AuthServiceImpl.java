@@ -546,7 +546,7 @@ public class AuthServiceImpl implements IAuthService {
         SysUserVO userVO = userService.getUserById(userId);
         if (userVO == null) {
             log.error("微信扫码登录 - 用户不存在，userId: {}", userId);
-            throw new IceeBootException("用户不存在");
+            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
         }
         
         // 构建返回结果

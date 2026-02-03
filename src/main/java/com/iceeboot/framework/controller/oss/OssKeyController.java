@@ -64,7 +64,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addOssKey(@Validated @RequestBody OssKeyDTO dto) {
         Boolean result = ossKeyService.addOssKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_CREATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.ADD_SUCCESS) : R.fail(ResponseMessage.Common.ADD_FAIL);
     }
 
     @Operation(summary = "更新OSS密钥", description = "更新OSS密钥信息")
@@ -72,7 +72,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateOssKey(@Validated @RequestBody OssKeyUpdateDTO dto) {
         Boolean result = ossKeyService.updateOssKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除OSS密钥")
@@ -80,7 +80,7 @@ public class OssKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteOssKey(@RequestBody List<Long> ids) {
         Boolean result = ossKeyService.deleteOssKey(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_DELETE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
     @Operation(summary = "更新OSS密钥状态")
@@ -91,7 +91,7 @@ public class OssKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = ossKeyService.updateOssKeyStatus(id, status);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_STATUS_UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.STATUS_UPDATE_FAIL);
     }
 
     @Operation(summary = "根据厂商获取激活的密钥列表")

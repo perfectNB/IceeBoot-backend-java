@@ -6,7 +6,6 @@ import com.iceeboot.framework.dto.create.workflow.ProcessDeployDTO;
 import com.iceeboot.framework.dto.create.workflow.ProcessStartDTO;
 import com.iceeboot.framework.dto.update.workflow.ProcessInstanceDeleteDTO;
 import com.iceeboot.framework.dto.update.workflow.TaskCompleteDTO;
-import com.iceeboot.framework.dto.update.workflow.TaskJumpDTO;
 import com.iceeboot.framework.query.workflow.ProcessDefinitionQuery;
 import com.iceeboot.framework.service.workflow.IWorkflowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,6 +81,30 @@ public class WorkflowController {
         return R.ok(tasks);
     }
 
+    @Operation(summary = "获取我的任务列表", description = "获取当前登录用户的任务列表")
+    @GetMapping("/tasks/my")
+    @RequirePermission(dynamic = true)
+    public R<List<Task>> getMyTasks() {
+        List<Task> tasks = workflowService.getMyTasks();
+        return R.ok(tasks);
+    }
+
+    @Operation(summary = "认领任务", description = "认领指定任务")
+    @PostMapping("/task/{taskId}/claim")
+    @RequirePermission(dynamic = true)
+    public R<Void> claimTask(@PathVariable("taskId") String taskId, @RequestParam("userId") String userId) {
+        workflowService.claimTask(taskId, userId);
+        return R.ok();
+    }
+
+    @Operation(summary = "取消认领任务", description = "取消认领指定任务")
+    @PostMapping("/task/{taskId}/unclaim")
+    @RequirePermission(dynamic = true)
+    public R<Void> unclaimTask(@PathVariable("taskId") String taskId) {
+        workflowService.unclaimTask(taskId);
+        return R.ok();
+    }
+
     @Operation(summary = "流程定义列表", description = "获取流程定义列表")
     @GetMapping("/definitions")
     @RequirePermission(dynamic = true)
@@ -96,6 +119,26 @@ public class WorkflowController {
     public R<Map<String, Object>> deployProcess(@ModelAttribute ProcessDeployDTO dto) {
         Map<String, Object> result = workflowService.deployProcess(dto);
         return R.ok(result);
+    }
+
+    @Operation(summary = "更新流程定义", description = "上传BPMN文件更新流程定义")
+    @PutMapping("/definitions/{definitionId}/redeploy")
+    @RequirePermission(dynamic = true)
+    public R<Map<String, Object>> updateProcessDefinition(
+            @PathVariable("definitionId") String definitionId,
+            @ModelAttribute ProcessDeployDTO dto) {
+        Map<String, Object> result = workflowService.updateProcessDefinition(definitionId, dto);
+        return R.ok(result);
+    }
+
+    @Operation(summary = "删除流程定义", description = "删除指定流程定义")
+    @DeleteMapping("/definitions/{definitionId}")
+    @RequirePermission(dynamic = true)
+    public R<Void> deleteProcessDefinition(
+            @PathVariable("definitionId") String definitionId,
+            @RequestParam(value = "cascade", required = false, defaultValue = "false") boolean cascade) {
+        workflowService.deleteProcessDefinition(definitionId, cascade);
+        return R.ok();
     }
 
     @Operation(summary = "获取流程定义XML", description = "获取流程定义的BPMN XML")
@@ -122,9 +165,17 @@ public class WorkflowController {
         return R.ok(nodes);
     }
 
-    /**
-     * 获取流程实例
-     */
+    @Operation(summary = "流程实例列表", description = "根据条件获取流程实例列表")
+    @GetMapping("/process")
+    @RequirePermission(dynamic = true)
+    public R<List<Map<String, Object>>> getProcessInstances(
+            @RequestParam(value = "definitionKey", required = false) String definitionKey,
+            @RequestParam(value = "businessKey", required = false) String businessKey,
+            @RequestParam(value = "includeEnded", required = false) Boolean includeEnded) {
+        List<Map<String, Object>> result = workflowService.getProcessInstances(definitionKey, businessKey, includeEnded);
+        return R.ok(result);
+    }
+
     @Operation(summary = "获取流程实例", description = "根据流程实例ID获取流程实例")
     @GetMapping("/process/{processInstanceId}")
     @RequirePermission(dynamic = true)
@@ -139,6 +190,22 @@ public class WorkflowController {
     public R<List<Map<String, Object>>> getProcessInstanceNodes(@PathVariable("processInstanceId") String processInstanceId) {
         List<Map<String, Object>> nodes = workflowService.getProcessInstanceNodes(processInstanceId);
         return R.ok(nodes);
+    }
+
+    @Operation(summary = "获取流程实例图", description = "获取流程实例的图片Base64（包含高亮节点）")
+    @GetMapping("/process/{processInstanceId}/diagram")
+    @RequirePermission(dynamic = true)
+    public R<Map<String, Object>> getProcessInstanceDiagram(@PathVariable("processInstanceId") String processInstanceId) {
+        Map<String, Object> result = workflowService.getProcessInstanceDiagram(processInstanceId);
+        return R.ok(result);
+    }
+
+    @Operation(summary = "获取流程实例历史", description = "获取流程实例审批历史与意见")
+    @GetMapping("/process/{processInstanceId}/history")
+    @RequirePermission(dynamic = true)
+    public R<List<Map<String, Object>>> getProcessInstanceHistory(@PathVariable("processInstanceId") String processInstanceId) {
+        List<Map<String, Object>> history = workflowService.getProcessInstanceHistory(processInstanceId);
+        return R.ok(history);
     }
 
     /**
@@ -165,21 +232,6 @@ public class WorkflowController {
     public R<Boolean> isProcessEnded(@PathVariable("processInstanceId") String processInstanceId) {
         boolean isEnded = workflowService.isProcessEnded(processInstanceId);
         return R.ok(isEnded);
-    }
-
-    /**
-     * 跳转到指定节点
-     */
-    @Operation(summary = "跳转到指定节点", description = "将任务跳转到指定的活动节点")
-    @PostMapping("/task/{taskId}/jump")
-    @RequirePermission(dynamic = true)
-    public R<Void> jumpToActivity(
-            @PathVariable("taskId") String taskId,
-            @RequestBody TaskJumpDTO dto) {
-        TaskJumpDTO request = dto == null ? new TaskJumpDTO() : dto;
-        request.setTaskId(taskId);
-        workflowService.jumpToActivity(request);
-        return R.ok();
     }
 
     /**

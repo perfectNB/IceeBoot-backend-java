@@ -48,7 +48,7 @@ public class AiAgentController {
     public R<AiAgentVO> addAgent(@Validated @RequestBody AiAgentDTO dto) {
         Boolean result = aiAgentService.addAgent(dto);
         if (result) {
-            return R.ok();
+            return R.ok(ResponseMessage.Ai.CREATE_SUCCESS);
         }
         return R.fail(ResponseMessage.Ai.CREATE_FAIL);
     }
@@ -58,7 +58,7 @@ public class AiAgentController {
     @RequirePermission(dynamic = true)
     public R<Void> updateAgent(@Validated @RequestBody AiAgentUpdateDTO dto) {
         Boolean result = aiAgentService.updateAgent(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Ai.UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除agents")
@@ -66,7 +66,7 @@ public class AiAgentController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteAgent(@RequestBody List<Long> ids) {
         Boolean result = aiAgentService.deleteAgent(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.Ai.DELETE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
     @Operation(summary = "更新代理状态")
@@ -77,9 +77,9 @@ public class AiAgentController {
             @RequestBody Map<String, String> request) {
         Boolean result = aiAgentService.updateAgentStatus(id, request.get("status"));
         if (result) {
-            return R.ok();
+            return R.ok(ResponseMessage.Common.STATUS_UPDATE_SUCCESS);
         }
-        return R.fail(ResponseMessage.Ai.STATUS_UPDATE_FAIL_AI);
+        return R.fail(ResponseMessage.Common.STATUS_UPDATE_FAIL);
     }
 
     @Operation(summary = "根据平台获取代理列表")

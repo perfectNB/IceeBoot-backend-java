@@ -323,6 +323,7 @@ public class SystemConstants {
         public static final String DEFAULT_DELETE_REASON = "手动删除";
         public static final String DEFAULT_END_REASON = "手动结束流程";
         public static final String CONTENT_TYPE_PNG = "image/png";
+        public static final String CONTENT_TYPE_XML = "application/xml";
     }
 
     public static class WorkflowNodeStatus {
@@ -335,13 +336,26 @@ public class SystemConstants {
         public static final String ID = "id";
         public static final String KEY = "key";
         public static final String NAME = "name";
+        public static final String ASSIGNEE = "assignee";
+        public static final String ASSIGNEE_ID = "assigneeId";
+        public static final String ASSIGNEE_NAME = "assigneeName";
         public static final String VERSION = "version";
         public static final String CATEGORY = "category";
         public static final String DEPLOYMENT_ID = "deploymentId";
+        public static final String PROCESS_DEFINITION_ID = "processDefinitionId";
         public static final String RESOURCE_NAME = "resourceName";
         public static final String DIAGRAM_RESOURCE_NAME = "diagramResourceName";
         public static final String TENANT_ID = "tenantId";
         public static final String DEPLOYMENT_TIME = "deploymentTime";
+        public static final String BUSINESS_KEY = "businessKey";
+        public static final String START_TIME = "startTime";
+        public static final String END_TIME = "endTime";
+        public static final String ROLE_CODES = "roleCodes";
+        public static final String USER_ID = "userId";
+        public static final String USER_NAME = "userName";
+        public static final String TIME = "time";
+        public static final String MESSAGE = "message";
+        public static final String COMMENTS = "comments";
         public static final String CONTENT_TYPE = "contentType";
         public static final String DATA = "data";
         public static final String TYPE = "type";

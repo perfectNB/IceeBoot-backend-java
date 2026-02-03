@@ -176,6 +176,104 @@ iceeboot 采用 **Sa-Token** 作为权限认证框架，实现了业界领先的
 - **SQL注入防护**：MyBatis预编译语句，有效防止SQL注入
 - **XSS防护**：输入输出过滤，防止跨站脚本攻击
 
+## 🔄 工作流使用说明
+
+### ✅ 能力清单与接口映射
+- **保存流程**：`POST /v1/workflow/deploy`
+- **修改流程（新版本）**：`PUT /v1/workflow/definitions/{definitionId}/redeploy`
+- **删除流程**：`DELETE /v1/workflow/definitions/{definitionId}?cascade=false`
+- **启动流程**：`POST /v1/workflow/start`
+- **查询流程**：
+  - 流程定义列表：`GET /v1/workflow/definitions`
+  - 流程实例列表：`GET /v1/workflow/process`
+- **审批流程**：`POST /v1/workflow/task/{taskId}/complete`
+- **查询自己任务**：`GET /v1/workflow/tasks/my`
+- **查询流程节点**：
+  - 定义节点（流程设计图）：`GET /v1/workflow/definitions/{definitionId}/nodes`
+  - 实例节点（运行态状态）：`GET /v1/workflow/process/{processInstanceId}/nodes`
+- **查询审批信息**：`GET /v1/workflow/process/{processInstanceId}/history`
+
+### 🔁 流程版本机制
+- 同一流程的 **processDefinitionKey** 不变时，每次重新部署都会自动生成新版本
+- 可通过 `GET /v1/workflow/definitions` 查看每个流程的 `version`
+- 查询最新版本时使用 `latestOnly=true`
+
+### ✅ 支持的流程能力
+- **多流程类型**：通过不同的 `processDefinitionKey` 区分研发合同/行政合同/人力合同等审批流程
+- **多次审批实例**：每次启动流程都会生成独立的流程实例，互不影响
+- **条件路由**：在 BPMN 中使用条件网关，根据变量自动分支（性别、年龄段等）
+- **角色可见性**：在 BPMN 的用户任务配置 `candidateGroups` 为角色编码，仅对应角色可见
+- **文件导入部署**：上传 BPMN 文件即可部署流程定义
+- **动态审批轨迹**：支持流程节点高亮、审批时间、意见、角色与审批人信息
+
+### 📦 部署流程（文件导入）
+- **接口**：`POST /v1/workflow/deploy`
+- **类型**：`multipart/form-data`
+- **字段**：
+  - `file`：BPMN 文件
+  - `name`：流程名称（可选）
+  - `category`：流程分类（可选）
+  - `tenantId`：租户ID（可选）
+
+### 🧹 删除与更新流程定义
+- **删除流程定义**：`DELETE /v1/workflow/definitions/{definitionId}?cascade=false`
+- **更新流程定义（重部署）**：`PUT /v1/workflow/definitions/{definitionId}/redeploy`
+
+### 🧩 审批合同流程示例
+- **研发合同（CEO审批）**
+  - BPMN 用户任务配置：`candidateGroups=role_ceo`
+  - 启动时 `processDefinitionKey=contract_approval_ceo`
+- **技术合同（技术总监审批）**
+  - BPMN 用户任务配置：`candidateGroups=role_cto`
+  - 启动时 `processDefinitionKey=contract_approval_cto`
+- **示例启动**
+```json
+{
+  "processDefinitionKey": "contract_approval_ceo",
+  "businessKey": "CEO-2026-0001",
+  "processInstanceName": "CEO审批-合同A",
+  "variables": {
+    "amount": 120000
+  }
+}
+```
+
+### 🚀 启动流程实例
+- **接口**：`POST /v1/workflow/start`
+- **示例**：
+```json
+{
+  "processDefinitionKey": "contract_approval_rd",
+  "businessKey": "RD-2026-0001",
+  "processInstanceName": "研发合同审批-张三",
+  "variables": {
+    "gender": "male",
+    "age": 28
+  }
+}
+```
+- **条件路由**：在 BPMN 网关中使用 `${gender == 'male'}` 或 `${age >= 21 && age <= 50}` 等表达式
+
+### ✅ 任务查看与审批
+- **我的任务**：`GET /v1/workflow/tasks/my`
+- **完成任务**：`POST /v1/workflow/task/{taskId}/complete`
+- **示例**：
+```json
+{
+  "variables": {
+    "approve": true
+  },
+  "comment": "同意"
+}
+```
+- **角色可见性**：用户角色编码需与 BPMN 用户任务的 `candidateGroups` 一致
+
+### 📈 审批轨迹与高亮
+- **流程图（高亮节点）**：`GET /v1/workflow/process/{processInstanceId}/diagram`
+- **节点坐标与状态**：`GET /v1/workflow/process/{processInstanceId}/nodes`
+- **审批历史与意见**：`GET /v1/workflow/process/{processInstanceId}/history`
+- **历史字段**：审批人、审批角色、审批时间、审批意见、节点状态
+
 ## 🤖 AI大模型集成
 
 iceeboot 紧跟人工智能发展趋势，深度集成了国内外主流AI大模型，为应用提供强大的智能化能力：

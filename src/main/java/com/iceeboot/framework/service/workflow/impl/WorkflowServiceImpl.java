@@ -7,25 +7,30 @@ import com.iceeboot.framework.dto.create.workflow.ProcessDeployDTO;
 import com.iceeboot.framework.dto.create.workflow.ProcessStartDTO;
 import com.iceeboot.framework.dto.update.workflow.ProcessInstanceDeleteDTO;
 import com.iceeboot.framework.dto.update.workflow.TaskCompleteDTO;
-import com.iceeboot.framework.dto.update.workflow.TaskJumpDTO;
 import com.iceeboot.framework.query.workflow.ProcessDefinitionQuery;
 import com.iceeboot.framework.service.workflow.IWorkflowService;
+import com.iceeboot.framework.service.system.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.FlowElement;
+import org.activiti.bpmn.model.FlowNode;
 import org.activiti.bpmn.model.GraphicInfo;
+import org.activiti.bpmn.model.SequenceFlow;
 import org.activiti.engine.HistoryService;
-import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
+import org.activiti.engine.task.Comment;
+import org.activiti.image.ProcessDiagramGenerator;
+import org.activiti.image.impl.DefaultProcessDiagramGenerator;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -37,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 /**
  * 工作流服务实现类
@@ -53,7 +59,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private final TaskService taskService;
     private final HistoryService historyService;
     private final RepositoryService repositoryService;
-    private final ManagementService managementService;
+    private final ISysUserService userService;
 
     @Override
     public ProcessInstance startProcess(String processDefinitionKey, Map<String, Object> variables) {
@@ -85,10 +91,16 @@ public class WorkflowServiceImpl implements IWorkflowService {
         if (dto == null || dto.getProcessDefinitionKey() == null || dto.getProcessDefinitionKey().isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_KEY_EMPTY);
         }
+        ProcessInstance processInstance;
         if (dto.getBusinessKey() != null && !dto.getBusinessKey().isBlank()) {
-            return startProcess(dto.getProcessDefinitionKey(), dto.getBusinessKey(), dto.getVariables());
+            processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getBusinessKey(), dto.getVariables());
+        } else {
+            processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getVariables());
         }
-        return startProcess(dto.getProcessDefinitionKey(), dto.getVariables());
+        if (dto.getProcessInstanceName() != null && !dto.getProcessInstanceName().isBlank()) {
+            runtimeService.setProcessInstanceName(processInstance.getId(), dto.getProcessInstanceName());
+        }
+        return processInstance;
     }
 
     @Override
@@ -112,17 +124,47 @@ public class WorkflowServiceImpl implements IWorkflowService {
         if (dto == null || dto.getTaskId() == null || dto.getTaskId().isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
         }
-        completeTask(dto.getTaskId(), dto.getVariables());
+        completeTask(dto.getTaskId(), dto.getVariables(), dto.getComment());
     }
 
     @Override
     public List<Task> getUserTasks(String assignee) {
         try {
-            List<Task> tasks = taskService.createTaskQuery()
-                    .taskAssignee(assignee)
-                    .orderByTaskCreateTime()
-                    .desc()
-                    .list();
+            Set<String> assigneeCandidates = new HashSet<>();
+            if (assignee != null && !assignee.isBlank()) {
+                assigneeCandidates.add(assignee);
+            }
+            Long assigneeId = parseUserId(assignee);
+            if (assigneeId == null && assignee != null && !assignee.isBlank()) {
+                var assigneeUser = userService.getUserByUsername(assignee);
+                if (assigneeUser != null) {
+                    assigneeId = assigneeUser.getId();
+                    if (assigneeUser.getUsername() != null && !assigneeUser.getUsername().isBlank()) {
+                        assigneeCandidates.add(assigneeUser.getUsername());
+                    }
+                    assigneeCandidates.add(String.valueOf(assigneeUser.getId()));
+                }
+            } else if (assigneeId != null) {
+                var assigneeUser = userService.getById(assigneeId);
+                if (assigneeUser != null && assigneeUser.getUsername() != null && !assigneeUser.getUsername().isBlank()) {
+                    assigneeCandidates.add(assigneeUser.getUsername());
+                }
+            }
+            List<String> roleCodes = assigneeId == null ? List.of() : userService.getUserRoles(assigneeId);
+            var query = taskService.createTaskQuery();
+            if (!assigneeCandidates.isEmpty() || (roleCodes != null && !roleCodes.isEmpty())) {
+                query.or();
+                for (String candidate : assigneeCandidates) {
+                    query.taskAssignee(candidate);
+                }
+                if (roleCodes != null && !roleCodes.isEmpty()) {
+                    query.taskCandidateGroupIn(roleCodes);
+                }
+                query.endOr();
+            } else {
+                query.taskAssignee(assignee);
+            }
+            List<Task> tasks = query.orderByTaskCreateTime().desc().list();
             log.debug("查询用户任务成功，用户: {}, 任务数量: {}", assignee, tasks.size());
             return tasks;
         } catch (Exception e) {
@@ -145,6 +187,75 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.error("查询候选任务失败，候选用户: {}", candidateUser, e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.QUERY_CANDIDATE_TASKS_FAILED, e);
         }
+    }
+
+    @Override
+    public void claimTask(String taskId, String userId) {
+        if (taskId == null || taskId.isBlank()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
+        }
+        if (userId == null || userId.isBlank()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_CLAIM_USER_EMPTY);
+        }
+        try {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if (task == null) {
+                throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
+            }
+            taskService.claim(taskId, userId);
+            log.info("认领任务成功，任务ID: {}, 认领人: {}", taskId, userId);
+        } catch (Exception e) {
+            log.error("认领任务失败，任务ID: {}, 认领人: {}", taskId, userId, e);
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_CLAIM_FAILED, e);
+        }
+    }
+
+    @Override
+    public void unclaimTask(String taskId) {
+        if (taskId == null || taskId.isBlank()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
+        }
+        try {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if (task == null) {
+                throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
+            }
+            taskService.claim(taskId, null);
+            log.info("取消认领任务成功，任务ID: {}", taskId);
+        } catch (Exception e) {
+            log.error("取消认领任务失败，任务ID: {}", taskId, e);
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_UNCLAIM_FAILED, e);
+        }
+    }
+
+    @Override
+    public List<Task> getMyTasks() {
+        Long userId = com.iceeboot.common.utils.TokenUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new IceeBootException(ResponseMessage.Common.UNAUTHORIZED);
+        }
+        var user = userService.getById(userId);
+        if (user == null) {
+            throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
+        }
+        String userIdString = String.valueOf(userId);
+        String username = user.getUsername();
+        List<String> roleCodes = userService.getUserRoles(userId);
+        Map<String, Task> taskMap = new HashMap<>();
+        addTasks(taskMap, taskService.createTaskQuery().taskAssignee(userIdString).list());
+        if (username != null && !username.isBlank()) {
+            addTasks(taskMap, taskService.createTaskQuery().taskAssignee(username).list());
+        }
+        addTasks(taskMap, taskService.createTaskQuery().taskCandidateUser(userIdString).list());
+        if (username != null && !username.isBlank()) {
+            addTasks(taskMap, taskService.createTaskQuery().taskCandidateUser(username).list());
+        }
+        if (roleCodes != null && !roleCodes.isEmpty()) {
+            addTasks(taskMap, taskService.createTaskQuery().taskCandidateGroupIn(roleCodes).list());
+        }
+        return taskMap.values().stream()
+                .sorted(Comparator.comparing(Task::getCreateTime).reversed())
+                .toList();
     }
 
     @Override
@@ -203,6 +314,67 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
+    public Map<String, Object> updateProcessDefinition(String definitionId, ProcessDeployDTO dto) {
+        if (definitionId == null || definitionId.isBlank()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_ID_EMPTY);
+        }
+        if (dto == null || dto.getFile() == null || dto.getFile().isEmpty()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_FILE_EMPTY);
+        }
+        ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionId(definitionId)
+                .singleResult();
+        if (definition == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        try {
+            String fileName = dto.getFile().getOriginalFilename();
+            if (fileName == null || fileName.isBlank()) {
+                fileName = SystemConstants.WorkflowValue.DEFAULT_BPMN_FILE_NAME;
+            }
+            String deployName = dto.getName();
+            if (deployName == null || deployName.isBlank()) {
+                deployName = definition.getName();
+            }
+            String category = dto.getCategory();
+            String tenantId = dto.getTenantId();
+            Deployment deployment = repositoryService.createDeployment()
+                    .name(deployName)
+                    .category(category != null ? category : definition.getCategory())
+                    .tenantId(tenantId != null ? tenantId : definition.getTenantId())
+                    .addInputStream(fileName, dto.getFile().getInputStream())
+                    .deploy();
+            Map<String, Object> result = new HashMap<>();
+            result.put(SystemConstants.WorkflowResponseKey.ID, deployment.getId());
+            result.put(SystemConstants.WorkflowResponseKey.NAME, deployment.getName());
+            result.put(SystemConstants.WorkflowResponseKey.CATEGORY, deployment.getCategory());
+            result.put(SystemConstants.WorkflowResponseKey.TENANT_ID, deployment.getTenantId());
+            result.put(SystemConstants.WorkflowResponseKey.DEPLOYMENT_TIME, deployment.getDeploymentTime());
+            return result;
+        } catch (Exception e) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.UPDATE_PROCESS_DEFINITION_FAILED, e);
+        }
+    }
+
+    @Override
+    public void deleteProcessDefinition(String definitionId, boolean cascade) {
+        if (definitionId == null || definitionId.isBlank()) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_ID_EMPTY);
+        }
+        ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionId(definitionId)
+                .singleResult();
+        if (definition == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        try {
+            repositoryService.deleteDeployment(definition.getDeploymentId(), cascade);
+        } catch (Exception e) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.DELETE_PROCESS_DEFINITION_FAILED, e);
+        }
+    }
+
+    @Override
     public String getDefinitionXml(String definitionId) {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
@@ -225,21 +397,56 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
                 .singleResult();
-        if (definition == null || definition.getDiagramResourceName() == null) {
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_DIAGRAM_NOT_EXIST);
+        if (definition == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
         }
-        try (InputStream inputStream = repositoryService.getResourceAsStream(definition.getDeploymentId(), definition.getDiagramResourceName())) {
-            if (inputStream == null) {
-                throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_DIAGRAM_NOT_EXIST);
+        String diagramResourceName = definition.getDiagramResourceName();
+        if (diagramResourceName != null) {
+            try (InputStream inputStream = repositoryService.getResourceAsStream(definition.getDeploymentId(), diagramResourceName)) {
+                if (inputStream != null) {
+                    return buildContentResult(inputStream, SystemConstants.WorkflowValue.CONTENT_TYPE_PNG);
+                }
+            } catch (Exception e) {
+                log.warn("读取流程定义图片失败，流程定义ID: {}", definitionId, e);
             }
-            String base64 = Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-            Map<String, Object> result = new HashMap<>();
-            result.put(SystemConstants.WorkflowResponseKey.CONTENT_TYPE, SystemConstants.WorkflowValue.CONTENT_TYPE_PNG);
-            result.put(SystemConstants.WorkflowResponseKey.DATA, base64);
-            return result;
+        }
+        try {
+            return generateDiagramResult(definitionId);
         } catch (Exception e) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.GET_DEFINITION_DIAGRAM_FAILED, e);
         }
+    }
+
+    private Map<String, Object> generateDiagramResult(String definitionId) throws Exception {
+        BpmnModel model = repositoryService.getBpmnModel(definitionId);
+        if (model == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        ProcessDiagramGenerator diagramGenerator = new DefaultProcessDiagramGenerator();
+        InputStream diagramStream = diagramGenerator.generateDiagram(
+                model,
+                List.of(),
+                List.of(),
+                "Arial",
+                "Arial",
+                "Arial",
+                false,
+                null
+        );
+        if (diagramStream == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_DIAGRAM_NOT_EXIST);
+        }
+        try (InputStream inputStream = diagramStream) {
+            return buildContentResult(inputStream, SystemConstants.WorkflowValue.CONTENT_TYPE_PNG);
+        }
+    }
+
+    private Map<String, Object> buildContentResult(InputStream inputStream, String contentType) throws Exception {
+        String base64 = Base64.getEncoder().encodeToString(inputStream.readAllBytes());
+        Map<String, Object> result = new HashMap<>();
+        result.put(SystemConstants.WorkflowResponseKey.CONTENT_TYPE, contentType);
+        result.put(SystemConstants.WorkflowResponseKey.DATA, base64);
+        return result;
     }
 
     @Override
@@ -267,6 +474,63 @@ public class WorkflowServiceImpl implements IWorkflowService {
             }
         }
         return nodes;
+    }
+
+    @Override
+    public List<Map<String, Object>> getProcessInstances(String definitionKey, String businessKey, Boolean includeEnded) {
+        try {
+            List<Map<String, Object>> result = new ArrayList<>();
+            var runtimeQuery = runtimeService.createProcessInstanceQuery();
+            if (definitionKey != null && !definitionKey.isBlank()) {
+                runtimeQuery.processDefinitionKey(definitionKey);
+            }
+            if (businessKey != null && !businessKey.isBlank()) {
+                runtimeQuery.processInstanceBusinessKey(businessKey);
+            }
+            List<ProcessInstance> runningInstances = runtimeQuery.orderByProcessInstanceId().desc().list();
+            for (ProcessInstance instance : runningInstances) {
+                Map<String, Object> item = new HashMap<>();
+                item.put(SystemConstants.WorkflowResponseKey.ID, instance.getId());
+                item.put(SystemConstants.WorkflowResponseKey.PROCESS_DEFINITION_ID, instance.getProcessDefinitionId());
+                item.put(SystemConstants.WorkflowResponseKey.KEY, instance.getProcessDefinitionKey());
+                item.put(SystemConstants.WorkflowResponseKey.NAME, instance.getName());
+                item.put(SystemConstants.WorkflowResponseKey.BUSINESS_KEY, instance.getBusinessKey());
+                HistoricProcessInstance historic = historyService.createHistoricProcessInstanceQuery()
+                        .processInstanceId(instance.getId())
+                        .singleResult();
+                if (historic != null) {
+                    item.put(SystemConstants.WorkflowResponseKey.START_TIME, historic.getStartTime());
+                }
+                item.put(SystemConstants.WorkflowResponseKey.STATUS, SystemConstants.WorkflowNodeStatus.ACTIVE);
+                result.add(item);
+            }
+            if (includeEnded != null && includeEnded) {
+                var historyQuery = historyService.createHistoricProcessInstanceQuery().finished();
+                if (definitionKey != null && !definitionKey.isBlank()) {
+                    historyQuery.processDefinitionKey(definitionKey);
+                }
+                if (businessKey != null && !businessKey.isBlank()) {
+                    historyQuery.processInstanceBusinessKey(businessKey);
+                }
+                List<HistoricProcessInstance> finishedInstances = historyQuery.orderByProcessInstanceEndTime().desc().list();
+                for (HistoricProcessInstance instance : finishedInstances) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put(SystemConstants.WorkflowResponseKey.ID, instance.getId());
+                    item.put(SystemConstants.WorkflowResponseKey.PROCESS_DEFINITION_ID, instance.getProcessDefinitionId());
+                    item.put(SystemConstants.WorkflowResponseKey.KEY, instance.getProcessDefinitionKey());
+                    item.put(SystemConstants.WorkflowResponseKey.NAME, instance.getName());
+                    item.put(SystemConstants.WorkflowResponseKey.BUSINESS_KEY, instance.getBusinessKey());
+                    item.put(SystemConstants.WorkflowResponseKey.START_TIME, instance.getStartTime());
+                    item.put(SystemConstants.WorkflowResponseKey.END_TIME, instance.getEndTime());
+                    item.put(SystemConstants.WorkflowResponseKey.STATUS, SystemConstants.WorkflowNodeStatus.COMPLETED);
+                    result.add(item);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("查询流程实例列表失败", e);
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.QUERY_PROCESS_INSTANCES_FAILED, e);
+        }
     }
 
     @Override
@@ -347,6 +611,133 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
+    public Map<String, Object> getProcessInstanceDiagram(String processInstanceId) {
+        String definitionId = null;
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        if (processInstance != null) {
+            definitionId = processInstance.getProcessDefinitionId();
+        } else {
+            HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+            if (historicProcessInstance != null) {
+                definitionId = historicProcessInstance.getProcessDefinitionId();
+            }
+        }
+        if (definitionId == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_INSTANCE_NOT_EXIST);
+        }
+        BpmnModel model = repositoryService.getBpmnModel(definitionId);
+        if (model == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        Set<String> activeIds = new HashSet<>();
+        if (processInstance != null) {
+            activeIds.addAll(runtimeService.getActiveActivityIds(processInstanceId));
+        }
+        List<HistoricActivityInstance> historicActivities = historyService.createHistoricActivityInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .orderByHistoricActivityInstanceStartTime()
+                .asc()
+                .list();
+        Set<String> completedIds = new HashSet<>();
+        for (HistoricActivityInstance historicActivity : historicActivities) {
+            if (historicActivity.getEndTime() != null) {
+                completedIds.add(historicActivity.getActivityId());
+            }
+        }
+        List<String> highlightedActivities = new ArrayList<>(completedIds);
+        highlightedActivities.addAll(activeIds);
+        List<String> highlightedFlows = getHighLightedFlows(model, historicActivities);
+        ProcessDiagramGenerator diagramGenerator = new DefaultProcessDiagramGenerator();
+        InputStream diagramStream = diagramGenerator.generateDiagram(
+                model,
+                highlightedActivities,
+                highlightedFlows,
+                "Arial",
+                "Arial",
+                "Arial",
+                false,
+                null
+        );
+        if (diagramStream == null) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_DIAGRAM_NOT_EXIST);
+        }
+        try (InputStream inputStream = diagramStream) {
+            return buildContentResult(inputStream, SystemConstants.WorkflowValue.CONTENT_TYPE_PNG);
+        } catch (Exception e) {
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.GET_DEFINITION_DIAGRAM_FAILED, e);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getProcessInstanceHistory(String processInstanceId) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        List<org.activiti.engine.history.HistoricTaskInstance> tasks = historyService.createHistoricTaskInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .orderByHistoricTaskInstanceStartTime()
+                .asc()
+                .list();
+        for (org.activiti.engine.history.HistoricTaskInstance task : tasks) {
+            Map<String, Object> item = new HashMap<>();
+            item.put(SystemConstants.WorkflowResponseKey.ID, task.getId());
+            item.put(SystemConstants.WorkflowResponseKey.NAME, task.getName());
+            item.put(SystemConstants.WorkflowResponseKey.ASSIGNEE, task.getAssignee());
+            item.put(SystemConstants.WorkflowResponseKey.START_TIME, task.getStartTime());
+            item.put(SystemConstants.WorkflowResponseKey.END_TIME, task.getEndTime());
+            item.put(SystemConstants.WorkflowResponseKey.STATUS,
+                    task.getEndTime() == null ? SystemConstants.WorkflowNodeStatus.ACTIVE : SystemConstants.WorkflowNodeStatus.COMPLETED);
+            if (task.getAssignee() != null) {
+                Long assigneeId = parseUserId(task.getAssignee());
+                var assigneeUser = assigneeId == null ? userService.getUserByUsername(task.getAssignee()) : userService.getById(assigneeId);
+                if (assigneeUser != null) {
+                    item.put(SystemConstants.WorkflowResponseKey.ASSIGNEE_ID, assigneeUser.getId());
+                    String assigneeName = assigneeUser.getNickname();
+                    if (assigneeName == null || assigneeName.isBlank()) {
+                        assigneeName = assigneeUser.getUsername();
+                    }
+                    item.put(SystemConstants.WorkflowResponseKey.ASSIGNEE_NAME, assigneeName);
+                    item.put(SystemConstants.WorkflowResponseKey.ROLE_CODES, userService.getUserRoles(assigneeUser.getId()));
+                } else if (assigneeId != null) {
+                    item.put(SystemConstants.WorkflowResponseKey.ASSIGNEE_ID, assigneeId);
+                    item.put(SystemConstants.WorkflowResponseKey.ROLE_CODES, userService.getUserRoles(assigneeId));
+                }
+            }
+            List<Comment> comments = taskService.getTaskComments(task.getId());
+            if (comments != null && !comments.isEmpty()) {
+                List<Map<String, Object>> commentList = new ArrayList<>();
+                for (Comment comment : comments) {
+                    Map<String, Object> commentItem = new HashMap<>();
+                    commentItem.put(SystemConstants.WorkflowResponseKey.USER_ID, comment.getUserId());
+                    if (comment.getUserId() != null && !comment.getUserId().isBlank()) {
+                        Long commentUserId = parseUserId(comment.getUserId());
+                        var commentUser = commentUserId == null ? userService.getUserByUsername(comment.getUserId())
+                                : userService.getById(commentUserId);
+                        if (commentUser != null) {
+                            String commentUserName = commentUser.getNickname();
+                            if (commentUserName == null || commentUserName.isBlank()) {
+                                commentUserName = commentUser.getUsername();
+                            }
+                            commentItem.put(SystemConstants.WorkflowResponseKey.USER_NAME, commentUserName);
+                            commentItem.put(SystemConstants.WorkflowResponseKey.ROLE_CODES, userService.getUserRoles(commentUser.getId()));
+                        } else if (commentUserId != null) {
+                            commentItem.put(SystemConstants.WorkflowResponseKey.ROLE_CODES, userService.getUserRoles(commentUserId));
+                        }
+                    }
+                    commentItem.put(SystemConstants.WorkflowResponseKey.TIME, comment.getTime());
+                    commentItem.put(SystemConstants.WorkflowResponseKey.MESSAGE, comment.getFullMessage());
+                    commentList.add(commentItem);
+                }
+                item.put(SystemConstants.WorkflowResponseKey.COMMENTS, commentList);
+            }
+            items.add(item);
+        }
+        return items;
+    }
+
+    @Override
     public void deleteProcessInstance(String processInstanceId, String deleteReason) {
         try {
             runtimeService.deleteProcessInstance(processInstanceId, deleteReason);
@@ -383,40 +774,6 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
-    public void jumpToActivity(String taskId, String targetActivityId) {
-        try {
-            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if (task == null) {
-                throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
-            }
-            
-            // 使用Activiti的跳转功能
-            managementService.executeCommand(context -> {
-                // 这里需要实现具体的跳转逻辑
-                // 由于Activiti的跳转比较复杂，这里提供一个基础框架
-                log.warn(ResponseMessage.WorkflowMessage.JUMP_TASK_NEED_IMPLEMENT, taskId, targetActivityId);
-                return null;
-            });
-            
-            log.info("跳转任务成功，任务ID: {}, 目标节点: {}", taskId, targetActivityId);
-        } catch (Exception e) {
-            log.error("跳转任务失败，任务ID: {}, 目标节点: {}", taskId, targetActivityId, e);
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.JUMP_TASK_FAILED, e);
-        }
-    }
-
-    @Override
-    public void jumpToActivity(TaskJumpDTO dto) {
-        if (dto == null || dto.getTaskId() == null || dto.getTaskId().isBlank()) {
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
-        }
-        if (dto.getTargetActivityId() == null || dto.getTargetActivityId().isBlank()) {
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.TARGET_ACTIVITY_ID_EMPTY);
-        }
-        jumpToActivity(dto.getTaskId(), dto.getTargetActivityId());
-    }
-
-    @Override
     public void endProcess(String processInstanceId) {
         try {
             ProcessInstance processInstance = getProcessInstance(processInstanceId);
@@ -430,5 +787,107 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.error("结束流程失败，流程实例ID: {}", processInstanceId, e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.END_PROCESS_FAILED, e);
         }
+    }
+
+    private void completeTask(String taskId, Map<String, Object> variables, String comment) {
+        try {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if (task == null) {
+                throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
+            }
+            if (comment != null && !comment.isBlank()) {
+                String authenticatedUser = null;
+                Long currentUserId = com.iceeboot.common.utils.TokenUtils.getCurrentUserId();
+                if (currentUserId != null) {
+                    authenticatedUser = String.valueOf(currentUserId);
+                } else if (task.getAssignee() != null && !task.getAssignee().isBlank()) {
+                    authenticatedUser = task.getAssignee();
+                }
+                if (authenticatedUser != null) {
+                    Authentication.setAuthenticatedUserId(authenticatedUser);
+                }
+                try {
+                    taskService.addComment(taskId, task.getProcessInstanceId(), comment);
+                } finally {
+                    Authentication.setAuthenticatedUserId(null);
+                }
+            }
+            taskService.complete(taskId, variables);
+            log.info("完成任务成功，任务ID: {}, 任务名称: {}", taskId, task.getName());
+        } catch (Exception e) {
+            log.error("完成任务失败，任务ID: {}", taskId, e);
+            throw new IceeBootException(ResponseMessage.WorkflowMessage.COMPLETE_TASK_FAILED, e);
+        }
+    }
+
+    private void addTasks(Map<String, Task> taskMap, List<Task> tasks) {
+        if (tasks == null || tasks.isEmpty()) {
+            return;
+        }
+        for (Task task : tasks) {
+            taskMap.putIfAbsent(task.getId(), task);
+        }
+    }
+
+    private Long parseUserId(String value) {
+        try {
+            return Long.valueOf(value);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private List<String> getHighLightedFlows(BpmnModel model, List<HistoricActivityInstance> historicActivityInstances) {
+        List<String> highFlows = new ArrayList<>();
+        if (historicActivityInstances == null || historicActivityInstances.isEmpty()) {
+            return highFlows;
+        }
+        for (int i = 0; i < historicActivityInstances.size() - 1; i++) {
+            HistoricActivityInstance current = historicActivityInstances.get(i);
+            FlowNode currentNode = getFlowNode(model, current.getActivityId());
+            if (currentNode == null) {
+                continue;
+            }
+            List<SequenceFlow> outgoingFlows = currentNode.getOutgoingFlows();
+            if (outgoingFlows == null || outgoingFlows.isEmpty()) {
+                continue;
+            }
+            List<HistoricActivityInstance> sameStartTimeNodes = new ArrayList<>();
+            HistoricActivityInstance nextNode = historicActivityInstances.get(i + 1);
+            sameStartTimeNodes.add(nextNode);
+            for (int j = i + 1; j < historicActivityInstances.size() - 1; j++) {
+                HistoricActivityInstance node1 = historicActivityInstances.get(j);
+                HistoricActivityInstance node2 = historicActivityInstances.get(j + 1);
+                if (node1.getStartTime() != null && node2.getStartTime() != null
+                        && node1.getStartTime().equals(node2.getStartTime())) {
+                    sameStartTimeNodes.add(node2);
+                } else {
+                    break;
+                }
+            }
+            for (SequenceFlow sequenceFlow : outgoingFlows) {
+                String targetRef = sequenceFlow.getTargetRef();
+                for (HistoricActivityInstance candidate : sameStartTimeNodes) {
+                    if (candidate.getActivityId().equals(targetRef)) {
+                        highFlows.add(sequenceFlow.getId());
+                        break;
+                    }
+                }
+            }
+        }
+        return highFlows;
+    }
+
+    private FlowNode getFlowNode(BpmnModel model, String activityId) {
+        if (model == null || activityId == null) {
+            return null;
+        }
+        for (org.activiti.bpmn.model.Process process : model.getProcesses()) {
+            FlowElement element = process.getFlowElement(activityId, true);
+            if (element instanceof FlowNode flowNode) {
+                return flowNode;
+            }
+        }
+        return null;
     }
 }

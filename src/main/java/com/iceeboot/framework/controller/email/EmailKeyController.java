@@ -64,7 +64,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> addEmailKey(@Validated @RequestBody EmailKeyDTO dto) {
         Boolean result = emailKeyService.addEmailKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Email.EMAIL_CREATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.ADD_SUCCESS) : R.fail(ResponseMessage.Common.ADD_FAIL);
     }
 
     @Operation(summary = "更新Email密钥", description = "更新Email密钥信息")
@@ -72,7 +72,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> updateEmailKey(@Validated @RequestBody EmailKeyUpdateDTO dto) {
         Boolean result = emailKeyService.updateEmailKey(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Email.EMAIL_UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除Email密钥")
@@ -80,7 +80,7 @@ public class EmailKeyController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteEmailKey(@RequestBody List<Long> ids) {
         Boolean result = emailKeyService.deleteEmailKey(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.Email.EMAIL_DELETE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
     @Operation(summary = "更新Email密钥状态")
@@ -91,7 +91,7 @@ public class EmailKeyController {
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
         Boolean result = emailKeyService.updateEmailKeyStatus(id, status);
-        return result ? R.ok() : R.fail(ResponseMessage.Email.EMAIL_STATUS_UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.STATUS_UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.STATUS_UPDATE_FAIL);
     }
 
     @Operation(summary = "根据厂商获取激活的密钥列表")

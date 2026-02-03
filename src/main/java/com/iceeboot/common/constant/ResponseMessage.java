@@ -12,20 +12,24 @@ public class ResponseMessage {
     public static class Common {
         public static final String SUCCESS = "操作成功";
         public static final String FAIL = "操作失败";
+        public static final String ADD_SUCCESS = "新增成功";
+        public static final String ADD_FAIL = "新增失败";
+        public static final String UPDATE_SUCCESS = "更新成功";
+        public static final String UPDATE_FAIL = "更新失败";
+        public static final String DELETE_SUCCESS = "删除成功";
+        public static final String DELETE_FAIL = "删除失败";
+        public static final String STATUS_UPDATE_SUCCESS = "状态更新成功";
+        public static final String STATUS_UPDATE_FAIL = "状态更新失败";
         public static final String SYSTEM_ERROR = "系统异常，请联系管理员";
-        public static final String SYSTEM_WELCOME = "谢谢您使用iceeboot超级脚手架";
         public static final String BAD_REQUEST = "请求参数错误";
         public static final String UNAUTHORIZED = "认证失败，无法访问系统资源";
         public static final String FORBIDDEN = "没有访问权限，请联系管理员授权";
         public static final String NOT_FOUND = "请求资源不存在";
         public static final String METHOD_NOT_ALLOWED = "请求方法不允许";
-        public static final String RATE_LIMIE = "您请求的太快了，请等一下哦！";
+        public static final String RATE_LIMIT = "您请求的太快了，请等一下哦！";
     }
 
     public static class Auth {
-        public static final String PASSWORD_ERROR = "密码错误";
-        public static final String LOGIN_ERROR = "用户名或密码错误";
-        public static final String AUTH_FAIL = "认证失败";
         public static final String USER_NOT_EXIST = "用户不存在";
         public static final String USERNAME_OR_PASSWORD_EMPTY = "用户名或密码不能为空";
     }
@@ -77,11 +81,6 @@ public class ResponseMessage {
     public static class Ai {
         public static final String CREATE_SUCCESS = "创建成功";
         public static final String CREATE_FAIL = "创建失败";
-        public static final String UPDATE_SUCCESS = "更新成功";
-        public static final String UPDATE_FAIL = "更新失败";
-        public static final String DELETE_SUCCESS = "删除成功";
-        public static final String DELETE_FAIL = "删除失败";
-        public static final String STATUS_UPDATE_FAIL_AI = "状态更新失败";
     }
 
     public static class Task {
@@ -136,53 +135,10 @@ public class ResponseMessage {
         public static final String MESSAGE_DELETE_FAIL = "消息删除失败";
     }
 
-    public static class Oss {
-        public static final String OSS_CREATE_SUCCESS = "新增成功";
-        public static final String OSS_CREATE_FAIL = "新增失败";
-        public static final String OSS_UPDATE_SUCCESS = "更新成功";
-        public static final String OSS_UPDATE_FAIL = "更新失败";
-        public static final String OSS_DELETE_SUCCESS = "删除成功";
-        public static final String OSS_DELETE_FAIL = "删除失败";
-        public static final String OSS_STATUS_UPDATE_SUCCESS = "状态更新成功";
-        public static final String OSS_STATUS_UPDATE_FAIL = "状态更新失败";
-    }
-
-    public static class Email {
-        public static final String EMAIL_CREATE_SUCCESS = "新增成功";
-        public static final String EMAIL_CREATE_FAIL = "新增失败";
-        public static final String EMAIL_UPDATE_SUCCESS = "更新成功";
-        public static final String EMAIL_UPDATE_FAIL = "更新失败";
-        public static final String EMAIL_DELETE_SUCCESS = "删除成功";
-        public static final String EMAIL_DELETE_FAIL = "删除失败";
-        public static final String EMAIL_STATUS_UPDATE_SUCCESS = "状态更新成功";
-        public static final String EMAIL_STATUS_UPDATE_FAIL = "状态更新失败";
-    }
-
-    public static class Sms {
-        public static final String SMS_CREATE_SUCCESS = "新增成功";
-        public static final String SMS_CREATE_FAIL = "新增失败";
-        public static final String SMS_UPDATE_SUCCESS = "更新成功";
-        public static final String SMS_UPDATE_FAIL = "更新失败";
-        public static final String SMS_DELETE_SUCCESS = "删除成功";
-        public static final String SMS_DELETE_FAIL = "删除失败";
-        public static final String SMS_STATUS_UPDATE_SUCCESS = "状态更新成功";
-        public static final String SMS_STATUS_UPDATE_FAIL = "状态更新失败";
-    }
-
     public static class AiChat {
         public static final String AI_CHAT_CONTENT_EMPTY = "对话内容不能为空";
     }
 
-    public static class AiLlm {
-        public static final String AI_LLM_CREATE_SUCCESS = "新增成功";
-        public static final String AI_LLM_CREATE_FAIL = "新增失败";
-        public static final String AI_LLM_UPDATE_SUCCESS = "更新成功";
-        public static final String AI_LLM_UPDATE_FAIL = "更新失败";
-        public static final String AI_LLM_DELETE_SUCCESS = "删除成功";
-        public static final String AI_LLM_DELETE_FAIL = "删除失败";
-        public static final String AI_LLM_STATUS_UPDATE_SUCCESS = "状态更新成功";
-        public static final String AI_LLM_STATUS_UPDATE_FAIL = "状态更新失败";
-    }
 
     public static class RolePermission {
         public static final String ROLE_PERMISSION_CREATE_SUCCESS = "新增角色权限关联成功";
@@ -236,34 +192,21 @@ public class ResponseMessage {
         public static final String USER_ROLE_RELATION_DELETE_FAIL = "删除用户角色关联失败";
     }
 
-    public static class Log {
-        public static final String LOG_DELETE_SUCCESS = "删除成功";
-        public static final String LOG_DELETE_FAIL = "删除失败";
-    }
-
-    public static class PermissionTest {
-        public static final String PERMISSION_TEST_PUBLIC = "这是一个公开接口，无需权限验证";
-        public static final String PERMISSION_TEST_USER_VIEW = "您有用户查看权限，可以访问此接口";
-        public static final String PERMISSION_TEST_USER_MANAGE = "您有用户管理权限，可以访问此接口";
-        public static final String PERMISSION_TEST_USER_FULL = "您有完整的用户权限，可以访问此接口";
-        public static final String PERMISSION_TEST_ADMIN = "您有管理员权限，可以访问此接口";
-        public static final String PERMISSION_TEST_DYNAMIC = "通过动态权限验证，可以访问此接口";
-        public static final String PERMISSION_TEST_PURE_DYNAMIC = "通过纯动态权限验证";
-        public static final String PERMISSION_TEST_SYSTEM_CONFIG = "系统配置信息";
-        public static final String PERMISSION_TEST_SYSTEM_MONITOR = "系统监控信息";
-        public static final String PERMISSION_TEST_SUPER_ADMIN = "超级管理员操作";
-    }
 
     public static class WorkflowMessage {
         public static final String PROCESS_DEFINITION_KEY_EMPTY = "流程定义Key不能为空";
+        public static final String PROCESS_DEFINITION_ID_EMPTY = "流程定义ID不能为空";
         public static final String START_PROCESS_FAILED = "启动流程实例失败";
         public static final String TASK_NOT_EXIST_PREFIX = "任务不存在，任务ID: ";
         public static final String COMPLETE_TASK_FAILED = "完成任务失败";
         public static final String TASK_ID_EMPTY = "任务ID不能为空";
+        public static final String TASK_CLAIM_USER_EMPTY = "认领用户不能为空";
         public static final String QUERY_USER_TASKS_FAILED = "查询用户任务失败";
         public static final String QUERY_CANDIDATE_TASKS_FAILED = "查询候选任务失败";
         public static final String PROCESS_FILE_EMPTY = "流程文件不能为空";
         public static final String DEPLOY_PROCESS_FAILED = "部署流程失败";
+        public static final String UPDATE_PROCESS_DEFINITION_FAILED = "更新流程定义失败";
+        public static final String DELETE_PROCESS_DEFINITION_FAILED = "删除流程定义失败";
         public static final String PROCESS_DEFINITION_NOT_EXIST = "流程定义不存在";
         public static final String PROCESS_DEFINITION_RESOURCE_NOT_EXIST = "流程定义资源不存在";
         public static final String GET_DEFINITION_XML_FAILED = "获取流程定义XML失败";
@@ -271,12 +214,15 @@ public class ResponseMessage {
         public static final String GET_DEFINITION_DIAGRAM_FAILED = "获取流程定义图失败";
         public static final String PROCESS_INSTANCE_NOT_EXIST = "流程实例不存在";
         public static final String QUERY_PROCESS_INSTANCE_FAILED = "查询流程实例失败";
+        public static final String QUERY_PROCESS_INSTANCES_FAILED = "查询流程实例列表失败";
         public static final String DELETE_PROCESS_INSTANCE_FAILED = "删除流程实例失败";
         public static final String PROCESS_INSTANCE_ID_EMPTY = "流程实例ID不能为空";
         public static final String PROCESS_ENDED_CHECK_FAILED = "判断流程是否结束失败";
         public static final String TARGET_ACTIVITY_ID_EMPTY = "目标节点ID不能为空";
         public static final String JUMP_TASK_FAILED = "跳转任务失败";
         public static final String JUMP_TASK_NEED_IMPLEMENT = "跳转功能需要根据具体业务需求实现，任务ID: {}, 目标节点: {}";
+        public static final String TASK_CLAIM_FAILED = "认领任务失败";
+        public static final String TASK_UNCLAIM_FAILED = "取消认领任务失败";
         public static final String END_PROCESS_FAILED = "结束流程失败";
     }
 
