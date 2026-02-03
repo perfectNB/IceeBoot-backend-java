@@ -4,7 +4,6 @@ import com.iceeboot.framework.dto.create.workflow.ProcessDeployDTO;
 import com.iceeboot.framework.dto.create.workflow.ProcessStartDTO;
 import com.iceeboot.framework.dto.update.workflow.ProcessInstanceDeleteDTO;
 import com.iceeboot.framework.dto.update.workflow.TaskCompleteDTO;
-import com.iceeboot.framework.dto.update.workflow.TaskJumpDTO;
 import com.iceeboot.framework.query.workflow.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -67,15 +66,27 @@ public interface IWorkflowService {
      */
     List<Task> getCandidateTasks(String candidateUser);
 
+    void claimTask(String taskId, String userId);
+
+    void unclaimTask(String taskId);
+
+    List<Task> getMyTasks();
+
     List<Map<String, Object>> getDefinitions(ProcessDefinitionQuery query);
 
     Map<String, Object> deployProcess(ProcessDeployDTO dto);
+
+    Map<String, Object> updateProcessDefinition(String definitionId, ProcessDeployDTO dto);
+
+    void deleteProcessDefinition(String definitionId, boolean cascade);
 
     String getDefinitionXml(String definitionId);
 
     Map<String, Object> getDefinitionDiagram(String definitionId);
 
     List<Map<String, Object>> getDefinitionNodes(String definitionId);
+
+    List<Map<String, Object>> getProcessInstances(String definitionKey, String businessKey, Boolean includeEnded);
 
     /**
      * 获取流程实例
@@ -86,6 +97,10 @@ public interface IWorkflowService {
     ProcessInstance getProcessInstance(String processInstanceId);
 
     List<Map<String, Object>> getProcessInstanceNodes(String processInstanceId);
+
+    Map<String, Object> getProcessInstanceDiagram(String processInstanceId);
+
+    List<Map<String, Object>> getProcessInstanceHistory(String processInstanceId);
 
     /**
      * 删除流程实例
@@ -104,16 +119,6 @@ public interface IWorkflowService {
      * @return 是否结束
      */
     boolean isProcessEnded(String processInstanceId);
-
-    /**
-     * 跳转到指定节点
-     * 
-     * @param taskId 当前任务ID
-     * @param targetActivityId 目标节点ID
-     */
-    void jumpToActivity(String taskId, String targetActivityId);
-
-    void jumpToActivity(TaskJumpDTO dto);
 
     /**
      * 结束流程

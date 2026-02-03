@@ -18,6 +18,9 @@ public class ProcessStartDTO {
     @Schema(description = "业务Key")
     private String businessKey;
 
+    @Schema(description = "流程实例名称")
+    private String processInstanceName;
+
     @Schema(description = "流程变量")
     private Map<String, Object> variables;
 }

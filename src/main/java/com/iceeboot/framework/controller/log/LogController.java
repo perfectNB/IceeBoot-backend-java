@@ -43,7 +43,7 @@ public class LogController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteLogs(@RequestBody List<String> ids) {
         boolean success = logService.deleteLogs(ids);
-        return success ? R.ok(ResponseMessage.Log.LOG_DELETE_SUCCESS) : R.fail(ResponseMessage.Log.LOG_DELETE_FAIL);
+        return success ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
 

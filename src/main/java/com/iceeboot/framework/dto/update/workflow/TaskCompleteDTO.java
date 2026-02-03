@@ -13,4 +13,7 @@ public class TaskCompleteDTO {
 
     @Schema(description = "任务变量")
     private Map<String, Object> variables;
+
+    @Schema(description = "审批意见")
+    private String comment;
 }

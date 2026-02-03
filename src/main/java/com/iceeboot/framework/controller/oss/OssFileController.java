@@ -58,7 +58,7 @@ public class OssFileController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteFile(@RequestBody List<Long> ids) {
         Boolean result = ossFileService.deleteFile(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_DELETE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
     @Operation(summary = "上传文件")
@@ -148,7 +148,7 @@ public class OssFileController {
     @RequirePermission(dynamic = true)
     public R<Void> addBucket(@Validated @RequestBody OssBucketDTO dto) {
         Boolean result = ossBucketService.addBucket(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_CREATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.ADD_SUCCESS) : R.fail(ResponseMessage.Common.ADD_FAIL);
     }
 
     @Operation(summary = "更新存储桶")
@@ -156,7 +156,7 @@ public class OssFileController {
     @RequirePermission(dynamic = true)
     public R<Void> updateBucket(@Validated @RequestBody OssBucketUpdateDTO dto) {
         Boolean result = ossBucketService.updateBucket(dto);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_UPDATE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.UPDATE_SUCCESS) : R.fail(ResponseMessage.Common.UPDATE_FAIL);
     }
 
     @Operation(summary = "删除存储桶")
@@ -164,7 +164,7 @@ public class OssFileController {
     @RequirePermission(dynamic = true)
     public R<Void> deleteBucket(@RequestBody List<Long> ids) {
         Boolean result = ossBucketService.deleteBucket(ids);
-        return result ? R.ok() : R.fail(ResponseMessage.Oss.OSS_DELETE_FAIL);
+        return result ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
     }
 
 }

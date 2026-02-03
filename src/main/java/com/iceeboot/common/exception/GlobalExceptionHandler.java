@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
         String requestURI = request.getRequestURI();
         log.warn("请求地址'{}',触发限流: {}, 限制: {}/{} 秒, 当前: {} 次", 
             requestURI, e.getMessage(), e.getLimitCount(), e.getTimeWindow(), e.getCurrentCount());
-        return R.fail(ResponseMessage.Common.RATE_LIMIE);
+        return R.fail(ResponseMessage.Common.RATE_LIMIT);
     }
 
     /**
