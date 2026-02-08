@@ -38,7 +38,7 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       username: ${REDIS_USERNAME:default}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:111111}
       database: ${REDIS_DATABASE:0}
       timeout: 10000
       lettuce:
@@ -85,7 +85,7 @@ spring:
       chat:
         model: qwen3:8b
     dashscope:
-      api-key: sk-
+      api-key: ${API_KEY}
       embedding:
         options:
           model: text-embedding-v3
@@ -98,20 +98,20 @@ spring:
         index-name: iceeboot-index
         prefix: iceeboot-prefix
     mcp:
-      ## 如果没有mcp服务，则注掉下面的配置
-      server:
-        type: async
-        name: iceeboot-define-mcp-server
-        version: 1.0.0
-      client:
-        type: async
-        request-timeout: 120
-        toolcallback:
-          enabled: true
-        sse:
-          connections:
-            mcp-server1:
-              url: http://localhost:8014
+    ## 如果没有mcp服务，则注掉下面的配置
+#      server:
+#        type: async
+#        name: iceeboot-define-mcp-server
+#        version: 1.0.0
+#      client:
+#        type: async
+#        request-timeout: 120
+#        toolcallback:
+#          enabled: true
+#        sse:
+#          connections:
+#            mcp-server1:
+#              url: http://localhost:8014
 
 # 日志配置
 logging:
@@ -178,12 +178,12 @@ knife4j:
   production: false
 
 YunGouOS:
-  mchId: xxx
-  key: xxx
+  mchId: ${YUN_GOU_OS_MCH_ID:111111}
+  key: ${YUN_GOU_OS_KEY:1111111111111111111}
   ## 支付回掉
   notifyUrl: http://127.0.0.1:9001/iceeboot/api/v1/pay/callback
   ## 前端地址（微信授权后重定向到前端）
-  frontendUrl: http://127.0.0.1:5137
+  frontendUrl: http://127.0.0.1:5173
   ## 微信OAuth回调地址（后端接口，由微信服务器调用）
   wechatCallbackUrl: http://127.0.0.1:9001/iceeboot/api/v1/auth/wechat/callback
   ## State密钥（用于生成state参数，防CSRF攻击）

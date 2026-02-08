@@ -23,7 +23,7 @@ spring:
   application:
     name: iceeboot-backend-java
   profiles:
-    active: ${APP_PROFILE:local}
+    active: ${APP_PROFILE:test}
   main:
     allow-bean-definition-overriding: true
   # 优雅关闭超时时间
@@ -176,17 +176,21 @@ iceeboot:
       - /v3/api-docs/**
       - /knife4j/**
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:5137
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
     allowed-headers: "*"
     allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
     allow-credentials: true
     max-age: 3600
   auth:
     refresh-token-expire-seconds: 604800
+    wechat-default-role-id: 3
     exclude-paths:
       - /v1/auth/test/**
       - /v1/auth/wechat/auth-url
+      - /v1/auth/wechat/innerQrCodeInfo-url
       - /v1/auth/wechat/callback
+      - /v1/auth/wechat/check/**
+      - /v1/auth/wechat/qr/**
       - /v1/auth/wechat/exchange-ticket
       - /v1/saa/**
       - /v1/chat/ali
@@ -206,6 +210,7 @@ iceeboot:
       - /iceeboot/api/v1/auth/wechat/auth-url
       - /iceeboot/api/v1/auth/wechat/callback
       - /iceeboot/api/v1/auth/wechat/exchange-ticket
+      - /iceeboot/api/v1/auth/wechat/innerQrCodeInfo-url
       - /iceeboot/api/v1/saa/**
       - /iceeboot/api/v1/chat/ali
       - /iceeboot/api/v1/auth/login

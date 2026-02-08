@@ -1,7 +1,6 @@
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RequirePermission;
-import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.system.LoginDTO;
 import com.iceeboot.framework.service.system.IAuthService;
@@ -14,7 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
 
-import java.io.UnsupportedEncodingException;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Map;
 
 /**
@@ -31,23 +32,6 @@ public class AuthController {
 
 
     private final IAuthService authService;
-
-
-    @Operation(summary = "test1", description = "test")
-    @GetMapping("/test1")
-    @RequirePermission(dynamic = true)
-    public R<LoginVO> test1() {
-
-        return R.ok("");
-    }
-
-    @Operation(summary = "test2", description = "test")
-    @GetMapping("/test2")
-    @RequirePermission(dynamic = true)
-    public R<LoginVO> test2() {
-
-        return R.ok("谢谢您使用iceeboot超级脚手架");
-    }
 
 
     @Operation(summary = "用户登录", description = "用户名密码登录")
@@ -98,13 +82,26 @@ public class AuthController {
         return R.ok(authUrl);
     }
 
+
+    @Operation(summary = "获取微信扫码登录二维码", description = "返回微信二维码")
+    @GetMapping({"/wechat/qr", "/wechat/innerQrCodeInfo-url"})
+    public R<Object> getWechatQr() {
+        return R.ok(authService.getWechatQr());
+    }
+
     @Operation(summary = "微信OAuth回调接口", description = "由微信服务器调用，处理授权码并重定向到前端")
     @GetMapping("/wechat/callback")
-    public String handleWechatCallback(
+    public void handleWechatCallback(
             @RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "state", required = false) String state) throws UnsupportedEncodingException {
-        String redirectUrl = authService.handleWechatCallback(code, state);
-        return "redirect:" + redirectUrl;
+            @RequestParam(name = "state", required = false) String state,
+            HttpServletResponse response) throws IOException {
+        try {
+            String redirectUrl = authService.handleWechatCallback(code, state);
+            response.sendRedirect(redirectUrl);
+        } catch (Exception e) {
+            String fallbackUrl = "http://127.0.0.1:5173/?error=" + URLEncoder.encode("微信回调处理失败", "UTF-8");
+            response.sendRedirect(fallbackUrl);
+        }
     }
 
     @Operation(summary = "使用ticket换取登录信息", description = "前端使用ticket换取accessToken和用户信息")
@@ -115,11 +112,9 @@ public class AuthController {
     }
 
     @Operation(summary = "检查登录状态", description = "检查当前用户是否已登录")
-    @GetMapping("/check")
-    @RequirePermission(dynamic = true)
-    public R<Boolean> checkLogin() {
-        boolean isLogin = authService.checkLogin();
-        return R.ok(isLogin);
+    @GetMapping("/wechat/check/{code}")
+    public R<Map<String, Object>> checkLogin(@PathVariable("code") String code) {
+        return R.ok(authService.checkLogin(code));
     }
 
 
