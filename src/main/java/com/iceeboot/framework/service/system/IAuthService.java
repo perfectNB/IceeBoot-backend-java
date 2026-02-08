@@ -11,6 +11,7 @@ import com.iceeboot.framework.vo.system.LoginVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 /**
  * 认证服务接口
@@ -55,6 +56,14 @@ public interface IAuthService {
      */
     String getWechatAuthUrl();
 
+
+    /**
+     * 获取微信登录二维码
+     *
+     * @return 获取微信登录二维码
+     */
+    Object getWechatQr();
+
     /**
      * 微信OAuth回调处理（由微信服务器调用）
      *
@@ -77,5 +86,5 @@ public interface IAuthService {
      *
      * @return 是否已登录
      */
-    boolean checkLogin();
+    Map<String, Object> checkLogin(String code);
 }

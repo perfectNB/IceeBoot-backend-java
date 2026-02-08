@@ -19,7 +19,6 @@ import com.iceeboot.common.utils.Md5Utils;
 import com.iceeboot.common.utils.PasswordUtil;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.dto.create.system.LoginDTO;
-import com.iceeboot.framework.entity.system.RoleDO;
 import com.iceeboot.framework.entity.system.SocialDO;
 import com.iceeboot.framework.entity.system.UserDO;
 import com.iceeboot.framework.entity.system.UserRoleDO;
@@ -27,6 +26,7 @@ import com.iceeboot.framework.service.system.*;
 import com.iceeboot.framework.vo.system.LoginVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.entity.WxOauthInfo;
+import com.yungouos.pay.entity.WxWebLoginBiz;
 import com.yungouos.pay.wxapi.WxApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,6 +83,12 @@ public class AuthServiceImpl implements IAuthService {
     @Value("${iceeboot.auth.refresh-token-expire-seconds:604800}")
     private Long refreshTokenExpireSeconds;
 
+    @Value("${iceeboot.auth.wechat-default-role-id:3}")
+    private Long wechatDefaultRoleId;
+
+    @Value("${spring.profiles.active:test}")
+    private String activeProfile;
+
     @Autowired
     private ISysUserService userService;
 
@@ -92,9 +100,6 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private ISysRoleService iSysRoleService;
 
     private static final Integer TYPE = SocialConstant.SOCIAL_TYPE_WECHAT;
 
@@ -178,10 +183,7 @@ public class AuthServiceImpl implements IAuthService {
         TokenUtils.logout();
     }
 
-    @Override
-    public boolean checkLogin() {
-        return TokenUtils.isLogin();
-    }
+
 
     @Override
     public SysUserVO getCurrentUser() {
@@ -253,7 +255,25 @@ public class AuthServiceImpl implements IAuthService {
         log.info("微信扫码登录 - 授权URL生成成功");
         return authUrl;
     }
-    
+
+    @Override
+    public Object getWechatQr() {
+        JSONObject params = new JSONObject();
+        WxWebLoginBiz loginBiz = WxApi.getWebLogin(
+                mchId,
+                wechatCallbackUrl,
+                params,
+                key
+        );
+        String state = loginBiz.getState();
+        if (StringUtils.hasText(state)) {
+            String stateKey = CacheConstants.Auth.WECHAT_STATE + state;
+            redisTemplate.opsForValue().set(stateKey, state, stateExpireSeconds.longValue(), TimeUnit.SECONDS);
+        }
+
+        return loginBiz;
+    }
+
     /**
      * 生成state参数（基于时间戳和密钥的签名）
      */
@@ -287,17 +307,20 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public String handleWechatCallback(String code, String state) throws UnsupportedEncodingException {
         log.info("微信OAuth回调 - 开始处理, code: {}, state: {}", code != null ? "***" : "null", state);
-        
-        if (state == null) {
-            log.warn("微信OAuth回调 - state参数为空");
-            return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
+        boolean isProd = "prod".equalsIgnoreCase(activeProfile);
+        if (isProd) {
+            if (state == null) {
+                log.warn("微信OAuth回调 - state参数为空（prod环境）");
+                return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
+            }
+            if (!verifyState(state)) {
+                log.error("微信OAuth回调 - state验证失败，state值: {}", state);
+                return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
+            }
+            log.info("微信OAuth回调 - state验证成功");
+        } else {
+            log.warn("微信OAuth回调 - 非prod环境，跳过state验证");
         }
-        
-        if (!verifyState(state)) {
-            log.error("微信OAuth回调 - state验证失败，state值: {}", state);
-            return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
-        }
-        log.info("微信OAuth回调 - state验证成功");
         
         // 验证授权码
         if (!StringUtils.hasText(code)) {
@@ -363,11 +386,18 @@ public class AuthServiceImpl implements IAuthService {
             ticketExpireSeconds.longValue(), 
             TimeUnit.SECONDS
         );
+        String stateLoginKey = CacheConstants.Auth.WECHAT_STATE_LOGIN + state;
+        redisTemplate.opsForValue().set(
+            stateLoginKey,
+            ticket,
+            ticketExpireSeconds.longValue(),
+            TimeUnit.SECONDS
+        );
         
         log.info("微信OAuth回调 - 已生成ticket，有效期: {}秒", ticketExpireSeconds);
         
         // 构建重定向URL（返回前端）
-        String redirectUrl = frontendUrl + "/wechat/callback?ticket=" + ticket;
+        String redirectUrl = frontendUrl + "/?ticket=" + ticket;
         log.info("微信OAuth回调 - 重定向到前端: {}", redirectUrl);
         
         return redirectUrl;
@@ -465,18 +495,15 @@ public class AuthServiceImpl implements IAuthService {
      */
     private void assignDefaultRoles(Long userId) {
         try {
-            List<RoleDO> defaultRoles = iSysRoleService.getDefaultRoles();
-            if (defaultRoles != null && !defaultRoles.isEmpty()) {
-                for (RoleDO role : defaultRoles) {
-                    UserRoleDO userRole = new UserRoleDO()
-                            .setUserId(userId)
-                            .setRoleId(role.getId());
-                    iSysUserRoleService.save(userRole);
-                }
-                log.info("微信OAuth回调 - 分配默认角色成功，角色数量: {}", defaultRoles.size());
-            } else {
-                log.warn("微信OAuth回调 - 没有配置默认角色");
+            if (wechatDefaultRoleId == null) {
+                log.warn("微信OAuth回调 - 未配置默认角色ID");
+                return;
             }
+            UserRoleDO userRole = new UserRoleDO()
+                    .setUserId(userId)
+                    .setRoleId(wechatDefaultRoleId);
+            iSysUserRoleService.save(userRole);
+            log.info("微信OAuth回调 - 分配默认角色成功，角色ID: {}", wechatDefaultRoleId);
         } catch (Exception e) {
             log.error("微信OAuth回调 - 分配默认角色失败: {}", e.getMessage(), e);
         }
@@ -486,7 +513,7 @@ public class AuthServiceImpl implements IAuthService {
      * 构建错误重定向URL
      */
     private String buildErrorRedirectUrl(String errorMsg) throws UnsupportedEncodingException {
-        return frontendUrl + "/wechat/callback?error=" + URLEncoder.encode(errorMsg, "UTF-8");
+        return frontendUrl + "/?error=" + URLEncoder.encode(errorMsg, "UTF-8");
     }
 
     @Override
@@ -532,7 +559,8 @@ public class AuthServiceImpl implements IAuthService {
         
         // 验证token是否有效
         try {
-            Long tokenUserId = (Long) StpUtil.getLoginIdByToken(accessToken);
+            Object tokenLoginId = StpUtil.getLoginIdByToken(accessToken);
+            Long tokenUserId = tokenLoginId == null ? null : Long.valueOf(tokenLoginId.toString());
             if (tokenUserId == null || !tokenUserId.equals(userId)) {
                 log.error("微信扫码登录 - token验证失败");
                 throw new IceeBootException("登录状态异常，请重新登录");
@@ -565,6 +593,19 @@ public class AuthServiceImpl implements IAuthService {
         return loginVO;
     }
 
+    @Override
+    public Map<String, Object> checkLogin(String code) {
+        Map<String, Object> data = new HashMap<>();
+        String stateLoginKey = CacheConstants.Auth.WECHAT_STATE_LOGIN + code;
+        Object ticketObj = redisTemplate.opsForValue().get(stateLoginKey);
+        if (ticketObj != null) {
+            data.put("loggedIn", true);
+            data.put("ticket", ticketObj.toString());
+            return data;
+        }
+        data.put("loggedIn", false);
+        return data;
+    }
 
 
     public static String generateRandomString(int length) {
