@@ -6,6 +6,7 @@
  */
 package com.iceeboot.common.service.sms.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
@@ -31,7 +32,7 @@ import java.util.UUID;
 @Component
 public class NeteaseSMSService extends AbstractSMSService {
 
-    private static final String PROVIDER_NAME = "netease";
+    private static final String PROVIDER_NAME = SystemConstants.SMSProvider.NETEASE;
     private static final String DEFAULT_ENDPOINT = "https://api.netease.im";
 
     @Override

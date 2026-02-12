@@ -70,6 +70,110 @@ public class SystemConstants {
 
     }
 
+    // ==================== 短信厂商 ====================
+
+    /**
+     * 短信厂商常量
+     */
+    public static class SMSProvider {
+        /** 阿里云 */
+        public static final String ALIYUN = "aliyun";
+
+        /** 腾讯云 */
+        public static final String TENCENT = "tencent";
+
+        /** 华为云 */
+        public static final String HUAWEI = "huawei";
+
+        /** 网易云信 */
+        public static final String NETEASE = "netease";
+
+        /** 容联云 */
+        public static final String RONGLIAN = "ronglian";
+
+        /** 七牛云 */
+        public static final String QINIU = "qiniu";
+    }
+
+    // ==================== 对象存储厂商 ====================
+
+    /**
+     * 对象存储厂商常量
+     */
+    public static class OSSProvider {
+        /** 阿里云OSS */
+        public static final String ALIYUN = "aliyun";
+
+        /** 腾讯云COS */
+        public static final String TENCENT = "tencent";
+
+        /** 华为云OBS */
+        public static final String HUAWEI = "huawei";
+
+        /** MinIO */
+        public static final String MINIO = "minio";
+
+        /** 七牛云Kodo */
+        public static final String QINIU = "qiniu";
+    }
+
+    // ==================== 邮件厂商 ====================
+
+    /**
+     * 邮件厂商常量
+     */
+    public static class EmailProvider {
+        /** QQ邮箱 */
+        public static final String QQ = "qq";
+
+        /** Gmail */
+        public static final String GMAIL = "gmail";
+
+        /** 网易邮箱 */
+        public static final String NETEASE = "netease";
+
+        /** Outlook */
+        public static final String OUTLOOK = "outlook";
+
+        /** 腾讯企业邮 */
+        public static final String TENCENT = "tencent";
+
+        /** 阿里云邮件 */
+        public static final String ALIYUN = "aliyun";
+    }
+
+    // ==================== 邮箱域名 ====================
+
+    /**
+     * 邮箱域名常量（用于自动识别邮件厂商）
+     */
+    public static class EmailDomain {
+        public static final String QQ_COM = "qq.com";
+        public static final String NETEASE_163 = "163.com";
+        public static final String NETEASE_126 = "126.com";
+        public static final String YEAH_NET = "yeah.net";
+        public static final String GMAIL_COM = "gmail.com";
+        public static final String OUTLOOK_COM = "outlook.com";
+        public static final String HOTMAIL_COM = "hotmail.com";
+        public static final String LIVE_COM = "live.com";
+    }
+
+    // ==================== SMTP端口 ====================
+
+    /**
+     * SMTP端口常量
+     */
+    public static class SmtpPort {
+        /** 默认SMTP端口 */
+        public static final int DEFAULT = 25;
+
+        /** SMTP提交端口（STARTTLS） */
+        public static final int SUBMISSION = 587;
+
+        /** SMTP SSL端口 */
+        public static final int SSL = 465;
+    }
+
     // ==================== 删除标识 ====================
     
     /**

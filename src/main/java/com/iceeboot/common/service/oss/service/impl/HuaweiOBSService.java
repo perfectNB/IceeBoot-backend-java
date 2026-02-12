@@ -1,5 +1,6 @@
 package com.iceeboot.common.service.oss.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 @Component
 public class HuaweiOBSService extends AbstractOSSService<ObsClient> {
 
-    private static final String PROVIDER_NAME = "huawei";
+    private static final String PROVIDER_NAME = SystemConstants.OSSProvider.HUAWEI;
     private static final String DEFAULT_ENDPOINT = "obs.cn-north-4.myhuaweicloud.com";
 
     @Override

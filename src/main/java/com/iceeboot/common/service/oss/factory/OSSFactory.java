@@ -1,5 +1,6 @@
 package com.iceeboot.common.service.oss.factory;
 
+import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
 import com.iceeboot.common.service.oss.service.OSSService;
@@ -41,11 +42,11 @@ public class OSSFactory {
      */
     public OSSService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IceeBootException("OSS厂商名称不能为空");
+            throw new IceeBootException(ResponseMessage.Factory.OSS_PROVIDER_EMPTY);
         }
         OSSService service = serviceMap.get(provider.toLowerCase().trim());
         if (service == null) {
-            throw new IceeBootException("不支持的OSS厂商: " + provider);
+            throw new IceeBootException(ResponseMessage.Factory.OSS_PROVIDER_NOT_SUPPORTED + provider);
         }
         return service;
     }
@@ -72,7 +73,7 @@ public class OSSFactory {
         if (service instanceof AbstractOSSService) {
             return ((AbstractOSSService<?>) service).getProviderDisplayName();
         }
-        return provider != null ? provider : "未知";
+        return provider != null ? provider : ResponseMessage.Factory.UNKNOWN_PROVIDER;
     }
 
     /**

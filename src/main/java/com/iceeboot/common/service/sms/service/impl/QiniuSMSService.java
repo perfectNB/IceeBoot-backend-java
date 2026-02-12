@@ -6,6 +6,7 @@
  */
 package com.iceeboot.common.service.sms.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
@@ -32,7 +33,7 @@ import java.util.Map;
 @Component
 public class QiniuSMSService extends AbstractSMSService {
 
-    private static final String PROVIDER_NAME = "qiniu";
+    private static final String PROVIDER_NAME = SystemConstants.SMSProvider.QINIU;
     private static final String DEFAULT_ENDPOINT = "https://sms.qiniuapi.com";
 
     @Override

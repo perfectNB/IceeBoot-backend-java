@@ -6,6 +6,7 @@
  */
 package com.iceeboot.common.service.sms.factory;
 
+import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import com.iceeboot.common.service.sms.service.SMSService;
@@ -47,11 +48,11 @@ public class SMSFactory {
      */
     public SMSService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IceeBootException("SMS厂商名称不能为空");
+            throw new IceeBootException(ResponseMessage.Factory.SMS_PROVIDER_EMPTY);
         }
         SMSService service = serviceMap.get(provider.toLowerCase().trim());
         if (service == null) {
-            throw new IceeBootException("不支持的SMS厂商: " + provider);
+            throw new IceeBootException(ResponseMessage.Factory.SMS_PROVIDER_NOT_SUPPORTED + provider);
         }
         return service;
     }
@@ -78,7 +79,7 @@ public class SMSFactory {
         if (service instanceof AbstractSMSService) {
             return ((AbstractSMSService) service).getProviderDisplayName();
         }
-        return provider != null ? provider : "未知";
+        return provider != null ? provider : ResponseMessage.Factory.UNKNOWN_PROVIDER;
     }
 
     /**

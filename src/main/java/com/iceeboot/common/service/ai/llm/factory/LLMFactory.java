@@ -7,6 +7,8 @@
  */
 package com.iceeboot.common.service.ai.llm.factory;
 
+import com.iceeboot.common.constant.ResponseMessage;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +49,11 @@ public class LLMFactory {
      */
     public LLMService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IceeBootException("厂商名称不能为空");
+            throw new IceeBootException(ResponseMessage.Factory.LLM_PROVIDER_EMPTY);
         }
         LLMService service = serviceMap.get(provider.toLowerCase().trim());
         if (service == null) {
-            throw new IceeBootException("不支持的厂商: " + provider);
+            throw new IceeBootException(ResponseMessage.Factory.LLM_PROVIDER_NOT_SUPPORTED + provider);
         }
         return service;
     }
@@ -74,6 +76,6 @@ public class LLMFactory {
      * 获取默认厂商服务（DeepSeek）
      */
     public LLMService getDefaultService() {
-        return getService("deepseek");
+        return getService(SystemConstants.LLMProvider.DEEPSEEK);
     }
 }

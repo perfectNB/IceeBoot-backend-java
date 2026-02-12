@@ -6,6 +6,7 @@
  */
 package com.iceeboot.common.service.sms.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
@@ -32,7 +33,7 @@ import java.util.UUID;
 @Component
 public class AliyunSMSService extends AbstractSMSService {
 
-    private static final String PROVIDER_NAME = "aliyun";
+    private static final String PROVIDER_NAME = SystemConstants.SMSProvider.ALIYUN;
     private static final String DEFAULT_ENDPOINT = "https://dysmsapi.aliyuncs.com";
     private static final String API_VERSION = "2017-05-25";
 
