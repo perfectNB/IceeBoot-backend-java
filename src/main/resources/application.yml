@@ -99,8 +99,8 @@ sa-token:
   is-read-body: false
   # token前缀
   token-prefix: 
-  # jwt秘钥
-  jwt-secret-key: changliaokuowencangmangdadishuizhuchenfujuwangyishufengliurenwuqiekanjinzhao
+  # jwt秘钥（通过环境变量注入，禁止硬编码）
+  jwt-secret-key: ${JWT_SECRET_KEY:please-set-a-secure-random-key-at-least-256-bits}
 
 # 日志配置
 logging:
