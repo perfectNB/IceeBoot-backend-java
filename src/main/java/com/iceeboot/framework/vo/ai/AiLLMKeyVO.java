@@ -1,6 +1,7 @@
 package com.iceeboot.framework.vo.ai;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.iceeboot.common.annotation.Sensitive;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -25,9 +26,11 @@ public class AiLLMKeyVO {
     @Schema(description = "备注")
     private String remark;
 
+    @Sensitive(prefixKeep = 4, suffixKeep = 4)
     @Schema(description = "秘密密钥")
     private String secretKey;
 
+    @Sensitive(prefixKeep = 4, suffixKeep = 4)
     @Schema(description = "API密钥")
     private String apiKey;
 

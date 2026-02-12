@@ -1,6 +1,7 @@
 package com.iceeboot.framework.vo.email;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.iceeboot.common.annotation.Sensitive;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -25,6 +26,7 @@ public class EmailKeyVO {
     @Schema(description = "邮箱地址")
     private String emailAddress;
 
+    @Sensitive(prefixKeep = 0, suffixKeep = 0)
     @Schema(description = "邮箱密码/授权码")
     private String emailPassword;
 
