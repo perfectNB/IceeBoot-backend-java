@@ -29,7 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @ConfigurationProperties(prefix = "iceeboot.auth")
 @Data
 public class SaTokenConfig implements WebMvcConfigurer {
-    
+
     @Autowired
     private PermissionInterceptor permissionInterceptor;
     

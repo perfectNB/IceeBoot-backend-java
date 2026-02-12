@@ -2,7 +2,7 @@ package com.iceeboot.config.activity;
 
 import org.activiti.engine.*;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,10 +15,10 @@ import javax.sql.DataSource;
  * @date 2025-08-12
  */
 @Configuration
+@RequiredArgsConstructor
 public class ActivitiConfig {
 
-    @Autowired
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
     /**
      * 流程引擎配置

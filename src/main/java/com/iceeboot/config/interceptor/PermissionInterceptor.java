@@ -12,7 +12,7 @@ import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.service.system.IAuthCacheService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
@@ -31,10 +31,10 @@ import java.util.Map;
  * @date 2025-08-13
  */
 @Component
+@RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {
 
-    @Autowired
-    private IAuthCacheService authCacheService;
+    private final IAuthCacheService authCacheService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

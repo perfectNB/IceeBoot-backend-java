@@ -12,8 +12,8 @@ import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.framework.entity.system.*;
 import com.iceeboot.framework.service.system.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -32,25 +32,20 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RoleCacheInitService implements ApplicationRunner {
 
-    @Autowired
-    private ISysRoleService roleService;
-    
-    @Autowired
-    private ISysRolePermissionService rolePermissionService;
-    
-    @Autowired
-    private ISysRoleMenuService roleMenuService;
-    
-    @Autowired
-    private ISysPermissionService permissionService;
-    
-    @Autowired
-    private ISysMenuService menuService;
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final ISysRoleService roleService;
+
+    private final ISysRolePermissionService rolePermissionService;
+
+    private final ISysRoleMenuService roleMenuService;
+
+    private final ISysPermissionService permissionService;
+
+    private final ISysMenuService menuService;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {

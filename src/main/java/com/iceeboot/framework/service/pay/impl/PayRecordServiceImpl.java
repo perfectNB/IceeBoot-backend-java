@@ -28,9 +28,9 @@ import com.iceeboot.framework.vo.pay.PayRecordVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.util.PaySignUtil;
 import com.yungouos.pay.wxpay.WxPay;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecordDO> implements IPayRecordService {
 
     @Value("${YunGouOS.key}")
@@ -63,17 +64,13 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     @Value("${YunGouOS.notifyUrl}")
     private String notifyUrl;
 
-    @Autowired
-    private IPayConfigService paymentConfigService;
+    private final IPayConfigService paymentConfigService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
-    private PayFactory strategyFactory;
+    private final PayFactory strategyFactory;
 
-    @Autowired
-    private ISysUserService sysUserService;
+    private final ISysUserService sysUserService;
 
     /** 支付方式：微信 */
     private static final Integer PAY_TYPE_WECHAT = 1;

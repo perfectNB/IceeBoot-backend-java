@@ -10,6 +10,7 @@ import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.enums.ResultCodeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.slf4j.MDC;
 
 import java.io.Serializable;
 
@@ -87,10 +88,16 @@ public class R<T> implements Serializable {
     private long timestamp;
 
     /**
+     * 链路追踪ID
+     */
+    private String traceId;
+
+    /**
      * 初始化一个新创建的 R 对象，使其表示一个空消息。
      */
     public R() {
         this.timestamp = System.currentTimeMillis();
+        this.traceId = MDC.get("traceId");
     }
 
     /**
@@ -104,6 +111,7 @@ public class R<T> implements Serializable {
         this.message = message;
         this.success = SUCCESS == code;
         this.timestamp = System.currentTimeMillis();
+        this.traceId = MDC.get("traceId");
     }
 
     /**
@@ -119,6 +127,7 @@ public class R<T> implements Serializable {
         this.result = result;
         this.success = SUCCESS == code;
         this.timestamp = System.currentTimeMillis();
+        this.traceId = MDC.get("traceId");
     }
 
     /**

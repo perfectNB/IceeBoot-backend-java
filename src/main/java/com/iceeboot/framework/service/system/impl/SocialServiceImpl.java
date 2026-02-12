@@ -6,7 +6,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.framework.entity.system.SocialDO;
 import com.iceeboot.framework.mapper.system.SocialMapper;
 import com.iceeboot.framework.service.system.ISocialService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +17,10 @@ import java.util.List;
  * @author CodeIcee
  */
 @Service
+@RequiredArgsConstructor
 public class SocialServiceImpl extends ServiceImpl<SocialMapper, SocialDO> implements ISocialService {
 
-    @Autowired
-    private SocialMapper socialMapper;
+    private final SocialMapper socialMapper;
 
 
     @Override

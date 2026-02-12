@@ -22,8 +22,8 @@ import com.iceeboot.framework.service.system.IAuthCacheService;
 import com.iceeboot.framework.service.system.ISysRoleService;
 import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.system.SysUserVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,19 +40,16 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
+@RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> implements ISysUserService {
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
-    @Autowired
-    private ISysRoleService roleService;
+    private final ISysRoleService roleService;
 
-    @Autowired
-    private IAuthCacheService authCacheService;
+    private final IAuthCacheService authCacheService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Override

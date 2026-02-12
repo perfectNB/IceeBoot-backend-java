@@ -28,8 +28,8 @@ import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.entity.WxOauthInfo;
 import com.yungouos.pay.entity.WxWebLoginBiz;
 import com.yungouos.pay.wxapi.WxApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AuthServiceImpl implements IAuthService {
 
     @Value("${YunGouOS.key}")
@@ -89,17 +90,13 @@ public class AuthServiceImpl implements IAuthService {
     @Value("${spring.profiles.active:test}")
     private String activeProfile;
 
-    @Autowired
-    private ISysUserService userService;
+    private final ISysUserService userService;
 
-    @Autowired
-    private ISysUserRoleService iSysUserRoleService;
+    private final ISysUserRoleService iSysUserRoleService;
 
-    @Autowired
-    private ISocialService iSocialService;
+    private final ISocialService iSocialService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final Integer TYPE = SocialConstant.SOCIAL_TYPE_WECHAT;
 

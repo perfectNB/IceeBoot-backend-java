@@ -27,8 +27,8 @@ import com.iceeboot.framework.service.system.*;
 import com.iceeboot.framework.vo.system.SysMenuVO;
 import com.iceeboot.framework.vo.system.SysPermissionVO;
 import com.iceeboot.framework.vo.system.SysRoleVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,25 +45,20 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
+@RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> implements ISysRoleService {
 
-    @Autowired
-    private ISysRolePermissionService rolePermissionService;
+    private final ISysRolePermissionService rolePermissionService;
 
-    @Autowired
-    private ISysPermissionService permissionService;
+    private final ISysPermissionService permissionService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
-    private ISysUserRoleService userRoleService;
+    private final ISysUserRoleService userRoleService;
 
-    @Autowired
-    private ISysMenuService menuService;
+    private final ISysMenuService menuService;
 
-    @Autowired
-    private ISysRoleMenuService roleMenuService;
+    private final ISysRoleMenuService roleMenuService;
 
 
     @Override

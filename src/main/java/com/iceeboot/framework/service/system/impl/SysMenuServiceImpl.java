@@ -25,8 +25,8 @@ import com.iceeboot.framework.service.system.IAuthCacheService;
 import com.iceeboot.framework.service.system.ISysMenuService;
 import com.iceeboot.framework.service.system.ISysRoleMenuService;
 import com.iceeboot.framework.vo.system.SysMenuVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -43,16 +43,14 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
+@RequiredArgsConstructor
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> implements ISysMenuService {
 
-    @Autowired
-    private IAuthCacheService authCacheService;
-    
-    @Autowired
-    private ISysRoleMenuService roleMenuService;
+    private final IAuthCacheService authCacheService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final ISysRoleMenuService roleMenuService;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Override

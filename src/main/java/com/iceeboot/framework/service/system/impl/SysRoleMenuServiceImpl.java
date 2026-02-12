@@ -17,8 +17,8 @@ import com.iceeboot.framework.mapper.system.SysRoleMenuMapper;
 import com.iceeboot.framework.query.system.RoleMenuQuery;
 import com.iceeboot.framework.service.system.ISysRoleMenuService;
 import com.iceeboot.framework.vo.system.RoleMenuVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
  * @date 2025-08-13
  */
 @Service
+@RequiredArgsConstructor
 public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, RoleMenuDO> implements ISysRoleMenuService {
 
-    @Autowired
-    private SysRoleMenuMapper sysRoleMenuMapper;
+    private final SysRoleMenuMapper sysRoleMenuMapper;
 
     @Override
     public PageResult<RoleMenuVO> getRoleMenuPage(RoleMenuQuery query) {

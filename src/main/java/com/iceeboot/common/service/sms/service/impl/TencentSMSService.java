@@ -1,6 +1,6 @@
 /**
  * 腾讯云SMS服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
@@ -8,9 +8,8 @@ package com.iceeboot.common.service.sms.service.impl;
 
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
-import com.iceeboot.common.service.sms.service.SMSService;
+import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
@@ -27,222 +26,213 @@ import java.util.Map;
 /**
  * 腾讯云SMS服务实现类
  * 基于腾讯云短信服务API实现短信发送功能
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
 @Slf4j
-public class TencentSMSService implements SMSService {
-    
+public class TencentSMSService extends AbstractSMSService {
+
     private static final String PROVIDER_NAME = "tencent";
     private static final String DEFAULT_ENDPOINT = "https://sms.tencentcloudapi.com";
     private static final String API_VERSION = "2021-01-11";
     private static final String SERVICE = "sms";
-    private static final Integer DEFAULT_TIMEOUT = 30;
-    
-    private final WebClient webClient;
-    
-    public TencentSMSService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build();
-    }
-    
+
     @Override
     public String getProvider() {
         return PROVIDER_NAME;
     }
-    
+
     @Override
-    public Mono<SMSResponse> sendSMS(SMSRequest request) {
-        return sendTemplateSMS(request);
+    protected String getProviderDisplayName() {
+        return "腾讯云短信";
     }
-    
+
+    @Override
+    protected String getDefaultEndpoint() {
+        return DEFAULT_ENDPOINT;
+    }
+
+    @Override
+    protected Map<String, String> buildCommonParams(SMSRequest request) {
+        // 腾讯云使用JSON请求体+自定义Header，不使用通用参数Map
+        return new HashMap<>();
+    }
+
+    @Override
+    protected String generateSignature(Map<String, String> params, String accessKeySecret) throws Exception {
+        // 腾讯云签名在buildHeaders中完成，此处不使用
+        return "";
+    }
+
+    @Override
+    protected void addSendSmsParams(Map<String, String> params, SMSRequest request) {
+        // 腾讯云使用JSON请求体，不使用通用参数Map
+    }
+
+    @Override
+    protected void addBatchSmsParams(Map<String, String> params, SMSRequest request) {
+        // 腾讯云使用JSON请求体，不使用通用参数Map
+    }
+
+    @Override
+    protected void addQueryStatusParams(Map<String, String> params, String messageId, SMSRequest request) {
+        // 腾讯云使用JSON请求体，不使用通用参数Map
+    }
+
+    // ==================== 覆盖模板方法（腾讯云使用JSON请求体而非表单参数） ====================
+
     @Override
     public Mono<SMSResponse> sendTemplateSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("PhoneNumberSet", new String[]{request.getPhoneNumber()});
                 requestBody.put("SmsSdkAppId", request.getAppId());
                 requestBody.put("SignName", request.getSignName());
                 requestBody.put("TemplateId", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     requestBody.put("TemplateParamSet", request.getTemplateParams().values().toArray(new String[0]));
                 }
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, "SendSms", jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildTencentHeaders(request, "SendSms", jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+
                 String response = webClient.post()
                         .uri(endpoint)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseResponse(response, request.getPhoneNumber(), startTime);
-                
             } catch (Exception e) {
-                log.error("腾讯云SMS发送失败: {}", e.getMessage(), e);
+                log.error("{}发送短信失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("SEND_FAILED", "发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumber(request.getPhoneNumber())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> sendBatchSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("PhoneNumberSet", request.getPhoneNumbers());
                 requestBody.put("SmsSdkAppId", request.getAppId());
                 requestBody.put("SignName", request.getSignName());
                 requestBody.put("TemplateId", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     requestBody.put("TemplateParamSet", request.getTemplateParams().values().toArray(new String[0]));
                 }
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, "SendSms", jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildTencentHeaders(request, "SendSms", jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+
                 String response = webClient.post()
                         .uri(endpoint)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBatchResponse(response, request.getPhoneNumbers(), startTime);
-                
             } catch (Exception e) {
-                log.error("腾讯云SMS批量发送失败: {}", e.getMessage(), e);
+                log.error("{}批量发送失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("BATCH_SEND_FAILED", "批量发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumbers(request.getPhoneNumbers())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
-    @Override
-    public Mono<SMSResponse> sendVerificationCode(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("verification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendNotification(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("notification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendMarketing(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("marketing"));
-    }
-    
+
     @Override
     public Mono<SMSResponse> querySMSStatus(String messageId, SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("SmsSdkAppId", request.getAppId());
                 requestBody.put("SerialNo", messageId);
-                requestBody.put("BeginTime", System.currentTimeMillis() / 1000 - 86400); // 24小时前
+                requestBody.put("BeginTime", System.currentTimeMillis() / 1000 - 86400);
                 requestBody.put("EndTime", System.currentTimeMillis() / 1000);
                 requestBody.put("Limit", 10);
                 requestBody.put("Offset", 0);
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, "PullSmsSendStatus", jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildTencentHeaders(request, "PullSmsSendStatus", jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+
                 String response = webClient.post()
                         .uri(endpoint)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseQueryResponse(response, messageId, startTime);
-                
             } catch (Exception e) {
-                log.error("腾讯云SMS状态查询失败: {}", e.getMessage(), e);
+                log.error("{}状态查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_FAILED", "状态查询失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setMessageId(messageId)
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> queryBalance(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("SmsSdkAppId", request.getAppId());
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, "SendStatusStatistics", jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildTencentHeaders(request, "SendStatusStatistics", jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+
                 String response = webClient.post()
                         .uri(endpoint)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBalanceResponse(response, startTime);
-                
             } catch (Exception e) {
-                log.error("腾讯云SMS余额查询失败: {}", e.getMessage(), e);
+                log.error("{}余额查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_BALANCE_FAILED", "余额查询失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<Boolean> validateConfig(SMSRequest request) {
         return Mono.fromCallable(() -> {
@@ -258,40 +248,40 @@ public class TencentSMSService implements SMSService {
                 }
                 return true;
             } catch (Exception e) {
-                log.error("腾讯云SMS配置验证失败: {}", e.getMessage());
+                log.error("{}配置验证失败: {}", getProviderDisplayName(), e.getMessage());
                 return false;
             }
         });
     }
-    
+
+    // ==================== 腾讯云特有方法 ====================
+
     /**
-     * 构建请求头
+     * 构建腾讯云请求头
      */
-    private Map<String, String> buildHeaders(SMSRequest request, String action, String payload) throws Exception {
+    private Map<String, String> buildTencentHeaders(SMSRequest request, String action, String payload) throws Exception {
         Map<String, String> headers = new HashMap<>();
-        
+
         String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
         String date = LocalDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        
+
         headers.put("Content-Type", "application/json; charset=utf-8");
         headers.put("Host", "sms.tencentcloudapi.com");
         headers.put("X-TC-Action", action);
         headers.put("X-TC-Version", API_VERSION);
         headers.put("X-TC-Timestamp", timestamp);
         headers.put("X-TC-Region", request.getRegion() != null ? request.getRegion() : "ap-beijing");
-        
-        // 生成签名
-        String authorization = generateSignature(request, action, payload, timestamp, date);
+
+        String authorization = generateTencentSignature(request, action, payload, timestamp, date);
         headers.put("Authorization", authorization);
-        
+
         return headers;
     }
-    
+
     /**
      * 生成腾讯云API签名
      */
-    private String generateSignature(SMSRequest request, String action, String payload, String timestamp, String date) throws Exception {
-        // 步骤1：拼接规范请求串
+    private String generateTencentSignature(SMSRequest request, String action, String payload, String timestamp, String date) throws Exception {
         String httpRequestMethod = "POST";
         String canonicalUri = "/";
         String canonicalQueryString = "";
@@ -306,8 +296,7 @@ public class TencentSMSService implements SMSService {
                 canonicalHeaders + "\n" +
                 signedHeaders + "\n" +
                 hashedRequestPayload;
-        
-        // 步骤2：拼接待签名字符串
+
         String algorithm = "TC3-HMAC-SHA256";
         String credentialScope = date + "/" + SERVICE + "/tc3_request";
         String hashedCanonicalRequest = sha256Hex(canonicalRequest);
@@ -315,40 +304,29 @@ public class TencentSMSService implements SMSService {
                 timestamp + "\n" +
                 credentialScope + "\n" +
                 hashedCanonicalRequest;
-        
-        // 步骤3：计算签名
+
         byte[] secretDate = hmacSha256(("TC3" + request.getAccessKeySecret()).getBytes(StandardCharsets.UTF_8), date);
         byte[] secretService = hmacSha256(secretDate, SERVICE);
         byte[] secretSigning = hmacSha256(secretService, "tc3_request");
         String signature = bytesToHex(hmacSha256(secretSigning, stringToSign));
-        
-        // 步骤4：拼接Authorization
+
         return algorithm + " Credential=" + request.getAccessKeyId() + "/" + credentialScope +
                 ", SignedHeaders=" + signedHeaders + ", Signature=" + signature;
     }
-    
-    /**
-     * SHA256哈希
-     */
+
     private String sha256Hex(String s) throws Exception {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] d = md.digest(s.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(d);
     }
-    
-    /**
-     * HMAC-SHA256
-     */
+
     private byte[] hmacSha256(byte[] key, String msg) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, mac.getAlgorithm());
         mac.init(secretKeySpec);
         return mac.doFinal(msg.getBytes(StandardCharsets.UTF_8));
     }
-    
-    /**
-     * 字节数组转十六进制字符串
-     */
+
     private String bytesToHex(byte[] bytes) {
         StringBuilder result = new StringBuilder();
         for (byte b : bytes) {
@@ -356,7 +334,7 @@ public class TencentSMSService implements SMSService {
         }
         return result.toString();
     }
-    
+
     /**
      * 将对象转换为JSON字符串
      */
@@ -368,7 +346,7 @@ public class TencentSMSService implements SMSService {
                 json.append(",");
             }
             json.append("\"").append(entry.getKey()).append("\":");
-            
+
             Object value = entry.getValue();
             if (value instanceof String) {
                 json.append("\"").append(value).append("\"");
@@ -388,16 +366,16 @@ public class TencentSMSService implements SMSService {
         json.append("}");
         return json.toString();
     }
-    
-    /**
-     * 解析单条短信响应
-     */
-    private SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
+
+    // ==================== 响应解析 ====================
+
+    @Override
+    protected SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
         try {
             if (response.contains("\"SendStatusSet\"")) {
                 String serialNo = extractJsonValue(response, "SerialNo");
                 String requestId = extractJsonValue(response, "RequestId");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setMessageId(serialNo)
@@ -409,7 +387,7 @@ public class TencentSMSService implements SMSService {
             } else if (response.contains("\"Error\"")) {
                 String errorCode = extractJsonValue(response, "Code");
                 String errorMessage = extractJsonValue(response, "Message");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumber(phoneNumber)
@@ -432,15 +410,13 @@ public class TencentSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析批量短信响应
-     */
-    private SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
+
+    @Override
+    protected SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
         try {
             if (response.contains("\"SendStatusSet\"")) {
                 String requestId = extractJsonValue(response, "RequestId");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setRequestId(requestId)
@@ -451,7 +427,7 @@ public class TencentSMSService implements SMSService {
             } else if (response.contains("\"Error\"")) {
                 String errorCode = extractJsonValue(response, "Code");
                 String errorMessage = extractJsonValue(response, "Message");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumbers(phoneNumbers)
@@ -474,11 +450,9 @@ public class TencentSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析查询响应
-     */
-    private SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
+
+    @Override
+    protected SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
         try {
             String status = "UNKNOWN";
             if (response.contains("\"ReportStatus\":\"SUCCESS\"")) {
@@ -486,7 +460,7 @@ public class TencentSMSService implements SMSService {
             } else if (response.contains("\"ReportStatus\":\"FAIL\"")) {
                 status = "FAILED";
             }
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setMessageId(messageId)
@@ -502,7 +476,7 @@ public class TencentSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
+
     /**
      * 解析余额响应
      */
@@ -521,30 +495,5 @@ public class TencentSMSService implements SMSService {
                     .setResponseTime(System.currentTimeMillis() - startTime)
                     .setRawResponse(response);
         }
-    }
-    
-    /**
-     * 从JSON字符串中提取值
-     */
-    private String extractJsonValue(String json, String key) {
-        try {
-            String pattern = "\"" + key + "\":\"([^\"]*)\";";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
-            }
-            
-            // 尝试数字值
-            pattern = "\"" + key + "\":([^,}]*)";
-            p = java.util.regex.Pattern.compile(pattern);
-            m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1).trim();
-            }
-        } catch (Exception e) {
-            log.warn("提取JSON值失败: key={}, error={}", key, e.getMessage());
-        }
-        return null;
     }
 }

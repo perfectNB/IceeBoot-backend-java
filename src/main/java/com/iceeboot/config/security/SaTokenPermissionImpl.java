@@ -8,7 +8,7 @@ package com.iceeboot.config.security;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.iceeboot.framework.service.system.ISysUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,10 +20,10 @@ import java.util.List;
  * @date 2025-08-11
  */
 @Component
+@RequiredArgsConstructor
 public class SaTokenPermissionImpl implements StpInterface {
 
-    @Autowired
-    private ISysUserService userService;
+    private final ISysUserService userService;
 
     /**
      * 返回一个账号所拥有的权限码集合

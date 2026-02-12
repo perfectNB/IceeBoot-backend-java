@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,7 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
     private final LLMFactory llmFactory;
     
     // 用于轮询获取密钥的计数器
-    private final Map<String, AtomicInteger> providerCounters = new HashMap<>();
+    private final Map<String, AtomicInteger> providerCounters = new ConcurrentHashMap<>();
 
     @Override
     public IPage<AiLLMKeyVO> getLLMKeyPage(AiLLMKeyQuery query) {

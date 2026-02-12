@@ -12,8 +12,8 @@ import com.iceeboot.framework.vo.pay.PayConfigVO;
 import com.iceeboot.framework.vo.pay.PayRecordVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,13 +30,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/pay")
 @Tag(name = "支付管理", description = "支付相关接口")
+@RequiredArgsConstructor
 public class PayController {
 
-    @Autowired
-    private IPayRecordService payRecordService;
+    private final IPayRecordService payRecordService;
 
-    @Autowired
-    private IPayConfigService payConfigService;
+    private final IPayConfigService payConfigService;
 
     @Operation(summary = "获取支付二维码", description = "根据支付配置ID创建支付订单并返回二维码")
     @GetMapping("/create-qr/{configId}")
