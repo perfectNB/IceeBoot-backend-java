@@ -6,6 +6,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.ai.llm.dto.*;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 注意：文心一言使用OAuth2.0认证，需要先获取access_token
  */
 @Slf4j
+@Component
 public class WenxinService implements LLMService {
     
     private static final String DEFAULT_BASE_URL = "https://aip.baidubce.com";

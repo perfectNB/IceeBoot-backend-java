@@ -1,126 +1,79 @@
 /**
  * 大模型工厂类
  * 根据厂商名称获取对应的大模型服务实例
- * 
+ *
  * @author CodeIcee
  * @date 2025-09-03
  */
 package com.iceeboot.common.service.ai.llm.factory;
 
-import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
-import com.iceeboot.common.service.ai.llm.service.impl.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 大模型工厂类
+ * 通过Spring自动注入所有LLMService实现，根据厂商名称自动路由
+ * 新增厂商只需实现LLMService接口并添加@Component即可，无需修改此类
+ *
  * @author CodeIcee
  * @date 2025-09-03
  */
 @Slf4j
 @Component
 public class LLMFactory {
-    
-    /**
-     * 服务实例缓存
-     */
-    private final Map<String, LLMService> serviceMap = new HashMap<>();
-    
-    /**
-     * 构造函数，初始化所有服务实例
-     */
-    public LLMFactory() {
-        initServices();
-    }
-    
-    /**
-     * 初始化所有服务实例
-     */
-    private void initServices() {
-        // DeepSeek
-        serviceMap.put(SystemConstants.LLMProvider.DEEPSEEK, new DeepSeekService());
-        
-        // ChatGPT
-        serviceMap.put(SystemConstants.LLMProvider.CHATGPT, new ChatGPTService());
-        
-        // Claude
-        serviceMap.put(SystemConstants.LLMProvider.CLAUDE, new ClaudeService());
-        
-        // Gemini
-        serviceMap.put(SystemConstants.LLMProvider.GEMINI, new GeminiService());
-        
-        // 文心一言
-        serviceMap.put(SystemConstants.LLMProvider.WENXIN, new WenxinService());
-        
-        // 通义千问
-        serviceMap.put(SystemConstants.LLMProvider.QWEN, new QwenService());
-        
-        // 月之暗面 (Kimi)
-        serviceMap.put(SystemConstants.LLMProvider.MOONSHOT, new MoonshotService());
-        
-        // Grok
-        serviceMap.put(SystemConstants.LLMProvider.GROK, new GrokService());
-        
-        // 智谱AI
-        serviceMap.put(SystemConstants.LLMProvider.ZHIPU, new ZhipuService());
-        
-        // 百川智能
-        serviceMap.put(SystemConstants.LLMProvider.BAICHUAN, new BaichuanService());
-        
-        // 讯飞星火
-        serviceMap.put(SystemConstants.LLMProvider.SPARK, new SparkService());
 
-        log.info("LLMFactory 初始化完成");
-        log.info("大模型策略工厂初始化完成，共注册 {} 个策略: {}", serviceMap.size(), serviceMap.keySet());
+    private final Map<String, LLMService> serviceMap;
+
+    public LLMFactory(List<LLMService> services) {
+        this.serviceMap = services.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getProvider().toLowerCase(),
+                        Function.identity(),
+                        (a, b) -> a
+                ));
+        log.info("LLMFactory初始化完成，注册{}个厂商: {}", serviceMap.size(), serviceMap.keySet());
     }
-    
+
     /**
      * 根据厂商名称获取服务实例
-     * @param provider 厂商名称
-     * @return 服务实例
-     * @throws IceeBootException 如果厂商不支持
      */
     public LLMService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
             throw new IceeBootException("厂商名称不能为空");
         }
-        
-        LLMService service = serviceMap.get(provider.toLowerCase());
+        LLMService service = serviceMap.get(provider.toLowerCase().trim());
         if (service == null) {
             throw new IceeBootException("不支持的厂商: " + provider);
         }
-        
         return service;
     }
-    
+
     /**
      * 获取所有支持的厂商名称
-     * @return 厂商名称集合
      */
     public Set<String> getSupportedProviders() {
         return serviceMap.keySet();
     }
-    
+
     /**
      * 检查是否支持指定厂商
-     * @param provider 厂商名称
-     * @return 是否支持
      */
     public boolean isSupported(String provider) {
-        return provider != null && serviceMap.containsKey(provider.toLowerCase());
+        return provider != null && serviceMap.containsKey(provider.toLowerCase().trim());
     }
-    
+
     /**
      * 获取默认厂商服务（DeepSeek）
-     * @return 默认服务实例
      */
     public LLMService getDefaultService() {
-        return getService(SystemConstants.LLMProvider.DEEPSEEK);
+        return getService("deepseek");
     }
 }

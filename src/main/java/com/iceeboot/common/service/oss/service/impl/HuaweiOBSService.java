@@ -4,6 +4,7 @@ import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import com.obs.services.ObsClient;
 import com.obs.services.model.*;
 
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
  * @date 2025-09-03
  */
 @Slf4j
+@Component
 public class HuaweiOBSService extends AbstractOSSService<ObsClient> {
 
     private static final String PROVIDER_NAME = "huawei";
@@ -34,12 +36,12 @@ public class HuaweiOBSService extends AbstractOSSService<ObsClient> {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "华为云OBS";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 

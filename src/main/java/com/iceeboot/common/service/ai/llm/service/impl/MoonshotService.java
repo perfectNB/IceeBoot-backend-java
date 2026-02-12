@@ -6,6 +6,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.ai.llm.dto.*;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,6 +18,7 @@ import java.util.*;
  * Kimi（月之暗面）大模型服务实现类
  */
 @Slf4j
+@Component
 public class MoonshotService implements LLMService {
     
     private static final String DEFAULT_BASE_URL = "https://api.moonshot.cn/v1";

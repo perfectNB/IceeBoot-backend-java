@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO> implements IEmailKeyService {
 
+    private final EmailFactory emailFactory;
+
     // 用于轮询获取密钥的计数器
     private final Map<String, AtomicInteger> providerCounters = new ConcurrentHashMap<>();
 
@@ -133,7 +135,7 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
     @Override
     public List<String> getSupportedProviders() {
         // 从EmailFactory获取支持的厂商列表
-        return Arrays.asList(EmailFactory.getSupportedProviders());
+        return new ArrayList<>(emailFactory.getSupportedProviders());
     }
 
     @Override
@@ -158,7 +160,7 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
         
         try {
             // 获取对应的Email服务
-            EmailService emailService = EmailFactory.getService(emailKey.getEmailProvider());
+            EmailService emailService = emailFactory.getService(emailKey.getEmailProvider());
             if (emailService == null) {
                 return false;
             }
@@ -273,8 +275,8 @@ public class EmailKeyServiceImpl extends ServiceImpl<EmailKeyMapper, EmailKeyDO>
             providerVO.setActiveKeyCount((int) activeCount);
             providerVO.setDefaultSmtpHost(getDefaultSmtpHost(provider));
             providerVO.setDefaultSmtpPort(getDefaultSmtpPort(provider));
-            providerVO.setSupportedEmailTypes(Arrays.asList(EmailFactory.getSupportedEmailTypes(provider)));
-            providerVO.setSupportedFeatures(Arrays.asList(EmailFactory.getSupportedFeatures(provider)));
+            providerVO.setSupportedEmailTypes(emailFactory.getService(provider).getSupportedEmailTypes());
+            providerVO.setSupportedFeatures(emailFactory.getService(provider).getSupportedFeatures());
             
             result.add(providerVO);
         }

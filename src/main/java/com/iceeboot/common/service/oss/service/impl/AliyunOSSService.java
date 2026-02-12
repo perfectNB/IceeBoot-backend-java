@@ -8,6 +8,7 @@ import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  * @date 2025-09-03
  */
 @Slf4j
+@Component
 public class AliyunOSSService extends AbstractOSSService<OSS> {
 
     private static final String PROVIDER_NAME = "aliyun";
@@ -38,12 +40,12 @@ public class AliyunOSSService extends AbstractOSSService<OSS> {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "阿里云OSS";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 

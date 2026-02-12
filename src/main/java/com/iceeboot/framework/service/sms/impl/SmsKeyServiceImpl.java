@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> implements ISmsKeyService {
 
+    private final SMSFactory smsFactory;
+
     // 用于轮询获取密钥的计数器
     private final Map<String, AtomicInteger> providerCounters = new ConcurrentHashMap<>();
 
@@ -93,7 +95,7 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
         
         // 设置默认端点
         if (!StringUtils.hasText(smsKey.getEndpoint())) {
-            smsKey.setEndpoint(SMSFactory.getDefaultEndpoint(dto.getSmsProvider()));
+            smsKey.setEndpoint(smsFactory.getDefaultEndpoint(dto.getSmsProvider()));
         }
         
         return this.save(smsKey);
@@ -133,7 +135,7 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
     @Override
     public List<String> getSupportedProviders() {
         // 从SMSFactory获取支持的厂商列表
-        return Arrays.asList(SMSFactory.getSupportedProviders());
+        return new ArrayList<>(smsFactory.getSupportedProviders());
     }
 
     @Override
@@ -158,7 +160,7 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
         
         try {
             // 获取对应的SMS服务
-            SMSService smsService = SMSFactory.getService(smsKey.getSmsProvider());
+            SMSService smsService = smsFactory.getService(smsKey.getSmsProvider());
             if (smsService == null) {
                 return false;
             }
@@ -267,9 +269,9 @@ public class SmsKeyServiceImpl extends ServiceImpl<SmsKeyMapper, SmsKeyDO> imple
             providerVO.setKeys(keyVOs);
             providerVO.setKeyCount(keyVOs.size());
             providerVO.setActiveKeyCount((int) activeCount);
-            providerVO.setDefaultEndpoint(SMSFactory.getDefaultEndpoint(provider));
-            providerVO.setSupportedSmsTypes(Arrays.asList(SMSFactory.getSupportedSMSTypes(provider)));
-            providerVO.setSupportedFeatures(Arrays.asList(SMSFactory.getSupportedFeatures(provider)));
+            providerVO.setDefaultEndpoint(smsFactory.getDefaultEndpoint(provider));
+            providerVO.setSupportedSmsTypes(smsFactory.getService(provider).getSupportedSMSTypes());
+            providerVO.setSupportedFeatures(smsFactory.getService(provider).getSupportedFeatures());
             
             result.add(providerVO);
         }

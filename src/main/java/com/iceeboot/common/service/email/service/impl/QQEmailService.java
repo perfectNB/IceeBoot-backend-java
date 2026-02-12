@@ -1,6 +1,7 @@
 package com.iceeboot.common.service.email.service.impl;
 
 import com.iceeboot.common.service.email.service.AbstractEmailService;
+import org.springframework.stereotype.Component;
 
 /**
  * QQ邮箱服务实现类
@@ -9,6 +10,7 @@ import com.iceeboot.common.service.email.service.AbstractEmailService;
  * @author CodeIcee
  * @date 2025-09-04
  */
+@Component
 public class QQEmailService extends AbstractEmailService {
 
     @Override
@@ -17,22 +19,22 @@ public class QQEmailService extends AbstractEmailService {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "QQ邮箱";
     }
 
     @Override
-    protected String getDefaultSmtpHost() {
+    public String getDefaultSmtpHost() {
         return "smtp.qq.com";
     }
 
     @Override
-    protected int getDefaultSmtpPort() {
+    public int getDefaultSmtpPort() {
         return 587;
     }
 
     @Override
-    protected int getDefaultSslPort() {
+    public int getDefaultSslPort() {
         return 465;
     }
 }

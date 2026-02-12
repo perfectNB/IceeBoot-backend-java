@@ -4,6 +4,7 @@ import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  * @date 2025-09-03
  */
 @Slf4j
+@Component
 public class TencentCOSService extends AbstractOSSService<COSClient> {
 
     private static final String PROVIDER_NAME = "tencent";
@@ -41,12 +43,12 @@ public class TencentCOSService extends AbstractOSSService<COSClient> {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "腾讯云COS";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_REGION;
     }
 
