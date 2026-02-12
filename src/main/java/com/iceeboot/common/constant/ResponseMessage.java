@@ -135,6 +135,18 @@ public class ResponseMessage {
         public static final String MESSAGE_DELETE_FAIL = "消息删除失败";
     }
 
+    public static class Factory {
+        public static final String LLM_PROVIDER_EMPTY = "厂商名称不能为空";
+        public static final String LLM_PROVIDER_NOT_SUPPORTED = "不支持的厂商: ";
+        public static final String SMS_PROVIDER_EMPTY = "SMS厂商名称不能为空";
+        public static final String SMS_PROVIDER_NOT_SUPPORTED = "不支持的SMS厂商: ";
+        public static final String OSS_PROVIDER_EMPTY = "OSS厂商名称不能为空";
+        public static final String OSS_PROVIDER_NOT_SUPPORTED = "不支持的OSS厂商: ";
+        public static final String EMAIL_PROVIDER_EMPTY = "Email厂商名称不能为空";
+        public static final String EMAIL_PROVIDER_NOT_SUPPORTED = "不支持的Email厂商: ";
+        public static final String UNKNOWN_PROVIDER = "未知";
+    }
+
     public static class AiChat {
         public static final String AI_CHAT_CONTENT_EMPTY = "对话内容不能为空";
     }

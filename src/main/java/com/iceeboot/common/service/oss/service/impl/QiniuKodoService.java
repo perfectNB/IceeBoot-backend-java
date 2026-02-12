@@ -1,6 +1,7 @@
 package com.iceeboot.common.service.oss.service.impl;
 
 import com.google.gson.Gson;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
@@ -32,7 +33,7 @@ import java.util.*;
 @Component
 public class QiniuKodoService extends AbstractOSSService<Auth> {
 
-    private static final String PROVIDER_NAME = "qiniu";
+    private static final String PROVIDER_NAME = SystemConstants.OSSProvider.QINIU;
     private static final String DEFAULT_REGION = "z0";
 
     @Override

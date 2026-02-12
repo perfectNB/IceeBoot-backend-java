@@ -4,6 +4,7 @@ import com.aliyun.oss.HttpMethod;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.*;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 @Component
 public class AliyunOSSService extends AbstractOSSService<OSS> {
 
-    private static final String PROVIDER_NAME = "aliyun";
+    private static final String PROVIDER_NAME = SystemConstants.OSSProvider.ALIYUN;
     private static final String DEFAULT_ENDPOINT = "oss-cn-hangzhou.aliyuncs.com";
 
     @Override

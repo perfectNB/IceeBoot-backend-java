@@ -6,6 +6,7 @@
  */
 package com.iceeboot.common.service.sms.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
@@ -35,7 +36,7 @@ import java.util.Map;
 @Component
 public class TencentSMSService extends AbstractSMSService {
 
-    private static final String PROVIDER_NAME = "tencent";
+    private static final String PROVIDER_NAME = SystemConstants.SMSProvider.TENCENT;
     private static final String DEFAULT_ENDPOINT = "https://sms.tencentcloudapi.com";
     private static final String API_VERSION = "2021-01-11";
     private static final String SERVICE = "sms";

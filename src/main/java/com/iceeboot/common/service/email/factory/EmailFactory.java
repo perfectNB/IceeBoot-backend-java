@@ -1,5 +1,7 @@
 package com.iceeboot.common.service.email.factory;
 
+import com.iceeboot.common.constant.ResponseMessage;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.email.service.AbstractEmailService;
 import com.iceeboot.common.service.email.service.EmailService;
@@ -41,11 +43,11 @@ public class EmailFactory {
      */
     public EmailService getService(String provider) {
         if (provider == null || provider.trim().isEmpty()) {
-            throw new IceeBootException("Email厂商名称不能为空");
+            throw new IceeBootException(ResponseMessage.Factory.EMAIL_PROVIDER_EMPTY);
         }
         EmailService service = serviceMap.get(provider.toLowerCase().trim());
         if (service == null) {
-            throw new IceeBootException("不支持的Email厂商: " + provider);
+            throw new IceeBootException(ResponseMessage.Factory.EMAIL_PROVIDER_NOT_SUPPORTED + provider);
         }
         return service;
     }
@@ -72,7 +74,7 @@ public class EmailFactory {
         if (service instanceof AbstractEmailService) {
             return ((AbstractEmailService) service).getProviderDisplayName();
         }
-        return provider != null ? provider : "未知";
+        return provider != null ? provider : ResponseMessage.Factory.UNKNOWN_PROVIDER;
     }
 
     /**
@@ -95,7 +97,7 @@ public class EmailFactory {
             AbstractEmailService abs = (AbstractEmailService) service;
             return useSsl ? abs.getDefaultSslPort() : abs.getDefaultSmtpPort();
         }
-        return useSsl ? 465 : 587;
+        return useSsl ? SystemConstants.SmtpPort.SSL : SystemConstants.SmtpPort.SUBMISSION;
     }
 
     /**
@@ -113,10 +115,10 @@ public class EmailFactory {
             }
         }
         // 常见邮箱域名映射
-        if (domain.equals("qq.com")) return "qq";
-        if (domain.equals("163.com") || domain.equals("126.com") || domain.equals("yeah.net")) return "netease";
-        if (domain.equals("gmail.com")) return "gmail";
-        if (domain.equals("outlook.com") || domain.equals("hotmail.com") || domain.equals("live.com")) return "outlook";
+        if (domain.equals(SystemConstants.EmailDomain.QQ_COM)) return SystemConstants.EmailProvider.QQ;
+        if (domain.equals(SystemConstants.EmailDomain.NETEASE_163) || domain.equals(SystemConstants.EmailDomain.NETEASE_126) || domain.equals(SystemConstants.EmailDomain.YEAH_NET)) return SystemConstants.EmailProvider.NETEASE;
+        if (domain.equals(SystemConstants.EmailDomain.GMAIL_COM)) return SystemConstants.EmailProvider.GMAIL;
+        if (domain.equals(SystemConstants.EmailDomain.OUTLOOK_COM) || domain.equals(SystemConstants.EmailDomain.HOTMAIL_COM) || domain.equals(SystemConstants.EmailDomain.LIVE_COM)) return SystemConstants.EmailProvider.OUTLOOK;
         return null;
     }
 }

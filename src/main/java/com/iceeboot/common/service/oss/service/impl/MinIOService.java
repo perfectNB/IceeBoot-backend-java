@@ -1,5 +1,6 @@
 package com.iceeboot.common.service.oss.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
@@ -31,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class MinIOService extends AbstractOSSService<MinioClient> {
 
-    private static final String PROVIDER_NAME = "minio";
+    private static final String PROVIDER_NAME = SystemConstants.OSSProvider.MINIO;
     private static final String DEFAULT_ENDPOINT = "http://localhost:9000";
 
     @Override

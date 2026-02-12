@@ -1,6 +1,7 @@
 package com.iceeboot.common.service.email.service.impl;
 
 import com.iceeboot.common.service.email.dto.EmailRequest;
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.email.service.AbstractEmailService;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +20,7 @@ public class NeteaseEmailService extends AbstractEmailService {
 
     @Override
     public String getProvider() {
-        return "netease";
+        return SystemConstants.EmailProvider.NETEASE;
     }
 
     @Override
@@ -34,12 +35,12 @@ public class NeteaseEmailService extends AbstractEmailService {
 
     @Override
     public int getDefaultSmtpPort() {
-        return 25;
+        return SystemConstants.SmtpPort.DEFAULT;
     }
 
     @Override
     public int getDefaultSslPort() {
-        return 465;
+        return SystemConstants.SmtpPort.SSL;
     }
 
     @Override

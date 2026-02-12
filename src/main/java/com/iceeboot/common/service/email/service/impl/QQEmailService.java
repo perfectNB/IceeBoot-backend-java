@@ -1,5 +1,6 @@
 package com.iceeboot.common.service.email.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.email.service.AbstractEmailService;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,7 @@ public class QQEmailService extends AbstractEmailService {
 
     @Override
     public String getProvider() {
-        return "qq";
+        return SystemConstants.EmailProvider.QQ;
     }
 
     @Override
@@ -30,11 +31,11 @@ public class QQEmailService extends AbstractEmailService {
 
     @Override
     public int getDefaultSmtpPort() {
-        return 587;
+        return SystemConstants.SmtpPort.SUBMISSION;
     }
 
     @Override
     public int getDefaultSslPort() {
-        return 465;
+        return SystemConstants.SmtpPort.SSL;
     }
 }

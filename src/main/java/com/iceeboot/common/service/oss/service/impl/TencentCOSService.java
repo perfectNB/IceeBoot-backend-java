@@ -1,5 +1,6 @@
 package com.iceeboot.common.service.oss.service.impl;
 
+import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 @Component
 public class TencentCOSService extends AbstractOSSService<COSClient> {
 
-    private static final String PROVIDER_NAME = "tencent";
+    private static final String PROVIDER_NAME = SystemConstants.OSSProvider.TENCENT;
     private static final String DEFAULT_REGION = "ap-beijing";
 
     @Override
