@@ -64,7 +64,7 @@ mybatis-plus:
     cache-enabled: false
     call-setters-on-nulls: true
     jdbc-type-for-null: 'null'
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     db-config:
       id-type: AUTO
@@ -105,9 +105,9 @@ sa-token:
 # 日志配置
 logging:
   level:
-    com.iceeboot: debug
+    com.iceeboot: info
     org.springframework: warn
-    org.mybatis: debug
+    org.mybatis: warn
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'

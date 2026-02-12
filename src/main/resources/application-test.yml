@@ -4,7 +4,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/zboot?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8}
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:111111}
+    password: ${DB_PASSWORD}
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 5
@@ -60,8 +60,8 @@ spring:
   elasticsearch:
     enabled: ${ELASTICSEARCH_ENABLED:false}
     uris: ${ES_URIS:http://localhost:9200}
-    username: ${ES_USERNAME:1111111111}
-    password: ${ES_PASSWORD:1111111111}
+    username: ${ES_USERNAME:}
+    password: ${ES_PASSWORD:}
     repositories:
       enabled: ${ELASTICSEARCH_REPOSITORIES_ENABLED:false}
 
@@ -178,8 +178,8 @@ knife4j:
   production: false
 
 YunGouOS:
-  mchId: ${YUN_GOU_OS_MCH_ID:111111}
-  key: ${YUN_GOU_OS_KEY:1111111111111111111}
+  mchId: ${YUN_GOU_OS_MCH_ID}
+  key: ${YUN_GOU_OS_KEY}
   ## 支付回掉
   notifyUrl: http://127.0.0.1:9000/iceeboot/api/v1/pay/callback
   ## 前端地址（微信授权后重定向到前端）

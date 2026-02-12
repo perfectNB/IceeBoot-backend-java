@@ -35,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,6 +53,28 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
     private final IOssBucketService ossBucketService;
     private final IOssKeyService ossKeyService;
     private final OSSFactory ossFactory;
+
+    /**
+     * 允许上传的文件扩展名白名单
+     */
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "jpg", "jpeg", "png", "gif", "bmp", "webp", "svg",
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "txt", "csv", "json", "xml",
+            "zip", "rar", "7z", "gz", "tar",
+            "mp3", "mp4", "avi", "mov", "wmv", "flv", "mkv",
+            "woff", "woff2", "ttf", "otf"
+    );
+
+    /**
+     * 禁止上传的危险扩展名
+     */
+    private static final Set<String> BLOCKED_EXTENSIONS = Set.of(
+            "exe", "bat", "cmd", "sh", "ps1", "vbs", "js",
+            "jsp", "jspx", "php", "asp", "aspx", "cgi", "pl",
+            "war", "jar", "class", "dll", "so", "dylib",
+            "html", "htm", "xhtml", "shtml", "htaccess"
+    );
 
     @Override
     public IPage<OssFileVO> getFilePage(OssFileQuery query) {
@@ -105,6 +128,11 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         try {
             MultipartFile file = dto.getFile();
 
+            // 校验文件类型
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = getFileExtension(originalFilename);
+            validateFileExtension(fileExtension, originalFilename);
+
             // 获取密钥信息
             OssKeyVO ossKey = ossKeyService.getOssKeyById(dto.getKeyId());
             if (ossKey == null) {
@@ -117,8 +145,6 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
             }
 
             // 生成文件名
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = getFileExtension(originalFilename);
             String fileName = generateFileName(dto.getPathPrefix(), fileExtension);
 
             // 计算文件MD5
@@ -352,7 +378,25 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
             return "";
         }
         int lastDotIndex = filename.lastIndexOf(".");
-        return lastDotIndex > 0 ? filename.substring(lastDotIndex + 1) : "";
+        return lastDotIndex > 0 ? filename.substring(lastDotIndex + 1).toLowerCase() : "";
+    }
+
+    /**
+     * 校验文件扩展名安全性
+     */
+    private void validateFileExtension(String extension, String originalFilename) {
+        if (!StringUtils.hasText(extension)) {
+            throw new IceeBootException("文件缺少扩展名，无法上传");
+        }
+        String ext = extension.toLowerCase();
+        if (BLOCKED_EXTENSIONS.contains(ext)) {
+            log.warn("拦截危险文件上传: {}", originalFilename);
+            throw new IceeBootException("不允许上传此类型文件: ." + ext);
+        }
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            log.warn("拦截未知类型文件上传: {}", originalFilename);
+            throw new IceeBootException("不支持的文件类型: ." + ext);
+        }
     }
 
     /**

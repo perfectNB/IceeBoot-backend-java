@@ -1,7 +1,9 @@
 package com.iceeboot.framework.controller.system;
 
+import com.iceeboot.common.annotation.RateLimit;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.R;
+import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.system.LoginDTO;
 import com.iceeboot.framework.service.system.IAuthService;
 import com.iceeboot.framework.vo.system.LoginVO;
@@ -36,6 +38,7 @@ public class AuthController {
 
     @Operation(summary = "用户登录", description = "用户名密码登录")
     @PostMapping("/login")
+    @RateLimit(count = 5, time = 300, limitType = RateLimitType.IP, message = "登录尝试过于频繁，请5分钟后再试")
     public R<LoginVO> login(@Validated @RequestBody LoginDTO loginDTO) {
         LoginVO loginVO = authService.login(loginDTO);
         return R.ok(loginVO);
@@ -62,6 +65,7 @@ public class AuthController {
 
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
     @PostMapping("/refresh")
+    @RateLimit(count = 10, time = 60, limitType = RateLimitType.IP, message = "刷新令牌过于频繁，请稍后再试")
     public R<LoginVO> refresh(@RequestParam(name = "refreshToken", required = false) String refreshToken,
                               @RequestBody(required = false) Map<String, Object> body) {
         String token = refreshToken;
@@ -106,6 +110,7 @@ public class AuthController {
 
     @Operation(summary = "使用ticket换取登录信息", description = "前端使用ticket换取accessToken和用户信息")
     @PostMapping("/wechat/exchange-ticket")
+    @RateLimit(count = 10, time = 60, limitType = RateLimitType.IP, message = "请求过于频繁，请稍后再试")
     public R<LoginVO> exchangeTicket(@RequestParam(name = "ticket") String ticket) {
         LoginVO loginVO = authService.exchangeTicket(ticket);
         return R.ok(loginVO);
