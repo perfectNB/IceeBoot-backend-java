@@ -111,6 +111,15 @@ public class AuthServiceImpl implements IAuthService {
 
     private static final long REFRESH_TOKEN_CONSUMED_TTL_SECONDS = 60L;
 
+    /** 登录失败最大次数 */
+    private static final int MAX_LOGIN_FAIL_COUNT = 5;
+
+    /** 登录失败计数窗口（秒）*/
+    private static final long LOGIN_FAIL_WINDOW_SECONDS = 900L;
+
+    /** 账号锁定时长（秒）*/
+    private static final long LOGIN_LOCK_SECONDS = 1800L;
+
     private static final String REFRESH_TOKEN_CONSUME_SCRIPT = "local v = redis.call('GET', KEYS[1]);"
             + " if v then redis.call('DEL', KEYS[1]); redis.call('SET', KEYS[2], '1', 'EX', ARGV[1]); return v; end;"
             + " if redis.call('EXISTS', KEYS[2]) == 1 then return 'CONSUMED'; end;"
@@ -124,9 +133,20 @@ public class AuthServiceImpl implements IAuthService {
             throw new IceeBootException(ResultCodeEnum.BAD_REQUEST.getCode(), ResponseMessage.Auth.USERNAME_OR_PASSWORD_EMPTY);
         }
 
+        String username = loginDTO.getUsername();
+
+        // 检查账号是否被锁定
+        String lockedKey = CacheConstants.Auth.LOGIN_LOCKED + username;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(lockedKey))) {
+            Long ttl = redisTemplate.getExpire(lockedKey, TimeUnit.MINUTES);
+            throw new IceeBootException(ResultCodeEnum.LOGIN_ERROR.getCode(),
+                    "账号已被锁定，请" + (ttl != null && ttl > 0 ? ttl + "分钟" : "稍") + "后再试");
+        }
+
         // 查询用户
-        UserDO user = userService.getUserByUsername(loginDTO.getUsername());
+        UserDO user = userService.getUserByUsername(username);
         if (user == null) {
+            recordLoginFailure(username);
             throw new IceeBootException(ResultCodeEnum.USER_NOT_EXIST.getCode(), ResultCodeEnum.USER_NOT_EXIST.getMessage());
         }
 
@@ -135,11 +155,14 @@ public class AuthServiceImpl implements IAuthService {
             throw new IceeBootException(ResultCodeEnum.USER_DISABLED.getCode(), ResultCodeEnum.USER_DISABLED.getMessage());
         }
 
-
         // 验证密码
         if (!PasswordUtil.matches(loginDTO.getPassword(), user.getPassword())) {
+            recordLoginFailure(username);
             throw new IceeBootException(ResultCodeEnum.LOGIN_ERROR.getCode(), ResultCodeEnum.LOGIN_ERROR.getMessage());
         }
+
+        // 登录成功，清除失败计数
+        clearLoginFailure(username);
 
         // 更新最后登录信息
         user.setLastLoginTime(LocalDateTime.now());
@@ -670,10 +693,28 @@ public class AuthServiceImpl implements IAuthService {
         return CacheConstants.Auth.USER_REFRESH_TOKEN + userId;
     }
 
-    public static void main(String[] args) {
-        String random20 = generateRandomString(20);
-        System.out.println(random20); // 例如：aB3xK9LmQw2RtY7nVpE8
+    /**
+     * 记录登录失败，达到阈值则锁定账号
+     */
+    private void recordLoginFailure(String username) {
+        String failKey = CacheConstants.Auth.LOGIN_FAIL_COUNT + username;
+        Long failCount = redisTemplate.opsForValue().increment(failKey);
+        if (failCount != null && failCount == 1) {
+            redisTemplate.expire(failKey, LOGIN_FAIL_WINDOW_SECONDS, TimeUnit.SECONDS);
+        }
+        if (failCount != null && failCount >= MAX_LOGIN_FAIL_COUNT) {
+            String lockedKey = CacheConstants.Auth.LOGIN_LOCKED + username;
+            redisTemplate.opsForValue().set(lockedKey, "1", LOGIN_LOCK_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.delete(failKey);
+            log.warn("账号 {} 登录失败{}次，已锁定{}秒", username, failCount, LOGIN_LOCK_SECONDS);
+        }
     }
 
-
+    /**
+     * 登录成功后清除失败计数
+     */
+    private void clearLoginFailure(String username) {
+        redisTemplate.delete(CacheConstants.Auth.LOGIN_FAIL_COUNT + username);
+        redisTemplate.delete(CacheConstants.Auth.LOGIN_LOCKED + username);
+    }
 }

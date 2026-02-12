@@ -70,10 +70,16 @@ public class CacheConstants {
 
         /** 刷新令牌缓存键前缀 */
         public static final String REFRESH_TOKEN = "auth:refresh:token:";
-        
+
         public static final String REFRESH_TOKEN_CONSUMED = "auth:refresh:consumed:";
-        
+
         public static final String USER_REFRESH_TOKEN = "auth:user:refresh:";
+
+        /** 登录失败次数缓存键前缀 */
+        public static final String LOGIN_FAIL_COUNT = "auth:login:fail:";
+
+        /** 账号锁定缓存键前缀 */
+        public static final String LOGIN_LOCKED = "auth:login:locked:";
         
         /** 缓存过期时间（分钟） */
         public static final long CACHE_EXPIRE_TIME = 30;
