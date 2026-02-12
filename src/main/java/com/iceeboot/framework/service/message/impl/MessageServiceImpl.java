@@ -124,14 +124,16 @@ public class MessageServiceImpl extends ServiceImpl<IMessageMapper, MessageDO> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateMessage(List<Long> ids) {
-        for (Long id : ids) {
-            MessageDO message = new MessageDO();
-            message.setId(id);
-            message.setStatus(SystemConstants.Status.READ);
-            this.updateById(message);
+        if (ids == null || ids.isEmpty()) {
+            return true;
         }
-        return true;
+        return this.update(
+                new LambdaUpdateWrapper<MessageDO>()
+                        .in(MessageDO::getId, ids)
+                        .set(MessageDO::getStatus, SystemConstants.Status.READ)
+        );
     }
 
 

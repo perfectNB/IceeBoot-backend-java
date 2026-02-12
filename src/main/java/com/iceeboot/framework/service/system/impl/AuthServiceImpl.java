@@ -35,6 +35,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -97,6 +99,8 @@ public class AuthServiceImpl implements IAuthService {
     private final ISocialService iSocialService;
 
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final TransactionTemplate transactionTemplate;
 
     private static final Integer TYPE = SocialConstant.SOCIAL_TYPE_WECHAT;
 
@@ -407,41 +411,42 @@ public class AuthServiceImpl implements IAuthService {
         // 查询社交账号是否已存在
         SocialDO social = iSocialService.findByOpenIdAndPlatform(openId, TYPE);
         UserDO user;
-        
-        if (social == null) {
-            // 新用户注册流程
-            log.info("微信OAuth回调 - 新用户注册，openId: {}", openId);
-            
-            try {
-                String random10 = generateRandomString(10);
-                log.info("随机生成的username为:{}",random10);
-                // 创建社交账号记录
-                social = new SocialDO()
-                        .setOpenId(openId)
-                        .setUsername(random10)
-                        .setNickname(nickname)
-                        .setAvatar(headimgurl)
-                        .setUnionId(unionId)
-                        .setPlatform(TYPE);
-                iSocialService.save(social);
-                
-                // 创建用户账号
-                user = new UserDO()
-                        .setOpenid(openId)
-                        .setUsername(random10)
-                        .setNickname(nickname)
-                        .setAvatar(headimgurl)
-                        .setPassword(PasswordUtil.encrypt(generateRandomString(20)))
-                        .setStatus(SystemConstants.Status.ACTIVE);
-                
-                userService.save(user);
-                log.info("微信OAuth回调 - 创建用户成功，userId: {}", user.getId());
-                
-                // 分配默认角色
-                assignDefaultRoles(user.getId());
-                
 
-                
+        if (social == null) {
+            // 新用户注册流程 — 使用编程式事务保证 social/user/role 三表原子写入
+            log.info("微信OAuth回调 - 新用户注册，openId: {}", openId);
+
+            try {
+                user = transactionTemplate.execute(status -> {
+                    String random10 = generateRandomString(10);
+                    log.info("随机生成的username为:{}", random10);
+
+                    // 创建社交账号记录
+                    SocialDO newSocial = new SocialDO()
+                            .setOpenId(openId)
+                            .setUsername(random10)
+                            .setNickname(nickname)
+                            .setAvatar(headimgurl)
+                            .setUnionId(unionId)
+                            .setPlatform(TYPE);
+                    iSocialService.save(newSocial);
+
+                    // 创建用户账号
+                    UserDO newUser = new UserDO()
+                            .setOpenid(openId)
+                            .setUsername(random10)
+                            .setNickname(nickname)
+                            .setAvatar(headimgurl)
+                            .setPassword(PasswordUtil.encrypt(generateRandomString(20)))
+                            .setStatus(SystemConstants.Status.ACTIVE);
+                    userService.save(newUser);
+                    log.info("微信OAuth回调 - 创建用户成功，userId: {}", newUser.getId());
+
+                    // 分配默认角色
+                    assignDefaultRoles(newUser.getId());
+
+                    return newUser;
+                });
             } catch (Exception e) {
                 log.error("微信OAuth回调 - 创建用户失败: {}", e.getMessage(), e);
                 return null;
@@ -491,19 +496,15 @@ public class AuthServiceImpl implements IAuthService {
      * 分配默认角色
      */
     private void assignDefaultRoles(Long userId) {
-        try {
-            if (wechatDefaultRoleId == null) {
-                log.warn("微信OAuth回调 - 未配置默认角色ID");
-                return;
-            }
-            UserRoleDO userRole = new UserRoleDO()
-                    .setUserId(userId)
-                    .setRoleId(wechatDefaultRoleId);
-            iSysUserRoleService.save(userRole);
-            log.info("微信OAuth回调 - 分配默认角色成功，角色ID: {}", wechatDefaultRoleId);
-        } catch (Exception e) {
-            log.error("微信OAuth回调 - 分配默认角色失败: {}", e.getMessage(), e);
+        if (wechatDefaultRoleId == null) {
+            log.warn("微信OAuth回调 - 未配置默认角色ID");
+            return;
         }
+        UserRoleDO userRole = new UserRoleDO()
+                .setUserId(userId)
+                .setRoleId(wechatDefaultRoleId);
+        iSysUserRoleService.save(userRole);
+        log.info("微信OAuth回调 - 分配默认角色成功，角色ID: {}", wechatDefaultRoleId);
     }
     
     /**
