@@ -13,6 +13,7 @@ import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
 import com.iceeboot.config.interceptor.PermissionInterceptor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @ConfigurationProperties(prefix = "iceeboot.auth")
 @Data
+@Slf4j
 public class SaTokenConfig implements WebMvcConfigurer {
 
     @Autowired
@@ -50,7 +52,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
                         SaRequest request = SaHolder.getRequest();
                         
                         // 打印请求路径用于调试
-                        System.out.println("Sa-Token拦截器检查请求: " + request.getUrl());
+                        log.debug("Sa-Token拦截器检查请求: {}", request.getUrl());
 
                         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
                             return;
@@ -115,13 +117,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
         if (StringUtils.hasText(xAccessToken)) {
             return xAccessToken;
         }
-        
-        // 5. 从请求参数获取
-        String paramToken = request.getParam("access_token");
-        if (StringUtils.hasText(paramToken)) {
-            return paramToken;
-        }
-        
+
         return null;
     }
     
