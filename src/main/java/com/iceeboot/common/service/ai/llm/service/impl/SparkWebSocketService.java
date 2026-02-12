@@ -54,7 +54,6 @@ public class SparkWebSocketService implements LLMService {
     public Mono<LLMResponse> chat(LLMRequest request) {
         log.info("讯飞星火WebSocket非流式聊天 - 这是示例实现");
         log.info("实际实现需要使用WebSocket客户端库建立连接");
-        log.info("认证信息: APPID={}, APIKey={}, APISecret={}", appId, apiKey, apiSecret);
         
         // 示例：返回说明信息
         return Mono.just(createInfoResponse(

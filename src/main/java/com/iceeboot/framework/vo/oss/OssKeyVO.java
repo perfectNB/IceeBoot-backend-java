@@ -1,6 +1,7 @@
 package com.iceeboot.framework.vo.oss;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.iceeboot.common.annotation.Sensitive;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -22,9 +23,11 @@ public class OssKeyVO {
     @Schema(description = "OSS厂商")
     private String ossProvider;
 
+    @Sensitive(prefixKeep = 4, suffixKeep = 4)
     @Schema(description = "Access Key ID")
     private String accessKeyId;
 
+    @Sensitive(prefixKeep = 4, suffixKeep = 4)
     @Schema(description = "Access Key Secret")
     private String accessKeySecret;
 

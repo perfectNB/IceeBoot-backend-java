@@ -16,6 +16,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.enums.ResultCodeEnum;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.utils.Md5Utils;
+import com.iceeboot.common.utils.DesensitizeUtils;
 import com.iceeboot.common.utils.PasswordUtil;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.dto.create.system.LoginDTO;
@@ -315,7 +316,7 @@ public class AuthServiceImpl implements IAuthService {
                 return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
             }
             if (!verifyState(state)) {
-                log.error("微信OAuth回调 - state验证失败，state值: {}", state);
+                log.error("微信OAuth回调 - state验证失败");
                 return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
             }
             log.info("微信OAuth回调 - state验证成功");
@@ -414,7 +415,7 @@ public class AuthServiceImpl implements IAuthService {
 
         if (social == null) {
             // 新用户注册流程 — 使用编程式事务保证 social/user/role 三表原子写入
-            log.info("微信OAuth回调 - 新用户注册，openId: {}", openId);
+            log.info("微信OAuth回调 - 新用户注册，openId: {}", DesensitizeUtils.desensitizeCustom(openId, 4, 4));
 
             try {
                 user = transactionTemplate.execute(status -> {
@@ -453,7 +454,7 @@ public class AuthServiceImpl implements IAuthService {
             }
         } else {
             // 老用户登录流程
-            log.info("微信OAuth回调 - 老用户登录，openId: {}", openId);
+            log.info("微信OAuth回调 - 老用户登录，openId: {}", DesensitizeUtils.desensitizeCustom(openId, 4, 4));
             
             // 通过用户名查找用户
             String socialUsername = social.getUsername();
@@ -472,7 +473,7 @@ public class AuthServiceImpl implements IAuthService {
             
             // 如果还是找不到用户，数据不一致
             if (user == null) {
-                log.error("微信OAuth回调 - 社交账号存在但找不到对应用户，openId: {}", openId);
+                log.error("微信OAuth回调 - 社交账号存在但找不到对应用户，openId: {}", DesensitizeUtils.desensitizeCustom(openId, 4, 4));
                 return null;
             }
             
