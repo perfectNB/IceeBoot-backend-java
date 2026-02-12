@@ -37,22 +37,22 @@ public abstract class AbstractEmailService implements EmailService {
      * 获取提供商显示名称（用于日志）
      * @return 例如 "QQ邮箱", "Gmail"
      */
-    protected abstract String getProviderDisplayName();
+    public abstract String getProviderDisplayName();
 
     /**
      * 获取默认SMTP主机
      */
-    protected abstract String getDefaultSmtpHost();
+    public abstract String getDefaultSmtpHost();
 
     /**
      * 获取默认SMTP端口
      */
-    protected abstract int getDefaultSmtpPort();
+    public abstract int getDefaultSmtpPort();
 
     /**
      * 获取默认SSL端口
      */
-    protected abstract int getDefaultSslPort();
+    public abstract int getDefaultSslPort();
 
     // ==================== 可覆盖方法（子类可选择性覆盖） ====================
 

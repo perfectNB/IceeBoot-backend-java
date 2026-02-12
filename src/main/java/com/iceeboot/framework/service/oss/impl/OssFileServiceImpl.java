@@ -51,6 +51,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
 
     private final IOssBucketService ossBucketService;
     private final IOssKeyService ossKeyService;
+    private final OSSFactory ossFactory;
 
     @Override
     public IPage<OssFileVO> getFilePage(OssFileQuery query) {
@@ -127,11 +128,12 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
             OssFileDO existingFile = baseMapper.selectByFileMd5(fileMd5);
             if (existingFile != null) {
                 log.info("文件已存在，返回已有文件信息: {}", existingFile.getFileName());
-                return convertToVO(existingFile);
+//                return convertToVO(existingFile);
+                throw new IceeBootException("文件已存在");
             }
 
             // 获取OSS服务
-            OSSService ossService = OSSFactory.getService(dto.getProvider());
+            OSSService ossService = ossFactory.getService(dto.getProvider());
 
             // 构建OSS请求
             OSSRequest ossRequest = new OSSRequest()
@@ -192,7 +194,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         }
 
         // 获取OSS服务
-        OSSService ossService = OSSFactory.getService(file.getProvider());
+        OSSService ossService = ossFactory.getService(file.getProvider());
 
         // 构建OSS请求
         OSSRequest ossRequest = new OSSRequest()
@@ -233,7 +235,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
         }
 
         // 获取OSS服务
-        OSSService ossService = OSSFactory.getService(file.getProvider());
+        OSSService ossService = ossFactory.getService(file.getProvider());
 
         // 构建OSS请求
         OSSRequest ossRequest = new OSSRequest()
@@ -270,7 +272,7 @@ public class OssFileServiceImpl extends ServiceImpl<OssFileMapper, OssFileDO> im
                     OssKeyVO ossKey = ossKeyService.getOssKeyById(bucket.getKeyId());
                     if (ossKey != null) {
                         // 获取OSS服务
-                        OSSService ossService = OSSFactory.getService(file.getProvider());
+                        OSSService ossService = ossFactory.getService(file.getProvider());
 
                         // 构建OSS请求
                         OSSRequest ossRequest = new OSSRequest()

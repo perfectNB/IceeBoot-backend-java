@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> implements IOssKeyService {
 
+    private final OSSFactory ossFactory;
+
     // 用于轮询获取密钥的计数器
     private final Map<String, AtomicInteger> providerCounters = new ConcurrentHashMap<>();
 
@@ -93,7 +95,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
         
         // 设置默认端点
         if (!StringUtils.hasText(ossKey.getEndpoint())) {
-            ossKey.setEndpoint(OSSFactory.getDefaultEndpoint(dto.getOssProvider()));
+            ossKey.setEndpoint(ossFactory.getDefaultEndpoint(dto.getOssProvider()));
         }
         
         return this.save(ossKey);
@@ -133,7 +135,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
     @Override
     public List<String> getSupportedProviders() {
         // 从OSSFactory获取支持的厂商列表
-        return Arrays.asList(OSSFactory.getSupportedProviders());
+        return new ArrayList<>(ossFactory.getSupportedProviders());
     }
 
     @Override
@@ -158,7 +160,7 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
         
         try {
             // 获取对应的OSS服务
-            OSSService ossService = OSSFactory.getService(ossKey.getOssProvider());
+            OSSService ossService = ossFactory.getService(ossKey.getOssProvider());
             if (ossService == null) {
                 return false;
             }
@@ -265,8 +267,8 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
             providerVO.setKeys(keyVOs);
             providerVO.setKeyCount(keyVOs.size());
             providerVO.setActiveKeyCount((int) activeCount);
-            providerVO.setDefaultEndpoint(OSSFactory.getDefaultEndpoint(provider));
-            providerVO.setSupportedFeatures(Arrays.asList(OSSFactory.getSupportedFeatures(provider)));
+            providerVO.setDefaultEndpoint(ossFactory.getDefaultEndpoint(provider));
+            providerVO.setSupportedFeatures(ossFactory.getService(provider).getSupportedOperations());
             
             result.add(providerVO);
         }

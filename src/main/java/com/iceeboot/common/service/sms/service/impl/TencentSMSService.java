@@ -10,6 +10,7 @@ import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @date 2025-01-24
  */
 @Slf4j
+@Component
 public class TencentSMSService extends AbstractSMSService {
 
     private static final String PROVIDER_NAME = "tencent";
@@ -44,12 +46,12 @@ public class TencentSMSService extends AbstractSMSService {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "腾讯云短信";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 

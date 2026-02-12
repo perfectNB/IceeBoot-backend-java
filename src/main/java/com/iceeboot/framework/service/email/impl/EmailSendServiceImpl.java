@@ -23,11 +23,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EmailSendServiceImpl implements IEmailSendService {
     private final IEmailKeyService emailKeyService;
+    private final EmailFactory emailFactory;
 
     @Override
     public EmailResponse sendEmail(EmailSendDTO dto) {
         EmailKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
-        EmailService emailService = EmailFactory.getService(key.getEmailProvider());
+        EmailService emailService = emailFactory.getService(key.getEmailProvider());
         EmailRequest request = buildRequest(dto, key);
         EmailResponse response = dispatchSend(emailService, dto, request);
         if (response == null) {
@@ -42,7 +43,7 @@ public class EmailSendServiceImpl implements IEmailSendService {
             throw new IceeBootException("消息ID不能为空");
         }
         EmailKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
-        EmailService emailService = EmailFactory.getService(key.getEmailProvider());
+        EmailService emailService = emailFactory.getService(key.getEmailProvider());
         EmailRequest request = buildRequest(null, key);
         EmailResponse response = emailService.queryEmailStatus(dto.getMessageId(), request).block();
         if (response == null) {

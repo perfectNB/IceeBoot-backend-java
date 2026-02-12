@@ -48,13 +48,13 @@ public abstract class AbstractOSSService<C> implements OSSService {
      * 获取厂商显示名称（用于日志）
      * @return 厂商显示名称（如 阿里云OSS、腾讯云COS）
      */
-    protected abstract String getProviderDisplayName();
+    public abstract String getProviderDisplayName();
 
     /**
      * 获取默认端点
      * @return 默认端点地址
      */
-    protected abstract String getDefaultEndpoint();
+    public abstract String getDefaultEndpoint();
 
     /**
      * 创建SDK客户端

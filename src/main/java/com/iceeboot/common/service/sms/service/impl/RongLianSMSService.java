@@ -10,6 +10,7 @@ import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
 import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -27,6 +28,7 @@ import java.util.*;
  * @date 2025-01-24
  */
 @Slf4j
+@Component
 public class RongLianSMSService extends AbstractSMSService {
 
     private static final String PROVIDER_NAME = "ronglian";
@@ -39,12 +41,12 @@ public class RongLianSMSService extends AbstractSMSService {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "容联云短信";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 

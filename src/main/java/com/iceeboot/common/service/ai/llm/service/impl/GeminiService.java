@@ -5,6 +5,7 @@ import com.iceeboot.common.service.ai.llm.dto.LLMRequest;
 import com.iceeboot.common.service.ai.llm.dto.LLMResponse;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -17,6 +18,7 @@ import java.util.List;
  * @date 2025-09-03
  */
 @Slf4j
+@Component
 public class GeminiService implements LLMService {
     
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";

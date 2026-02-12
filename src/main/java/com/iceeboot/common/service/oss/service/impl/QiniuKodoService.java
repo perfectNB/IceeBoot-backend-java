@@ -5,6 +5,7 @@ import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.dto.OSSResponse;
 import com.iceeboot.common.service.oss.service.AbstractOSSService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
@@ -28,6 +29,7 @@ import java.util.*;
  * @date 2025-09-03
  */
 @Slf4j
+@Component
 public class QiniuKodoService extends AbstractOSSService<Auth> {
 
     private static final String PROVIDER_NAME = "qiniu";
@@ -39,12 +41,12 @@ public class QiniuKodoService extends AbstractOSSService<Auth> {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "七牛云Kodo";
     }
 
     @Override
-    protected String getDefaultEndpoint() {
+    public String getDefaultEndpoint() {
         return DEFAULT_REGION;
     }
 

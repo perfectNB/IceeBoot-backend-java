@@ -20,11 +20,12 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SmsSendServiceImpl implements ISmsSendService {
     private final ISmsKeyService smsKeyService;
+    private final SMSFactory smsFactory;
 
     @Override
     public SMSResponse sendSms(SmsSendDTO dto) {
         SmsKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
-        SMSService smsService = SMSFactory.getService(key.getSmsProvider());
+        SMSService smsService = smsFactory.getService(key.getSmsProvider());
         SMSRequest request = buildRequest(dto, key);
         SMSResponse response = dispatchSend(smsService, dto, request);
         if (response == null) {
@@ -39,7 +40,7 @@ public class SmsSendServiceImpl implements ISmsSendService {
             throw new IceeBootException("消息ID不能为空");
         }
         SmsKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
-        SMSService smsService = SMSFactory.getService(key.getSmsProvider());
+        SMSService smsService = smsFactory.getService(key.getSmsProvider());
         SMSRequest request = buildRequest(null, key);
         SMSResponse response = smsService.querySMSStatus(dto.getMessageId(), request).block();
         if (response == null) {
@@ -51,7 +52,7 @@ public class SmsSendServiceImpl implements ISmsSendService {
     @Override
     public SMSResponse queryBalance(SmsBalanceQuery dto) {
         SmsKeyVO key = resolveKey(dto.getKeyId(), dto.getProvider());
-        SMSService smsService = SMSFactory.getService(key.getSmsProvider());
+        SMSService smsService = smsFactory.getService(key.getSmsProvider());
         SMSRequest request = buildRequest(null, key);
         SMSResponse response = smsService.queryBalance(request).block();
         if (response == null) {

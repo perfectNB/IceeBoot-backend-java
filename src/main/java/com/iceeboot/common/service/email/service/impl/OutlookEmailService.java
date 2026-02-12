@@ -2,6 +2,7 @@ package com.iceeboot.common.service.email.service.impl;
 
 import com.iceeboot.common.service.email.dto.EmailRequest;
 import com.iceeboot.common.service.email.service.AbstractEmailService;
+import org.springframework.stereotype.Component;
 
 import java.util.Properties;
 
@@ -13,6 +14,7 @@ import java.util.Properties;
  * @author CodeIcee
  * @date 2025-09-04
  */
+@Component
 public class OutlookEmailService extends AbstractEmailService {
 
     @Override
@@ -21,22 +23,22 @@ public class OutlookEmailService extends AbstractEmailService {
     }
 
     @Override
-    protected String getProviderDisplayName() {
+    public String getProviderDisplayName() {
         return "Outlook";
     }
 
     @Override
-    protected String getDefaultSmtpHost() {
+    public String getDefaultSmtpHost() {
         return "smtp-mail.outlook.com";
     }
 
     @Override
-    protected int getDefaultSmtpPort() {
+    public int getDefaultSmtpPort() {
         return 587;
     }
 
     @Override
-    protected int getDefaultSslPort() {
+    public int getDefaultSslPort() {
         return 465;
     }
 

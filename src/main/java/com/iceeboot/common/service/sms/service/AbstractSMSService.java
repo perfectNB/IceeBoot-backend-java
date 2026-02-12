@@ -39,13 +39,13 @@ public abstract class AbstractSMSService implements SMSService {
      * 获取厂商显示名称，如"阿里云短信"
      * @return 厂商显示名称
      */
-    protected abstract String getProviderDisplayName();
+    public abstract String getProviderDisplayName();
 
     /**
      * 获取默认端点URL
      * @return 默认端点URL
      */
-    protected abstract String getDefaultEndpoint();
+    public abstract String getDefaultEndpoint();
 
     /**
      * 获取默认超时时间（秒）
