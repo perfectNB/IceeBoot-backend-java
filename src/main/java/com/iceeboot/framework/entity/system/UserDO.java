@@ -9,6 +9,7 @@ package com.iceeboot.framework.entity.system;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.iceeboot.common.core.domain.IceeBootDO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -34,6 +35,7 @@ public class UserDO extends IceeBootDO {
     @TableField("username")
     private String username;
 
+    @JsonIgnore
     @Schema(description = "密码")
     @TableField("password")
     private String password;
