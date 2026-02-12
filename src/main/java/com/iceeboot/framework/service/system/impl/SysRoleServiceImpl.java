@@ -32,6 +32,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -59,6 +60,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     private final ISysMenuService menuService;
 
     private final ISysRoleMenuService roleMenuService;
+
+    private final TransactionTemplate transactionTemplate;
 
 
     @Override
@@ -248,78 +251,63 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
     }
 
     @Override
-    @Transactional
     public boolean saveRolePermissions(Long roleId, List<Long> permissionIds) {
-        try {
-            // 1. 删除角色现有的所有权限
+        // 1. 事务内只做DB操作
+        transactionTemplate.executeWithoutResult(status -> {
             rolePermissionService.removeAllPermissionsByRoleId(roleId);
-
-            // 2. 添加新的权限
             if (permissionIds != null && !permissionIds.isEmpty()) {
                 rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
             }
+        });
 
-            // 3. 重置缓存
-            List<PermissionDO> permissions;
-            if (permissionIds == null || permissionIds.isEmpty()) {
-                permissions = Collections.emptyList(); // 直接返回空列表
-            } else {
-                permissions = permissionService.list(
-                        new LambdaQueryWrapper<PermissionDO>()
-                                .in(PermissionDO::getId, permissionIds)
-                                .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                                .orderByAsc(PermissionDO::getSort)
-                );
-            }
-
-
-            String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
-            redisTemplate.opsForValue().set(
-                    cacheKey,
-                    permissions
+        // 2. 事务提交后再刷新缓存（避免Redis慢导致DB锁持有过长）
+        List<PermissionDO> permissions;
+        if (permissionIds == null || permissionIds.isEmpty()) {
+            permissions = Collections.emptyList();
+        } else {
+            permissions = permissionService.list(
+                    new LambdaQueryWrapper<PermissionDO>()
+                            .in(PermissionDO::getId, permissionIds)
+                            .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
+                            .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
+                            .orderByAsc(PermissionDO::getSort)
             );
-            redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
-
-            return true;
-        } catch (Exception e) {
-            throw new RuntimeException("保存角色权限失败", e);
         }
+
+        String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
+        redisTemplate.opsForValue().set(cacheKey, permissions);
+        redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
+
+        return true;
     }
 
     @Override
-    @Transactional
     public boolean saveRoleMenus(Long roleId, List<Long> menuIds) {
-        try {
-            // 1. 删除角色现有的所有菜单
+        // 1. 事务内只做DB操作
+        transactionTemplate.executeWithoutResult(status -> {
             roleMenuService.removeAllMenusByRoleId(roleId);
-
-            // 2. 添加新的菜单
             if (menuIds != null && !menuIds.isEmpty()) {
                 roleMenuService.assignMenusToRole(roleId, menuIds);
             }
-            // 3. 重置缓存
-            List<MenuDO> menus;
-            if (menuIds == null || menuIds.isEmpty()) {
-                menus = Collections.emptyList(); // 直接返回空列表
-            } else {
-                menus = menuService.list(
-                        new LambdaQueryWrapper<MenuDO>()
-                                .in(MenuDO::getId, menuIds)
-                                .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                                .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                                .orderByAsc(MenuDO::getSort)
-                );
-            }
-            String cacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
-            redisTemplate.opsForValue().set(
-                    cacheKey,
-                    menus
+        });
+
+        // 2. 事务提交后再刷新缓存
+        List<MenuDO> menus;
+        if (menuIds == null || menuIds.isEmpty()) {
+            menus = Collections.emptyList();
+        } else {
+            menus = menuService.list(
+                    new LambdaQueryWrapper<MenuDO>()
+                            .in(MenuDO::getId, menuIds)
+                            .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                            .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
+                            .orderByAsc(MenuDO::getSort)
             );
-            return true;
-        } catch (Exception e) {
-            throw new RuntimeException("保存角色菜单失败", e);
         }
+        String cacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
+        redisTemplate.opsForValue().set(cacheKey, menus);
+
+        return true;
     }
 
     @Override
