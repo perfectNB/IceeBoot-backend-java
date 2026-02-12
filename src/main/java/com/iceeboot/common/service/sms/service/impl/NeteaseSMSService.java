@@ -2,7 +2,7 @@
  * 网易云信SMS服务实现类
  *
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 package com.iceeboot.common.service.sms.service.impl;
 
@@ -26,7 +26,7 @@ import java.util.UUID;
  * 基于网易云信短信服务API实现短信发送功能
  *
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 @Slf4j
 @Component
