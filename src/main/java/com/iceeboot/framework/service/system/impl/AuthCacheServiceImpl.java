@@ -12,7 +12,7 @@ import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.framework.entity.system.*;
 import com.iceeboot.framework.mapper.system.*;
 import com.iceeboot.framework.service.system.IAuthCacheService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -27,30 +27,24 @@ import java.util.stream.Collectors;
  * @date 2025-08-13
  */
 @Service
+@RequiredArgsConstructor
 public class AuthCacheServiceImpl implements IAuthCacheService {
 
     // 直接使用CacheConstants中的常量
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
-    private SysMenuMapper menuMapper;
+    private final SysMenuMapper menuMapper;
 
-    @Autowired
-    private SysPermissionMapper permissionMapper;
+    private final SysPermissionMapper permissionMapper;
 
-    @Autowired
-    private SysRoleMapper roleMapper;
+    private final SysRoleMapper roleMapper;
 
-    @Autowired
-    private SysUserRoleMapper userRoleMapper;
+    private final SysUserRoleMapper userRoleMapper;
 
-    @Autowired
-    private SysRoleMenuMapper roleMenuMapper;
+    private final SysRoleMenuMapper roleMenuMapper;
 
-    @Autowired
-    private SysRolePermissionMapper rolePermissionMapper;
+    private final SysRolePermissionMapper rolePermissionMapper;
 
 
     @Override

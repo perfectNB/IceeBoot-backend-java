@@ -315,8 +315,8 @@ public class SparkWebSocketService implements LLMService {
         
         // 示例认证信息
         String appId = "e3dbb357";
-        String apiKey = "008b5828e6edcaf41a011ad88dab999e";
-        String apiSecret = "NjI5NWRkMjJkNDJiZTA4YmIyNDI5ZDZj";
+        String apiKey = "";
+        String apiSecret = "";
         
         SparkWebSocketService service = new SparkWebSocketService(appId, apiKey, apiSecret);
         

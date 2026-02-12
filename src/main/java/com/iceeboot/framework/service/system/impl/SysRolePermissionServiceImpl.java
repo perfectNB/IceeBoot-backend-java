@@ -17,8 +17,8 @@ import com.iceeboot.framework.mapper.system.SysRolePermissionMapper;
 import com.iceeboot.framework.query.system.RolePermissionQuery;
 import com.iceeboot.framework.service.system.ISysRolePermissionService;
 import com.iceeboot.framework.vo.system.RolePermissionVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
  * @date 2025-08-13
  */
 @Service
+@RequiredArgsConstructor
 public class SysRolePermissionServiceImpl extends ServiceImpl<SysRolePermissionMapper, RolePermissionDO> implements ISysRolePermissionService {
 
-    @Autowired
-    private SysRolePermissionMapper sysRolePermissionMapper;
+    private final SysRolePermissionMapper sysRolePermissionMapper;
 
     @Override
     public PageResult<RolePermissionVO> getRolePermissionPage(RolePermissionQuery query) {

@@ -17,8 +17,8 @@ import com.iceeboot.framework.mapper.system.SysUserRoleMapper;
 import com.iceeboot.framework.query.system.UserRoleQuery;
 import com.iceeboot.framework.service.system.ISysUserRoleService;
 import com.iceeboot.framework.vo.system.UserRoleVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
  * @date 2025-08-13
  */
 @Service
+@RequiredArgsConstructor
 public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, UserRoleDO> implements ISysUserRoleService {
 
-    @Autowired
-    private SysUserRoleMapper sysUserRoleMapper;
+    private final SysUserRoleMapper sysUserRoleMapper;
 
     @Override
     public PageResult<UserRoleVO> getUserRolePage(UserRoleQuery query) {

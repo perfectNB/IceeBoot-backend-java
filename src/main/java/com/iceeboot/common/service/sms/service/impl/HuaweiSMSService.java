@@ -1,6 +1,6 @@
 /**
  * 华为云SMS服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
@@ -8,9 +8,8 @@ package com.iceeboot.common.service.sms.service.impl;
 
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
-import com.iceeboot.common.service.sms.service.SMSService;
+import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -24,206 +23,197 @@ import java.util.UUID;
 /**
  * 华为云SMS服务实现类
  * 基于华为云短信服务API实现短信发送功能
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
 @Slf4j
-public class HuaweiSMSService implements SMSService {
-    
+public class HuaweiSMSService extends AbstractSMSService {
+
     private static final String PROVIDER_NAME = "huawei";
     private static final String DEFAULT_ENDPOINT = "https://smsapi.cn-north-4.myhuaweicloud.com:443";
-    private static final String API_VERSION = "v1";
-    private static final Integer DEFAULT_TIMEOUT = 30;
-    
-    private final WebClient webClient;
-    
-    public HuaweiSMSService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build();
-    }
-    
+
     @Override
     public String getProvider() {
         return PROVIDER_NAME;
     }
-    
+
     @Override
-    public Mono<SMSResponse> sendSMS(SMSRequest request) {
-        return sendTemplateSMS(request);
+    protected String getProviderDisplayName() {
+        return "华为云短信";
     }
-    
+
+    @Override
+    protected String getDefaultEndpoint() {
+        return DEFAULT_ENDPOINT;
+    }
+
+    @Override
+    protected Map<String, String> buildCommonParams(SMSRequest request) {
+        return new HashMap<>();
+    }
+
+    @Override
+    protected String generateSignature(Map<String, String> params, String accessKeySecret) throws Exception {
+        // 华为云使用WSSE认证，签名在buildHeaders中完成
+        return "";
+    }
+
+    @Override
+    protected void addSendSmsParams(Map<String, String> params, SMSRequest request) {
+        // 华为云使用JSON请求体
+    }
+
+    @Override
+    protected void addBatchSmsParams(Map<String, String> params, SMSRequest request) {
+        // 华为云使用JSON请求体
+    }
+
+    @Override
+    protected void addQueryStatusParams(Map<String, String> params, String messageId, SMSRequest request) {
+        // 华为云使用JSON请求体
+    }
+
+    // ==================== 覆盖模板方法（华为云使用JSON请求体+WSSE认证） ====================
+
     @Override
     public Mono<SMSResponse> sendTemplateSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("from", request.getSignName());
                 requestBody.put("to", new String[]{request.getPhoneNumber()});
                 requestBody.put("templateId", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     requestBody.put("templateParas", request.getTemplateParams().values().toArray(new String[0]));
                 }
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildHuaweiHeaders(request, jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/batchSendSms/v1";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseResponse(response, request.getPhoneNumber(), startTime);
-                
             } catch (Exception e) {
-                log.error("华为云SMS发送失败: {}", e.getMessage(), e);
+                log.error("{}发送短信失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("SEND_FAILED", "发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumber(request.getPhoneNumber())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> sendBatchSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("from", request.getSignName());
                 requestBody.put("to", request.getPhoneNumbers());
                 requestBody.put("templateId", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     requestBody.put("templateParas", request.getTemplateParams().values().toArray(new String[0]));
                 }
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, jsonBody);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                Map<String, String> headers = buildHuaweiHeaders(request, jsonBody);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/batchSendSms/v1";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBatchResponse(response, request.getPhoneNumbers(), startTime);
-                
             } catch (Exception e) {
-                log.error("华为云SMS批量发送失败: {}", e.getMessage(), e);
+                log.error("{}批量发送失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("BATCH_SEND_FAILED", "批量发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumbers(request.getPhoneNumbers())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
-    @Override
-    public Mono<SMSResponse> sendVerificationCode(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("verification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendNotification(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("notification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendMarketing(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("marketing"));
-    }
-    
+
     @Override
     public Mono<SMSResponse> querySMSStatus(String messageId, SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 华为云SMS状态查询
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/statusReport/v1?" + messageId;
-                
-                Map<String, String> headers = buildQueryHeaders(request);
-                
+
+                Map<String, String> headers = buildHuaweiQueryHeaders(request);
+
                 String response = webClient.get()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseQueryResponse(response, messageId, startTime);
-                
             } catch (Exception e) {
-                log.error("华为云SMS状态查询失败: {}", e.getMessage(), e);
+                log.error("{}状态查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_FAILED", "状态查询失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setMessageId(messageId)
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> queryBalance(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 华为云SMS余额查询
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/balance/v1";
-                
-                Map<String, String> headers = buildQueryHeaders(request);
-                
+
+                Map<String, String> headers = buildHuaweiQueryHeaders(request);
+
                 String response = webClient.get()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBalanceResponse(response, startTime);
-                
             } catch (Exception e) {
-                log.error("华为云SMS余额查询失败: {}", e.getMessage(), e);
+                log.error("{}余额查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_BALANCE_FAILED", "余额查询失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<Boolean> validateConfig(SMSRequest request) {
         return Mono.fromCallable(() -> {
@@ -239,52 +229,53 @@ public class HuaweiSMSService implements SMSService {
                 }
                 return true;
             } catch (Exception e) {
-                log.error("华为云SMS配置验证失败: {}", e.getMessage());
+                log.error("{}配置验证失败: {}", getProviderDisplayName(), e.getMessage());
                 return false;
             }
         });
     }
-    
+
+    // ==================== 华为云特有方法 ====================
+
     /**
      * 构建请求头
      */
-    private Map<String, String> buildHeaders(SMSRequest request, String payload) throws Exception {
+    private Map<String, String> buildHuaweiHeaders(SMSRequest request, String payload) throws Exception {
         Map<String, String> headers = new HashMap<>();
-        
+
         String timestamp = String.valueOf(System.currentTimeMillis());
         String nonce = UUID.randomUUID().toString();
-        
+
         headers.put("Content-Type", "application/json; charset=UTF-8");
         headers.put("Authorization", "WSSE realm=\"SDP\",profile=\"UsernameToken\",type=\"Appkey\"");
         headers.put("X-WSSE", buildWSSEHeader(request.getAccessKeyId(), request.getAccessKeySecret(), timestamp, nonce));
-        
+
         return headers;
     }
-    
+
     /**
      * 构建查询请求头
      */
-    private Map<String, String> buildQueryHeaders(SMSRequest request) throws Exception {
+    private Map<String, String> buildHuaweiQueryHeaders(SMSRequest request) throws Exception {
         Map<String, String> headers = new HashMap<>();
-        
+
         String timestamp = String.valueOf(System.currentTimeMillis());
         String nonce = UUID.randomUUID().toString();
-        
+
         headers.put("Authorization", "WSSE realm=\"SDP\",profile=\"UsernameToken\",type=\"Appkey\"");
         headers.put("X-WSSE", buildWSSEHeader(request.getAccessKeyId(), request.getAccessKeySecret(), timestamp, nonce));
-        
+
         return headers;
     }
-    
+
     /**
      * 构建WSSE认证头
      */
     private String buildWSSEHeader(String appKey, String appSecret, String timestamp, String nonce) throws Exception {
-        // 构建PasswordDigest
         String passwordDigest = Base64.getEncoder().encodeToString(
                 sha256((nonce + timestamp + appSecret).getBytes(StandardCharsets.UTF_8))
         );
-        
+
         return String.format(
                 "UsernameToken Username=\"%s\",PasswordDigest=\"%s\",Nonce=\"%s\",Created=\"%s\"",
                 appKey,
@@ -293,15 +284,12 @@ public class HuaweiSMSService implements SMSService {
                 timestamp
         );
     }
-    
-    /**
-     * SHA256哈希
-     */
+
     private byte[] sha256(byte[] data) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return digest.digest(data);
     }
-    
+
     /**
      * 将对象转换为JSON字符串
      */
@@ -313,7 +301,7 @@ public class HuaweiSMSService implements SMSService {
                 json.append(",");
             }
             json.append("\"").append(entry.getKey()).append("\":");
-            
+
             Object value = entry.getValue();
             if (value instanceof String) {
                 json.append("\"").append(value).append("\"");
@@ -333,15 +321,15 @@ public class HuaweiSMSService implements SMSService {
         json.append("}");
         return json.toString();
     }
-    
-    /**
-     * 解析单条短信响应
-     */
-    private SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
+
+    // ==================== 响应解析 ====================
+
+    @Override
+    protected SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
         try {
             if (response.contains("\"code\":\"000000\"")) {
                 String messageId = extractJsonValue(response, "smsMsgId");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setMessageId(messageId)
@@ -352,7 +340,7 @@ public class HuaweiSMSService implements SMSService {
             } else {
                 String errorCode = extractJsonValue(response, "code");
                 String errorMessage = extractJsonValue(response, "description");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumber(phoneNumber)
@@ -368,11 +356,9 @@ public class HuaweiSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析批量短信响应
-     */
-    private SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
+
+    @Override
+    protected SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
         try {
             if (response.contains("\"code\":\"000000\"")) {
                 return SMSResponse.success()
@@ -384,7 +370,7 @@ public class HuaweiSMSService implements SMSService {
             } else {
                 String errorCode = extractJsonValue(response, "code");
                 String errorMessage = extractJsonValue(response, "description");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumbers(phoneNumbers)
@@ -400,11 +386,9 @@ public class HuaweiSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析查询响应
-     */
-    private SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
+
+    @Override
+    protected SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
         try {
             String status = "UNKNOWN";
             if (response.contains("\"status\":\"DELIVRD\"")) {
@@ -412,7 +396,7 @@ public class HuaweiSMSService implements SMSService {
             } else if (response.contains("\"status\":\"FAILED\"")) {
                 status = "FAILED";
             }
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setMessageId(messageId)
@@ -428,14 +412,14 @@ public class HuaweiSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
+
     /**
      * 解析余额响应
      */
     private SMSResponse parseBalanceResponse(String response, long startTime) {
         try {
             String balance = extractJsonValue(response, "balance");
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setStatus("SUCCESS")
@@ -449,30 +433,5 @@ public class HuaweiSMSService implements SMSService {
                     .setResponseTime(System.currentTimeMillis() - startTime)
                     .setRawResponse(response);
         }
-    }
-    
-    /**
-     * 从JSON字符串中提取值
-     */
-    private String extractJsonValue(String json, String key) {
-        try {
-            String pattern = "\"" + key + "\":\"([^\"]*)\";";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
-            }
-            
-            // 尝试数字值
-            pattern = "\"" + key + "\":([^,}]*)";
-            p = java.util.regex.Pattern.compile(pattern);
-            m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1).trim();
-            }
-        } catch (Exception e) {
-            log.warn("提取JSON值失败: key={}, error={}", key, e.getMessage());
-        }
-        return null;
     }
 }

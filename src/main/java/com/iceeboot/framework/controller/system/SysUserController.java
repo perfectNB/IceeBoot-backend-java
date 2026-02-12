@@ -5,6 +5,7 @@ import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.framework.dto.create.system.UserDTO;
+import com.iceeboot.framework.dto.update.system.ResetPasswordDTO;
 import com.iceeboot.framework.dto.update.system.UserUpdateDTO;
 import com.iceeboot.framework.query.system.SysUserQuery;
 import com.iceeboot.framework.service.system.ISysUserService;
@@ -80,8 +81,8 @@ public class SysUserController {
     @Operation(summary = "重置密码", description = "重置用户密码")
     @PutMapping("/{id}/password")
     @RequirePermission(dynamic = true)
-    public R<Void> resetPassword(@PathVariable("id") Long id, @RequestParam("newPassword") String newPassword) {
-        boolean success = userService.resetPassword(id, newPassword);
+    public R<Void> resetPassword(@PathVariable("id") Long id, @Validated @RequestBody ResetPasswordDTO dto) {
+        boolean success = userService.resetPassword(id, dto.getNewPassword());
         return success ? R.ok(ResponseMessage.User.PASSWORD_RESET_SUCCESS) : R.fail(ResponseMessage.User.PASSWORD_RESET_FAIL);
     }
 

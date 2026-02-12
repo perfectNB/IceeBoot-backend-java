@@ -2,12 +2,12 @@ package com.iceeboot.config.ai.saa;
 
 import cn.hutool.crypto.SecureUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -22,11 +22,10 @@ import java.util.List;
  */
 @Configuration
 @Slf4j
+@RequiredArgsConstructor
 public class InitVectorDatabaseConfig {
-    @Autowired
-    private VectorStore vectorStore;
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    private final VectorStore vectorStore;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Value("classpath:ops.txt")
     private Resource opsFile;

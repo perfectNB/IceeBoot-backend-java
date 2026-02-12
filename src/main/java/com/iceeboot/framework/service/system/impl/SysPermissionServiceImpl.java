@@ -18,8 +18,8 @@ import com.iceeboot.framework.mapper.system.SysPermissionMapper;
 import com.iceeboot.framework.service.system.ISysPermissionService;
 import com.iceeboot.framework.service.system.ISysRolePermissionService;
 import com.iceeboot.framework.vo.system.SysPermissionVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -35,13 +35,12 @@ import java.util.stream.Collectors;
  * @date 2025-08-11
  */
 @Service
+@RequiredArgsConstructor
 public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, PermissionDO> implements ISysPermissionService {
 
-    @Autowired
-    private ISysRolePermissionService rolePermissionService;
+    private final ISysRolePermissionService rolePermissionService;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
 
     @Override

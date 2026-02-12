@@ -7,7 +7,7 @@
 package com.iceeboot.common.utils;
 
 import com.iceeboot.common.exception.IceeBootException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -22,10 +22,10 @@ import java.util.concurrent.TimeUnit;
  * Redis工具类
  */
 @Component
+@RequiredArgsConstructor
 public class RedisUtils {
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+
+    private final RedisTemplate<String, Object> redisTemplate;
     
     // =============================common============================
     
