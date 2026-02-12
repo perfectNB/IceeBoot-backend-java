@@ -1,6 +1,6 @@
 /**
  * 网易云信SMS服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
@@ -8,9 +8,8 @@ package com.iceeboot.common.service.sms.service.impl;
 
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
-import com.iceeboot.common.service.sms.service.SMSService;
+import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -23,48 +22,69 @@ import java.util.UUID;
 /**
  * 网易云信SMS服务实现类
  * 基于网易云信短信服务API实现短信发送功能
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
 @Slf4j
-public class NeteaseSMSService implements SMSService {
-    
+public class NeteaseSMSService extends AbstractSMSService {
+
     private static final String PROVIDER_NAME = "netease";
     private static final String DEFAULT_ENDPOINT = "https://api.netease.im";
-    private static final Integer DEFAULT_TIMEOUT = 30;
-    
-    private final WebClient webClient;
-    
-    public NeteaseSMSService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build();
-    }
-    
+
     @Override
     public String getProvider() {
         return PROVIDER_NAME;
     }
-    
+
     @Override
-    public Mono<SMSResponse> sendSMS(SMSRequest request) {
-        return sendTemplateSMS(request);
+    protected String getProviderDisplayName() {
+        return "网易云信短信";
     }
-    
+
+    @Override
+    protected String getDefaultEndpoint() {
+        return DEFAULT_ENDPOINT;
+    }
+
+    @Override
+    protected Map<String, String> buildCommonParams(SMSRequest request) {
+        return new HashMap<>();
+    }
+
+    @Override
+    protected String generateSignature(Map<String, String> params, String accessKeySecret) throws Exception {
+        // 网易云信使用CheckSum认证，签名在buildNeteaseHeaders中完成
+        return "";
+    }
+
+    @Override
+    protected void addSendSmsParams(Map<String, String> params, SMSRequest request) {
+        // 网易云信使用表单参数+自定义Header
+    }
+
+    @Override
+    protected void addBatchSmsParams(Map<String, String> params, SMSRequest request) {
+        // 网易云信使用表单参数+自定义Header
+    }
+
+    @Override
+    protected void addQueryStatusParams(Map<String, String> params, String messageId, SMSRequest request) {
+        // 网易云信使用表单参数+自定义Header
+    }
+
+    // ==================== 覆盖模板方法（网易云信使用表单参数+CheckSum认证） ====================
+
     @Override
     public Mono<SMSResponse> sendTemplateSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求参数
                 Map<String, String> params = new HashMap<>();
                 params.put("mobile", request.getPhoneNumber());
                 params.put("templateid", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
-                    // 网易云信模板参数格式：["param1", "param2"]
                     StringBuilder paramsJson = new StringBuilder("[");
                     boolean first = true;
                     for (String value : request.getTemplateParams().values()) {
@@ -75,46 +95,41 @@ public class NeteaseSMSService implements SMSService {
                     paramsJson.append("]");
                     params.put("params", paramsJson.toString());
                 }
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, params);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+
+                Map<String, String> headers = buildNeteaseHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/sendtemplate.action";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(buildFormData(params))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseResponse(response, request.getPhoneNumber(), startTime);
-                
             } catch (Exception e) {
-                log.error("网易云信SMS发送失败: {}", e.getMessage(), e);
+                log.error("{}发送短信失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("SEND_FAILED", "发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumber(request.getPhoneNumber())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> sendBatchSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求参数
                 Map<String, String> params = new HashMap<>();
                 params.put("mobiles", String.join(",", request.getPhoneNumbers()));
                 params.put("templateid", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     StringBuilder paramsJson = new StringBuilder("[");
                     boolean first = true;
@@ -126,142 +141,99 @@ public class NeteaseSMSService implements SMSService {
                     paramsJson.append("]");
                     params.put("params", paramsJson.toString());
                 }
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, params);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+
+                Map<String, String> headers = buildNeteaseHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/sendtemplate.action";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(buildFormData(params))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBatchResponse(response, request.getPhoneNumbers(), startTime);
-                
             } catch (Exception e) {
-                log.error("网易云信SMS批量发送失败: {}", e.getMessage(), e);
+                log.error("{}批量发送失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("BATCH_SEND_FAILED", "批量发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumbers(request.getPhoneNumbers())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> sendVerificationCode(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 网易云信验证码短信
                 Map<String, String> params = new HashMap<>();
                 params.put("mobile", request.getPhoneNumber());
                 params.put("authCode", request.getTemplateParams().get("code"));
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, params);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+
+                Map<String, String> headers = buildNeteaseHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/sendcode.action";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(buildFormData(params))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseResponse(response, request.getPhoneNumber(), startTime);
-                
             } catch (Exception e) {
-                log.error("网易云信SMS验证码发送失败: {}", e.getMessage(), e);
+                log.error("{}验证码发送失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("SEND_VERIFICATION_FAILED", "验证码发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumber(request.getPhoneNumber())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
-    @Override
-    public Mono<SMSResponse> sendNotification(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("notification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendMarketing(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("marketing"));
-    }
-    
+
     @Override
     public Mono<SMSResponse> querySMSStatus(String messageId, SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求参数
                 Map<String, String> params = new HashMap<>();
                 params.put("sendid", messageId);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request, params);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
+
+                Map<String, String> headers = buildNeteaseHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
                 String url = endpoint + "/sms/querystatus.action";
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(buildFormData(params))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseQueryResponse(response, messageId, startTime);
-                
             } catch (Exception e) {
-                log.error("网易云信SMS状态查询失败: {}", e.getMessage(), e);
+                log.error("{}状态查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_FAILED", "状态查询失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setMessageId(messageId)
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
-    @Override
-    public Mono<SMSResponse> queryBalance(SMSRequest request) {
-        return Mono.fromCallable(() -> {
-            long startTime = System.currentTimeMillis();
-            
-            try {
-                // 网易云信不直接提供余额查询API，返回不支持
-                return SMSResponse.failure("NOT_SUPPORTED", "网易云信SMS不支持余额查询")
-                        .setProvider(getProvider())
-                        .setResponseTime(System.currentTimeMillis() - startTime);
-                
-            } catch (Exception e) {
-                log.error("网易云信SMS余额查询失败: {}", e.getMessage(), e);
-                return SMSResponse.failure("QUERY_BALANCE_FAILED", "余额查询失败: " + e.getMessage())
-                        .setProvider(getProvider())
-                        .setResponseTime(System.currentTimeMillis() - startTime);
-            }
-        });
-    }
-    
+
     @Override
     public Mono<Boolean> validateConfig(SMSRequest request) {
         return Mono.fromCallable(() -> {
@@ -274,38 +246,36 @@ public class NeteaseSMSService implements SMSService {
                 }
                 return true;
             } catch (Exception e) {
-                log.error("网易云信SMS配置验证失败: {}", e.getMessage());
+                log.error("{}配置验证失败: {}", getProviderDisplayName(), e.getMessage());
                 return false;
             }
         });
     }
-    
+
+    // ==================== 网易云信特有方法 ====================
+
     /**
-     * 构建请求头
+     * 构建网易云信请求头
      */
-    private Map<String, String> buildHeaders(SMSRequest request, Map<String, String> params) throws Exception {
+    private Map<String, String> buildNeteaseHeaders(SMSRequest request) throws Exception {
         Map<String, String> headers = new HashMap<>();
-        
+
         String appKey = request.getAppKey();
         String appSecret = request.getAccessKeySecret();
         String nonce = UUID.randomUUID().toString();
         String curTime = String.valueOf(System.currentTimeMillis() / 1000);
-        
-        // 计算CheckSum
+
         String checkSum = sha1(appSecret + nonce + curTime);
-        
+
         headers.put("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
         headers.put("AppKey", appKey);
         headers.put("Nonce", nonce);
         headers.put("CurTime", curTime);
         headers.put("CheckSum", checkSum);
-        
+
         return headers;
     }
-    
-    /**
-     * SHA1哈希
-     */
+
     private String sha1(String input) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -319,7 +289,7 @@ public class NeteaseSMSService implements SMSService {
         }
         return hexString.toString();
     }
-    
+
     /**
      * 构建表单数据
      */
@@ -341,15 +311,15 @@ public class NeteaseSMSService implements SMSService {
         }
         return formData.toString();
     }
-    
-    /**
-     * 解析单条短信响应
-     */
-    private SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
+
+    // ==================== 响应解析 ====================
+
+    @Override
+    protected SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
         try {
             if (response.contains("\"code\":200")) {
                 String messageId = extractJsonValue(response, "sendid");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setMessageId(messageId)
@@ -360,7 +330,7 @@ public class NeteaseSMSService implements SMSService {
             } else {
                 String errorCode = extractJsonValue(response, "code");
                 String errorMessage = extractJsonValue(response, "desc");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumber(phoneNumber)
@@ -376,15 +346,13 @@ public class NeteaseSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析批量短信响应
-     */
-    private SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
+
+    @Override
+    protected SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
         try {
             if (response.contains("\"code\":200")) {
                 String messageId = extractJsonValue(response, "sendid");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setMessageId(messageId)
@@ -395,7 +363,7 @@ public class NeteaseSMSService implements SMSService {
             } else {
                 String errorCode = extractJsonValue(response, "code");
                 String errorMessage = extractJsonValue(response, "desc");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumbers(phoneNumbers)
@@ -411,11 +379,9 @@ public class NeteaseSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析查询响应
-     */
-    private SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
+
+    @Override
+    protected SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
         try {
             String status = "UNKNOWN";
             if (response.contains("\"status\":1")) {
@@ -425,7 +391,7 @@ public class NeteaseSMSService implements SMSService {
             } else if (response.contains("\"status\":0")) {
                 status = "WAITING";
             }
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setMessageId(messageId)
@@ -440,30 +406,5 @@ public class NeteaseSMSService implements SMSService {
                     .setResponseTime(System.currentTimeMillis() - startTime)
                     .setRawResponse(response);
         }
-    }
-    
-    /**
-     * 从JSON字符串中提取值
-     */
-    private String extractJsonValue(String json, String key) {
-        try {
-            String pattern = "\"" + key + "\":\"([^\"]*)\";";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
-            }
-            
-            // 尝试数字值
-            pattern = "\"" + key + "\":([^,}]*)";
-            p = java.util.regex.Pattern.compile(pattern);
-            m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1).trim();
-            }
-        } catch (Exception e) {
-            log.warn("提取JSON值失败: key={}, error={}", key, e.getMessage());
-        }
-        return null;
     }
 }
