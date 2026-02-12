@@ -1,6 +1,6 @@
 /**
  * 容联云SMS服务实现类
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
@@ -8,9 +8,8 @@ package com.iceeboot.common.service.sms.service.impl;
 
 import com.iceeboot.common.service.sms.dto.SMSRequest;
 import com.iceeboot.common.service.sms.dto.SMSResponse;
-import com.iceeboot.common.service.sms.service.SMSService;
+import com.iceeboot.common.service.sms.service.AbstractSMSService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -23,93 +22,110 @@ import java.util.*;
 /**
  * 容联云SMS服务实现类
  * 基于容联云短信服务API实现短信发送功能
- * 
+ *
  * @author CodeIcee
  * @date 2025-01-24
  */
 @Slf4j
-public class RongLianSMSService implements SMSService {
-    
+public class RongLianSMSService extends AbstractSMSService {
+
     private static final String PROVIDER_NAME = "ronglian";
     private static final String DEFAULT_ENDPOINT = "https://app.cloopen.com:8883";
     private static final String API_VERSION = "2013-12-26";
-    private static final Integer DEFAULT_TIMEOUT = 30;
-    
-    private final WebClient webClient;
-    
-    public RongLianSMSService() {
-        this.webClient = WebClient.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build();
-    }
-    
+
     @Override
     public String getProvider() {
         return PROVIDER_NAME;
     }
-    
+
     @Override
-    public Mono<SMSResponse> sendSMS(SMSRequest request) {
-        return sendTemplateSMS(request);
+    protected String getProviderDisplayName() {
+        return "容联云短信";
     }
-    
+
+    @Override
+    protected String getDefaultEndpoint() {
+        return DEFAULT_ENDPOINT;
+    }
+
+    @Override
+    protected Map<String, String> buildCommonParams(SMSRequest request) {
+        return new HashMap<>();
+    }
+
+    @Override
+    protected String generateSignature(Map<String, String> params, String accessKeySecret) throws Exception {
+        // 容联云使用URL签名，在generateSig中完成
+        return "";
+    }
+
+    @Override
+    protected void addSendSmsParams(Map<String, String> params, SMSRequest request) {
+        // 容联云使用JSON请求体
+    }
+
+    @Override
+    protected void addBatchSmsParams(Map<String, String> params, SMSRequest request) {
+        // 容联云使用JSON请求体
+    }
+
+    @Override
+    protected void addQueryStatusParams(Map<String, String> params, String messageId, SMSRequest request) {
+        // 容联云使用URL参数
+    }
+
+    // ==================== 覆盖模板方法（容联云使用JSON请求体+URL签名） ====================
+
     @Override
     public Mono<SMSResponse> sendTemplateSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求体
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("to", request.getPhoneNumber());
                 requestBody.put("templateId", request.getTemplateId());
-                
+
                 if (request.getTemplateParams() != null && !request.getTemplateParams().isEmpty()) {
                     requestBody.put("datas", request.getTemplateParams().values().toArray(new String[0]));
                 }
-                
+
                 String jsonBody = convertToJson(requestBody);
-                
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-                String url = String.format("%s/%s/Accounts/%s/SMS/TemplateSMS?sig=%s", 
+                Map<String, String> headers = buildRongLianHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+                String url = String.format("%s/%s/Accounts/%s/SMS/TemplateSMS?sig=%s",
                         endpoint, API_VERSION, request.getAccessKeyId(), generateSig(request));
-                
+
                 String response = webClient.post()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .bodyValue(jsonBody)
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseResponse(response, request.getPhoneNumber(), startTime);
-                
             } catch (Exception e) {
-                log.error("容联云SMS发送失败: {}", e.getMessage(), e);
+                log.error("{}发送短信失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("SEND_FAILED", "发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumber(request.getPhoneNumber())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> sendBatchSMS(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
                 // 容联云批量发送需要逐个发送
                 List<String> messageIds = new ArrayList<>();
                 boolean allSuccess = true;
                 String lastError = null;
-                
+
                 for (String phoneNumber : request.getPhoneNumbers()) {
                     SMSRequest singleRequest = new SMSRequest()
                             .setPhoneNumber(phoneNumber)
@@ -120,7 +136,7 @@ public class RongLianSMSService implements SMSService {
                             .setAppId(request.getAppId())
                             .setEndpoint(request.getEndpoint())
                             .setTimeout(request.getTimeout());
-                    
+
                     SMSResponse singleResponse = sendTemplateSMS(singleRequest).block();
                     if (singleResponse.getSuccess()) {
                         messageIds.add(singleResponse.getMessageId());
@@ -129,7 +145,7 @@ public class RongLianSMSService implements SMSService {
                         lastError = singleResponse.getErrorMessage();
                     }
                 }
-                
+
                 if (allSuccess) {
                     return SMSResponse.success()
                             .setProvider(getProvider())
@@ -143,99 +159,75 @@ public class RongLianSMSService implements SMSService {
                             .setPhoneNumbers(request.getPhoneNumbers())
                             .setResponseTime(System.currentTimeMillis() - startTime);
                 }
-                
             } catch (Exception e) {
-                log.error("容联云SMS批量发送失败: {}", e.getMessage(), e);
+                log.error("{}批量发送失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("BATCH_SEND_FAILED", "批量发送失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setPhoneNumbers(request.getPhoneNumbers())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
-    @Override
-    public Mono<SMSResponse> sendVerificationCode(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("verification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendNotification(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("notification"));
-    }
-    
-    @Override
-    public Mono<SMSResponse> sendMarketing(SMSRequest request) {
-        return sendTemplateSMS(request.setSmsType("marketing"));
-    }
-    
+
     @Override
     public Mono<SMSResponse> querySMSStatus(String messageId, SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-                String url = String.format("%s/%s/Accounts/%s/SMS/QuerySMSStatus?sig=%s&smsMessageSid=%s", 
+                Map<String, String> headers = buildRongLianHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+                String url = String.format("%s/%s/Accounts/%s/SMS/QuerySMSStatus?sig=%s&smsMessageSid=%s",
                         endpoint, API_VERSION, request.getAccessKeyId(), generateSig(request), messageId);
-                
+
                 String response = webClient.get()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseQueryResponse(response, messageId, startTime);
-                
             } catch (Exception e) {
-                log.error("容联云SMS状态查询失败: {}", e.getMessage(), e);
+                log.error("{}状态查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_FAILED", "状态查询失败: " + e.getMessage())
                         .setProvider(getProvider())
-                        .setMessageId(messageId)
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<SMSResponse> queryBalance(SMSRequest request) {
         return Mono.fromCallable(() -> {
             long startTime = System.currentTimeMillis();
-            
             try {
-                // 构建请求头
-                Map<String, String> headers = buildHeaders(request);
-                
-                // 发送请求
-                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : DEFAULT_ENDPOINT;
-                String url = String.format("%s/%s/Accounts/%s/AccountInfo?sig=%s", 
+                Map<String, String> headers = buildRongLianHeaders(request);
+
+                String endpoint = request.getEndpoint() != null ? request.getEndpoint() : getDefaultEndpoint();
+                int timeout = request.getTimeout() != null ? request.getTimeout() : getDefaultTimeout();
+                String url = String.format("%s/%s/Accounts/%s/AccountInfo?sig=%s",
                         endpoint, API_VERSION, request.getAccessKeyId(), generateSig(request));
-                
+
                 String response = webClient.get()
                         .uri(url)
                         .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                         .retrieve()
                         .bodyToMono(String.class)
-                        .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
+                        .timeout(Duration.ofSeconds(timeout))
                         .block();
-                
+
                 return parseBalanceResponse(response, startTime);
-                
             } catch (Exception e) {
-                log.error("容联云SMS余额查询失败: {}", e.getMessage(), e);
+                log.error("{}余额查询失败: {}", getProviderDisplayName(), e.getMessage(), e);
                 return SMSResponse.failure("QUERY_BALANCE_FAILED", "余额查询失败: " + e.getMessage())
                         .setProvider(getProvider())
                         .setResponseTime(System.currentTimeMillis() - startTime);
             }
         });
     }
-    
+
     @Override
     public Mono<Boolean> validateConfig(SMSRequest request) {
         return Mono.fromCallable(() -> {
@@ -251,30 +243,32 @@ public class RongLianSMSService implements SMSService {
                 }
                 return true;
             } catch (Exception e) {
-                log.error("容联云SMS配置验证失败: {}", e.getMessage());
+                log.error("{}配置验证失败: {}", getProviderDisplayName(), e.getMessage());
                 return false;
             }
         });
     }
-    
+
+    // ==================== 容联云特有方法 ====================
+
     /**
      * 构建请求头
      */
-    private Map<String, String> buildHeaders(SMSRequest request) throws Exception {
+    private Map<String, String> buildRongLianHeaders(SMSRequest request) throws Exception {
         Map<String, String> headers = new HashMap<>();
-        
+
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String authorization = Base64.getEncoder().encodeToString(
                 (request.getAccessKeyId() + ":" + timestamp).getBytes(StandardCharsets.UTF_8)
         );
-        
+
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Accept", "application/json");
         headers.put("Authorization", authorization);
-        
+
         return headers;
     }
-    
+
     /**
      * 生成签名
      */
@@ -283,10 +277,7 @@ public class RongLianSMSService implements SMSService {
         String sigStr = request.getAccessKeyId() + request.getAccessKeySecret() + timestamp;
         return md5(sigStr).toUpperCase();
     }
-    
-    /**
-     * MD5哈希
-     */
+
     private String md5(String input) throws Exception {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -296,7 +287,7 @@ public class RongLianSMSService implements SMSService {
         }
         return sb.toString();
     }
-    
+
     /**
      * 将对象转换为JSON字符串
      */
@@ -308,7 +299,7 @@ public class RongLianSMSService implements SMSService {
                 json.append(",");
             }
             json.append("\"").append(entry.getKey()).append("\":");
-            
+
             Object value = entry.getValue();
             if (value instanceof String) {
                 json.append("\"").append(value).append("\"");
@@ -328,15 +319,15 @@ public class RongLianSMSService implements SMSService {
         json.append("}");
         return json.toString();
     }
-    
-    /**
-     * 解析单条短信响应
-     */
-    private SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
+
+    // ==================== 响应解析 ====================
+
+    @Override
+    protected SMSResponse parseResponse(String response, String phoneNumber, long startTime) {
         try {
             if (response.contains("\"statusCode\":\"000000\"")) {
                 String messageId = extractJsonValue(response, "smsMessageSid");
-                
+
                 return SMSResponse.success()
                         .setProvider(getProvider())
                         .setMessageId(messageId)
@@ -347,7 +338,7 @@ public class RongLianSMSService implements SMSService {
             } else {
                 String errorCode = extractJsonValue(response, "statusCode");
                 String errorMessage = extractJsonValue(response, "statusMsg");
-                
+
                 return SMSResponse.failure(errorCode, errorMessage)
                         .setProvider(getProvider())
                         .setPhoneNumber(phoneNumber)
@@ -363,11 +354,15 @@ public class RongLianSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
-    /**
-     * 解析查询响应
-     */
-    private SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
+
+    @Override
+    protected SMSResponse parseBatchResponse(String response, String[] phoneNumbers, long startTime) {
+        // 容联云批量发送在sendBatchSMS中逐个处理，此方法不会被调用
+        return parseResponse(response, phoneNumbers != null && phoneNumbers.length > 0 ? phoneNumbers[0] : null, startTime);
+    }
+
+    @Override
+    protected SMSResponse parseQueryResponse(String response, String messageId, long startTime) {
         try {
             String status = "UNKNOWN";
             if (response.contains("\"status\":\"SUCCESS\"")) {
@@ -377,7 +372,7 @@ public class RongLianSMSService implements SMSService {
             } else if (response.contains("\"status\":\"SENDING\"")) {
                 status = "SENDING";
             }
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setMessageId(messageId)
@@ -393,14 +388,14 @@ public class RongLianSMSService implements SMSService {
                     .setRawResponse(response);
         }
     }
-    
+
     /**
      * 解析余额响应
      */
     private SMSResponse parseBalanceResponse(String response, long startTime) {
         try {
             String balance = extractJsonValue(response, "balance");
-            
+
             return SMSResponse.success()
                     .setProvider(getProvider())
                     .setStatus("SUCCESS")
@@ -414,30 +409,5 @@ public class RongLianSMSService implements SMSService {
                     .setResponseTime(System.currentTimeMillis() - startTime)
                     .setRawResponse(response);
         }
-    }
-    
-    /**
-     * 从JSON字符串中提取值
-     */
-    private String extractJsonValue(String json, String key) {
-        try {
-            String pattern = "\"" + key + "\":\"([^\"]*)\";";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
-            }
-            
-            // 尝试数字值
-            pattern = "\"" + key + "\":([^,}]*)";
-            p = java.util.regex.Pattern.compile(pattern);
-            m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1).trim();
-            }
-        } catch (Exception e) {
-            log.warn("提取JSON值失败: key={}, error={}", key, e.getMessage());
-        }
-        return null;
     }
 }
