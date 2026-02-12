@@ -68,7 +68,7 @@ IceeBoot 是一个基于 **Spring Boot 3.5.5 + Java 21** 的现代化企业级�
 ## 🖼️ 界面展示
 
 ### 首页概览
-
+![首页展示](src/main/resources/assets/img/首页展示.png)
 ![首页展示](src/main/resources/assets/img/首页展示2.png)
 
 ### 主页仪表盘
