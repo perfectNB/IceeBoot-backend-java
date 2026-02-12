@@ -2,7 +2,7 @@
  * 阿里云SMS服务实现类
  *
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 package com.iceeboot.common.service.sms.service.impl;
 
@@ -27,7 +27,7 @@ import java.util.UUID;
  * 基于阿里云短信服务API实现短信发送功能
  *
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-24
  */
 @Slf4j
 @Component

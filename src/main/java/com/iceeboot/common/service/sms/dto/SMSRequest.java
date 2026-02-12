@@ -2,7 +2,7 @@
  * SMS请求DTO
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 package com.iceeboot.common.service.sms.dto;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * SMS请求DTO
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 @Data
 @Accessors(chain = true)

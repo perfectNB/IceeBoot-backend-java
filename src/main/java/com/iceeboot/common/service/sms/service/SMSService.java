@@ -2,7 +2,7 @@
  * SMS服务抽象接口
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 package com.iceeboot.common.service.sms.service;
 
@@ -17,7 +17,7 @@ import java.util.List;
  * 定义了短信发送的基本操作：单发、群发、模板短信等
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 public interface SMSService {
     

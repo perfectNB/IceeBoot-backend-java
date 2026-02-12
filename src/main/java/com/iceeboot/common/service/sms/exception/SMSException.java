@@ -2,7 +2,7 @@
  * SMS异常处理类
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 package com.iceeboot.common.service.sms.exception;
 
@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
  * 用于处理SMS操作过程中的各种异常情况
  * 
  * @author CodeIcee
- * @date 2025-01-24
+ * @date 2025-09-04
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
