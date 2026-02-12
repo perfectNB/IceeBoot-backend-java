@@ -10,6 +10,9 @@ import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
+import com.iceeboot.common.service.ai.agent.exception.AgentException;
+import com.iceeboot.common.service.oss.exception.OSSException;
+import com.iceeboot.common.service.sms.exception.SMSException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -111,6 +114,39 @@ public class GlobalExceptionHandler {
         String requestURI = request.getRequestURI();
         log.warn("请求地址'{}',数据权限校验失败: {}", requestURI, e.getMessage());
         return R.fail(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * OSS异常
+     */
+    @ExceptionHandler(OSSException.class)
+    public R<Void> handleOSSException(OSSException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',OSS操作异常: {}", requestURI, e.getDetailedMessage(), e);
+        String code = e.getErrorCode();
+        return code != null ? R.fail(code + ": " + e.getMessage()) : R.fail(e.getMessage());
+    }
+
+    /**
+     * SMS异常
+     */
+    @ExceptionHandler(SMSException.class)
+    public R<Void> handleSMSException(SMSException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',SMS操作异常: {}", requestURI, e.getDetailedMessage(), e);
+        String code = e.getErrorCode();
+        return code != null ? R.fail(code + ": " + e.getMessage()) : R.fail(e.getMessage());
+    }
+
+    /**
+     * Agent异常
+     */
+    @ExceptionHandler(AgentException.class)
+    public R<Void> handleAgentException(AgentException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',Agent操作异常: [{}] [{}] {}", requestURI, e.getProvider(), e.getErrorCode(), e.getMessage(), e);
+        String code = e.getErrorCode();
+        return code != null ? R.fail(code + ": " + e.getMessage()) : R.fail(e.getMessage());
     }
 
     /**
