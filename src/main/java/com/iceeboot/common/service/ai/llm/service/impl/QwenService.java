@@ -7,11 +7,20 @@ import com.iceeboot.common.service.ai.llm.dto.*;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import io.netty.channel.ChannelOption;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeoutException;
 import java.util.*;
 
 /**
@@ -24,13 +33,34 @@ public class QwenService implements LLMService {
     private static final String DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
     private static final String CHAT_ENDPOINT = "/chat/completions";
     private static final String DEFAULT_MODEL = "qwen-plus";
-    private static final Integer DEFAULT_TIMEOUT = 60;
+    private static final Integer DEFAULT_TIMEOUT = 300;
+    private static final Integer DEFAULT_CONNECT_TIMEOUT_MS = 10000;
+    private static final Integer DEFAULT_RESPONSE_TIMEOUT = 300;
+    private static final Integer DEFAULT_RETRY_MAX = 4;
+    private static final Integer DEFAULT_RETRY_BACKOFF_MS = 1000;
+    private static final Integer DEFAULT_MAX_CONNECTIONS = 200;
+    private static final Integer DEFAULT_PENDING_ACQUIRE_MAX = 1000;
+    private static final Integer DEFAULT_PENDING_ACQUIRE_TIMEOUT = 60;
+    private static final Integer DEFAULT_MAX_IDLE_TIME = 60;
+    private static final Integer DEFAULT_MAX_LIFE_TIME = 300;
     
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     
     public QwenService() {
+        ConnectionProvider provider = ConnectionProvider.builder("qwen-connection-provider")
+                .maxConnections(DEFAULT_MAX_CONNECTIONS)
+                .pendingAcquireMaxCount(DEFAULT_PENDING_ACQUIRE_MAX)
+                .pendingAcquireTimeout(Duration.ofSeconds(DEFAULT_PENDING_ACQUIRE_TIMEOUT))
+                .maxIdleTime(Duration.ofSeconds(DEFAULT_MAX_IDLE_TIME))
+                .maxLifeTime(Duration.ofSeconds(DEFAULT_MAX_LIFE_TIME))
+                .build();
+        HttpClient httpClient = HttpClient.create(provider)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECT_TIMEOUT_MS)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .responseTimeout(Duration.ofSeconds(DEFAULT_RESPONSE_TIMEOUT));
         this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
                 .build();
         this.objectMapper = new ObjectMapper();
@@ -56,11 +86,13 @@ public class QwenService implements LLMService {
                             .bodyToMono(String.class)
                             .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
                             .map(this::parseResponse)
+                            .retryWhen(Retry.backoff(DEFAULT_RETRY_MAX, Duration.ofMillis(DEFAULT_RETRY_BACKOFF_MS))
+                                    .filter(this::isRetryable))
                             .doOnError(error -> log.error("通义千问API调用失败: {}", error.getMessage()))
                             .onErrorReturn(createErrorResponse("API调用失败"));
                 });
     }
-    
+
     @Override
     public Flux<LLMResponse> chatStream(LLMRequest request) {
         return buildRequestBody(request, true)
@@ -76,12 +108,15 @@ public class QwenService implements LLMService {
                             .retrieve()
                             .bodyToFlux(String.class)
                             .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .doOnNext(chunk -> log.debug("接收到原始数据块: {}", chunk))
+                            // .doOnNext(chunk -> log.info("接收到原始数据块: {}", chunk))
                             .filter(chunk -> !chunk.trim().isEmpty() && !"[DONE]".equals(chunk.trim()))
-                            .doOnNext(data -> log.debug("处理JSON数据: {}", data))
+                            // .doOnNext(data -> log.info("过滤后的数据: {}", data))
                             .map(this::parseStreamResponse)
                             .filter(Objects::nonNull)
-                            .doOnError(error -> log.error("通义千问流式API调用失败: {}", error.getMessage()))
+                            .doOnComplete(() -> log.info("流式响应流完成"))
+                            .retryWhen(Retry.backoff(DEFAULT_RETRY_MAX, Duration.ofMillis(DEFAULT_RETRY_BACKOFF_MS))
+                                    .filter(this::isRetryable))
+                            .doOnError(error -> log.error("通义千问流式API调用失败: {}", error.getMessage(), error))
                             .onErrorReturn(createErrorResponse("流式API调用失败"));
                 });
     }
@@ -195,6 +230,9 @@ public class QwenService implements LLMService {
             if (request.getExtraParams() != null) {
                 requestBody.putAll(request.getExtraParams());
             }
+            if (request.getThinking() != null) {
+                requestBody.put("enable_thinking", request.getThinking());
+            }
             
             return requestBody;
         });
@@ -291,11 +329,22 @@ public class QwenService implements LLMService {
     private LLMResponse parseStreamResponse(String data) {
         try {
             JsonNode jsonNode = objectMapper.readTree(data);
-            
+
             LLMResponse response = new LLMResponse()
                     .setProvider(getProvider())
                     .setFinished(false);
-            
+
+            // 检查是否有错误
+            if (jsonNode.has("error")) {
+                JsonNode errorNode = jsonNode.get("error");
+                String errorCode = errorNode.has("code") ? errorNode.get("code").asText() : "unknown";
+                String errorMessage = errorNode.has("message") ? errorNode.get("message").asText() : "Unknown error";
+                response.setError(errorCode + ": " + errorMessage);
+                response.setFinished(true);
+                log.warn("API返回错误: {} - {}", errorCode, errorMessage);
+                return response;
+            }
+
             // 解析基本信息
             if (jsonNode.has("id")) {
                 response.setId(jsonNode.get("id").asText());
@@ -306,7 +355,7 @@ public class QwenService implements LLMService {
             if (jsonNode.has("created")) {
                 response.setCreated(jsonNode.get("created").asLong());
             }
-            
+
             // 解析选择列表
             if (jsonNode.has("choices")) {
                 JsonNode choicesNode = jsonNode.get("choices");
@@ -347,6 +396,23 @@ public class QwenService implements LLMService {
                 
                 response.setChoices(choices);
             }
+
+            if (jsonNode.has("usage")) {
+                JsonNode usageNode = jsonNode.get("usage");
+                LLMUsage usage = new LLMUsage();
+
+                if (usageNode.has("prompt_tokens")) {
+                    usage.setPromptTokens(usageNode.get("prompt_tokens").asInt());
+                }
+                if (usageNode.has("completion_tokens")) {
+                    usage.setCompletionTokens(usageNode.get("completion_tokens").asInt());
+                }
+                if (usageNode.has("total_tokens")) {
+                    usage.setTotalTokens(usageNode.get("total_tokens").asInt());
+                }
+
+                response.setUsage(usage);
+            }
             
             return response;
             
@@ -364,5 +430,11 @@ public class QwenService implements LLMService {
                 .setProvider(getProvider())
                 .setError(errorMessage)
                 .setFinished(true);
+    }
+
+    private boolean isRetryable(Throwable error) {
+        return error instanceof IOException
+                || error instanceof TimeoutException
+                || error instanceof UnknownHostException;
     }
 }

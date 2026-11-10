@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * DeepSeek大模型服务测试类
  */
 @Slf4j
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "RUN_LIVE_LLM_TESTS", matches = "true")
 public class DeepSeekServiceTest {
     
     private DeepSeekService deepSeekService;

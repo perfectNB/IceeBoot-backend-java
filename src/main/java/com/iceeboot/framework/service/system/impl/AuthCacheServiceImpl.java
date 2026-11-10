@@ -70,7 +70,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                     new LambdaQueryWrapper<UserRoleDO>()
                             .eq(UserRoleDO::getUserId, userId)
                             .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-            ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
+            ).stream().map(UserRoleDO::getRoleId).collect(Collectors.toList());
             redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
 
@@ -129,7 +129,7 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
                     new LambdaQueryWrapper<UserRoleDO>()
                             .eq(UserRoleDO::getUserId, userId)
                             .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-            ).stream().map(UserRoleDO::getId).collect(Collectors.toList());
+            ).stream().map(UserRoleDO::getRoleId).collect(Collectors.toList());
             redisTemplate.opsForValue().set(userRoleKey, roleIds);
         }
 

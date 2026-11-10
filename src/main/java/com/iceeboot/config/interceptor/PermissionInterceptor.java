@@ -10,6 +10,7 @@ import cn.dev33.satoken.exception.NotPermissionException;
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.service.system.IAuthCacheService;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +35,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {
 
+    private static final String EVENT_STREAM = "text/event-stream";
+    private static final String SSE_AUTHORIZED = PermissionInterceptor.class.getName() + ".authorized";
+
     private final IAuthCacheService authCacheService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        // SSE 请求在首轮鉴权通过后，后续 ASYNC/ERROR 派发只负责把流继续写完。
+        // 这里跳过二次权限校验，避免 token 轮换时把已建立的流误切断。
+        if (shouldSkipAsyncSsePermissionCheck(request)) {
             return true;
         }
 
@@ -112,6 +122,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             throw new NotPermissionException("缺少权限: " + permissionDesc);
         }
         
+        request.setAttribute(SSE_AUTHORIZED, Boolean.TRUE);
         return true;
     }
     
@@ -177,5 +188,18 @@ public class PermissionInterceptor implements HandlerInterceptor {
             return Arrays.stream(requiredPermissions)
                     .anyMatch(userPermissions::contains);
         }
+    }
+
+    private boolean shouldSkipAsyncSsePermissionCheck(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        DispatcherType dispatcherType = request.getDispatcherType();
+        if (dispatcherType != DispatcherType.ASYNC && dispatcherType != DispatcherType.ERROR) {
+            return false;
+        }
+        String accept = request.getHeader("Accept");
+        return Boolean.TRUE.equals(request.getAttribute(SSE_AUTHORIZED))
+                && accept != null && accept.contains(EVENT_STREAM);
     }
 }

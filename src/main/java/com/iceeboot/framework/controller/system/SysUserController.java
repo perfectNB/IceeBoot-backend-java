@@ -45,7 +45,7 @@ public class SysUserController {
 
     @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详细信息")
     @GetMapping("/{id}")
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<SysUserVO> getUserById(@PathVariable("id") Long id) {
         SysUserVO userVO = userService.getUserById(id);
         return R.ok(userVO);

@@ -9,6 +9,8 @@ package com.iceeboot.common.service.ai.llm.dto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 /**
  * 大模型消息DTO
  * @author CodeIcee
@@ -27,6 +29,11 @@ public class LLMMessage {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 多模态消息内容。非空时由支持多模态的供应商优先使用。
+     */
+    private List<LLMContentPart> contentParts;
     
     /**
      * 消息名称（可选）
@@ -64,6 +71,10 @@ public class LLMMessage {
      */
     public static LLMMessage user(String content) {
         return new LLMMessage("user", content);
+    }
+
+    public static LLMMessage user(List<LLMContentPart> contentParts) {
+        return new LLMMessage().setRole("user").setContentParts(contentParts);
     }
     
     /**

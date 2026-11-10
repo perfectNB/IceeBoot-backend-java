@@ -25,11 +25,17 @@ import lombok.EqualsAndHashCode;
 @Schema(description = "大模型密钥")
 public class AiLLMKeyDO extends IceeBootDO {
 
+    @Schema(description = "密钥名称（同一厂商下唯一，用于按名路由）")
+    @TableField("name")
+    private String name;
+
     @Schema(description = "大模型厂商")
     @TableField("llm_provider")
     private String llmProvider;
 
-
+    @Schema(description = "自定义请求地址")
+    @TableField("url")
+    private String url;
 
     @Schema(description = "备注")
     @TableField("remark")

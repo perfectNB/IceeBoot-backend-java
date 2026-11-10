@@ -60,6 +60,16 @@ public class LLMRequest {
      * 扩展参数，用于不同厂商的特殊参数
      */
     private Map<String, Object> extraParams;
+
+    /**
+     * 是否启用模型思考能力，由具体厂商适配为原生参数。
+     */
+    private Boolean thinking;
+
+    /**
+     * 推理强度，由支持该能力的厂商适配为原生参数。
+     */
+    private String reasoningEffort;
     
     /**
      * API密钥
@@ -75,6 +85,11 @@ public class LLMRequest {
      * 基础URL
      */
     private String baseUrl;
+
+    /**
+     * 仅允许连接公网地址。用户临时提供 API URL 时开启，平台自有配置保持原有行为。
+     */
+    private Boolean publicEndpointOnly;
     
     /**
      * 请求超时时间（秒）

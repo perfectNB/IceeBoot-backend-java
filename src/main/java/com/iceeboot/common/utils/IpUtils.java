@@ -53,38 +53,17 @@ public class IpUtils {
         if (request == null) {
             return UNKNOWN;
         }
-        
-        String ip = request.getHeader("X-Forwarded-For");
-        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
-            // 多次反向代理后会有多个IP值，第一个为真实IP
-            int index = ip.indexOf(',');
-            if (index != -1) {
-                ip = ip.substring(0, index);
-            }
+
+        String remoteAddr = request.getRemoteAddr();
+        String ip = null;
+
+        // 仅在可信代理链路中才信任转发头
+        if (isTrustedProxy(remoteAddr)) {
+            ip = getClientIpFromHeaders(request);
         }
-        
+
         if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        
-        if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        
-        if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        
-        if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        
-        if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        
-        if (StrUtil.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
+            ip = remoteAddr;
             if (LOCALHOST_IP.equals(ip) || LOCALHOST_IPV6.equals(ip)) {
                 // 根据网卡取本机配置的IP
                 try {
@@ -95,8 +74,64 @@ public class IpUtils {
                 }
             }
         }
-        
+
         return StrUtil.isBlank(ip) ? UNKNOWN : ip.trim();
+    }
+
+    /**
+     * 从常见转发头解析客户端IP
+     */
+    private static String getClientIpFromHeaders(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            // 多次反向代理后会有多个IP值，第一个为真实IP
+            int index = ip.indexOf(',');
+            if (index != -1) {
+                ip = ip.substring(0, index);
+            }
+            return ip;
+        }
+
+        ip = request.getHeader("X-Real-IP");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            return ip;
+        }
+
+        ip = request.getHeader("Proxy-Client-IP");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            return ip;
+        }
+
+        ip = request.getHeader("WL-Proxy-Client-IP");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            return ip;
+        }
+
+        ip = request.getHeader("HTTP_CLIENT_IP");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            return ip;
+        }
+
+        ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        if (StrUtil.isNotBlank(ip) && !UNKNOWN.equalsIgnoreCase(ip)) {
+            return ip;
+        }
+
+        return null;
+    }
+
+    /**
+     * 是否为可信代理来源
+     * 仅在内网/本机代理时信任转发头，避免被伪造绕过。
+     */
+    private static boolean isTrustedProxy(String ip) {
+        if (StrUtil.isBlank(ip)) {
+            return false;
+        }
+        if (!isValidIp(ip)) {
+            return false;
+        }
+        return isInternalIp(ip) || LOCALHOST_IPV6.equals(ip);
     }
     
     /**

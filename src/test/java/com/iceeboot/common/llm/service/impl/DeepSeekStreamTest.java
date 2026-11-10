@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * DeepSeek流式聊天专项测试
  */
 @Slf4j
+@org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "RUN_LIVE_LLM_TESTS", matches = "true")
 public class DeepSeekStreamTest {
     
     private DeepSeekService deepSeekService;
