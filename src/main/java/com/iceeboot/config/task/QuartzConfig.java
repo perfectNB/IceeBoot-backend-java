@@ -1,6 +1,7 @@
 package com.iceeboot.config.task;
 
 import org.quartz.Scheduler;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -19,9 +20,12 @@ import java.util.Properties;
 public class QuartzConfig {
 
     @Bean
-    public SchedulerFactoryBean schedulerFactoryBean(DataSource dataSource) {
+    public SchedulerFactoryBean schedulerFactoryBean(DataSource dataSource,
+                                                       AutowireCapableBeanFactory beanFactory) {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
         factory.setDataSource(dataSource);
+        factory.setJobFactory((bundle, scheduler) ->
+                beanFactory.createBean(bundle.getJobDetail().getJobClass()));
         factory.setApplicationContextSchedulerContextKey("applicationContext");
         factory.setQuartzProperties(quartzProperties());
         factory.setStartupDelay(1);

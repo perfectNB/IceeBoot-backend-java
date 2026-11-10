@@ -51,7 +51,12 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.like(AiLLMKeyDO::getRemark, query.getKeyword())
                    .or()
-                   .like(AiLLMKeyDO::getLlmProvider, query.getKeyword());
+                   .like(AiLLMKeyDO::getLlmProvider, query.getKeyword())
+                   .or()
+                   .like(AiLLMKeyDO::getName, query.getKeyword());
+        }
+        if (StringUtils.hasText(query.getName())) {
+            wrapper.eq(AiLLMKeyDO::getName, query.getName());
         }
         if (StringUtils.hasText(query.getLlmProvider())) {
             wrapper.eq(AiLLMKeyDO::getLlmProvider, query.getLlmProvider());
@@ -83,6 +88,18 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
         // 验证厂商是否支持
         if (!getSupportedProviders().contains(dto.getLlmProvider())) {
             throw new IceeBootException("不支持的大模型厂商: " + dto.getLlmProvider());
+        }
+
+        // 同一厂商下密钥名称唯一，避免按名路由时命中多条
+        if (StringUtils.hasText(dto.getName())) {
+            String name = dto.getName().trim();
+            long exists = this.count(new LambdaQueryWrapper<AiLLMKeyDO>()
+                    .eq(AiLLMKeyDO::getLlmProvider, dto.getLlmProvider())
+                    .eq(AiLLMKeyDO::getName, name));
+            if (exists > 0) {
+                throw new IceeBootException("该厂商下已存在同名密钥: " + name);
+            }
+            dto.setName(name);
         }
         
         AiLLMKeyDO llmKey = new AiLLMKeyDO();
@@ -152,10 +169,31 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
             return null;
         }
         
-        // 轮询获取密钥
+        // 同一 provider 下可能配置了多条激活 key。
+        // 这里不做逐个探测，而是按内存计数器轮询选择当前这一次要使用的那一条。
+        // 下次再次调用时计数器递增，因此失败重试时通常会轮到下一条 key。
         AtomicInteger counter = providerCounters.computeIfAbsent(llmProvider, k -> new AtomicInteger(0));
         int index = counter.getAndIncrement() % keys.size();
         return keys.get(index);
+    }
+
+    @Override
+    public AiLLMKeyVO getAvailableKeyByProviderAndName(String llmProvider, String name) {
+        if (!StringUtils.hasText(name)) {
+            return null;
+        }
+        String provider = llmProvider == null ? null : llmProvider.trim().toLowerCase();
+        String keyName = name.trim();
+        LambdaQueryWrapper<AiLLMKeyDO> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(provider)) {
+            wrapper.eq(AiLLMKeyDO::getLlmProvider, provider);
+        }
+        wrapper.eq(AiLLMKeyDO::getName, keyName)
+               .eq(AiLLMKeyDO::getStatus, SystemConstants.Status.ACTIVE)
+               .orderByDesc(AiLLMKeyDO::getCreateTime)
+               .last("LIMIT 1");
+        AiLLMKeyDO llmKey = this.getOne(wrapper);
+        return llmKey == null ? null : convertToVO(llmKey);
     }
 
     @Override
@@ -174,7 +212,8 @@ public class AiLLMKeyServiceImpl extends ServiceImpl<AiLLMKeyMapper, AiLLMKeyDO>
             
             // 验证API密钥
             String apiKey = llmKey.getApiKey();
-            Boolean isValid = llmService.validateApiKey(apiKey, null).block();
+            String baseUrl = StringUtils.hasText(llmKey.getUrl()) ? llmKey.getUrl().trim() : null;
+            Boolean isValid = llmService.validateApiKey(apiKey, baseUrl).block();
             
             return Boolean.TRUE.equals(isValid);
         } catch (Exception e) {

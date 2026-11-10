@@ -472,8 +472,10 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
      * 构建LLM请求
      */
     public LLMRequest buildLLMRequest(StreamChatRequest request, AiChatSessionDO session, AiLLMKeyDO llmKey) {
+        String baseUrl = StringUtils.hasText(llmKey.getUrl()) ? llmKey.getUrl().trim() : null;
         return new LLMRequest()
                 .setApiKey(llmKey.getApiKey())
+                .setBaseUrl(baseUrl)
                 .setSecretKey(llmKey.getSecretKey())
                 .setModel(session.getModelName())
                 .setUserMessage(request.getContent())

@@ -5,7 +5,9 @@
     <!-- 结果映射 -->
     <resultMap id="BaseResultMap" type="com.iceeboot.framework.entity.ai.AiLLMKeyDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
         <result column="llm_provider" property="llmProvider" jdbcType="VARCHAR"/>
+        <result column="url" property="url" jdbcType="VARCHAR"/>
         <result column="remark" property="remark" jdbcType="VARCHAR"/>
         <result column="secret_key" property="secretKey" jdbcType="VARCHAR"/>
         <result column="api_key" property="apiKey" jdbcType="VARCHAR"/>
@@ -19,7 +21,7 @@
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, llm_provider, remark, secret_key, api_key, status,
+        id, name, llm_provider, url, remark, secret_key, api_key, status,
         create_by, create_time, update_by, update_time, del_flag
     </sql>
 

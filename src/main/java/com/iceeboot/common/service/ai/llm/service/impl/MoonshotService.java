@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.service.ai.llm.dto.*;
+import com.iceeboot.common.service.ai.llm.security.PublicEndpointWebClientFactory;
 import com.iceeboot.common.service.ai.llm.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,12 +29,14 @@ public class MoonshotService implements LLMService {
     private static final Integer DEFAULT_TIMEOUT = 60;
     
     private final WebClient webClient;
+    private final WebClient publicEndpointWebClient;
     private final ObjectMapper objectMapper;
     
     public MoonshotService() {
         this.webClient = WebClient.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
                 .build();
+        this.publicEndpointWebClient = PublicEndpointWebClientFactory.create(10 * 1024 * 1024);
         this.objectMapper = new ObjectMapper();
     }
     
@@ -46,18 +50,31 @@ public class MoonshotService implements LLMService {
         return buildRequestBody(request, false)
                 .flatMap(requestBody -> {
                     String baseUrl = request.getBaseUrl() != null ? request.getBaseUrl() : DEFAULT_BASE_URL;
+                    String model = request.getModel() != null ? request.getModel() : DEFAULT_MODEL;
                     
-                    return webClient.post()
-                            .uri(baseUrl + CHAT_ENDPOINT)
+                    String endpoint = buildChatEndpoint(baseUrl);
+                    return webClient(request).post()
+                            .uri(endpoint)
                             .header("Authorization", "Bearer " + request.getApiKey())
                             .header("Content-Type", "application/json")
                             .bodyValue(requestBody)
-                            .retrieve()
-                            .bodyToMono(String.class)
+                            .exchangeToMono(response -> {
+                                if (response.statusCode().is2xxSuccessful()) {
+                                    return response.bodyToMono(String.class);
+                                }
+                                return response.bodyToMono(String.class)
+                                        .defaultIfEmpty("")
+                                        .flatMap(errorBody -> {
+                                            log.error("Kimi API返回错误: status={}", response.statusCode());
+                                            return Mono.error(new RuntimeException(
+                                                    "API返回" + response.statusCode() + ": " + errorBody));
+                                        });
+                            })
                             .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
                             .map(this::parseResponse)
-                            .doOnError(error -> log.error("Kimi API调用失败: {}", error.getMessage()))
-                            .onErrorReturn(createErrorResponse("API调用失败"));
+                            .doOnError(error -> log.error("Kimi API调用失败: type={}", error.getClass().getSimpleName()))
+                            .onErrorResume(error -> Mono.just(createErrorResponse(
+                                    "API调用失败：" + safeErrorMessage(error.getMessage()))));
                 });
     }
     
@@ -66,24 +83,51 @@ public class MoonshotService implements LLMService {
         return buildRequestBody(request, true)
                 .flatMapMany(requestBody -> {
                     String baseUrl = request.getBaseUrl() != null ? request.getBaseUrl() : DEFAULT_BASE_URL;
+                    String model = request.getModel() != null ? request.getModel() : DEFAULT_MODEL;
                     
-                    return webClient.post()
-                            .uri(baseUrl + CHAT_ENDPOINT)
+                    String endpoint = buildChatEndpoint(baseUrl);
+                    return webClient(request).post()
+                            .uri(endpoint)
                             .header("Authorization", "Bearer " + request.getApiKey())
                             .header("Content-Type", "application/json")
                             .header("Accept", "text/event-stream")
                             .bodyValue(requestBody)
-                            .retrieve()
-                            .bodyToFlux(String.class)
+                            .exchangeToFlux(response -> {
+                                if (response.statusCode().is2xxSuccessful()) {
+                                    return response.bodyToFlux(String.class);
+                                }
+                                return response.bodyToMono(String.class)
+                                        .defaultIfEmpty("")
+                                        .flatMapMany(errorBody -> {
+                                            log.error("Kimi流式API返回错误: status={}", response.statusCode());
+                                            return Flux.error(new RuntimeException(
+                                                    "API返回" + response.statusCode() + ": " + errorBody));
+                                        });
+                            })
                             .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .doOnNext(chunk -> log.debug("接收到原始数据块: {}", chunk))
-                            .filter(chunk -> !chunk.trim().isEmpty() && !"[DONE]".equals(chunk.trim()))
-                            .doOnNext(data -> log.debug("处理JSON数据: {}", data))
+                            .concatMapIterable(this::extractStreamPayloads)
                             .map(this::parseStreamResponse)
                             .filter(Objects::nonNull)
-                            .doOnError(error -> log.error("Kimi流式API调用失败: {}", error.getMessage()))
-                            .onErrorReturn(createErrorResponse("流式API调用失败"));
+                            .doOnError(error -> log.error("Kimi流式API调用失败: type={}", error.getClass().getSimpleName()))
+                            .onErrorResume(error -> Flux.just(createErrorResponse(
+                                    "流式API调用失败：" + safeErrorMessage(error.getMessage()))));
                 });
+    }
+
+    private String buildChatEndpoint(String configuredBaseUrl) {
+        String baseUrl = configuredBaseUrl == null || configuredBaseUrl.isBlank()
+                ? DEFAULT_BASE_URL : configuredBaseUrl.trim();
+        while (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        return baseUrl.endsWith(CHAT_ENDPOINT) ? baseUrl : baseUrl + CHAT_ENDPOINT;
+    }
+
+    private WebClient webClient(LLMRequest request) {
+        return Boolean.TRUE.equals(request.getPublicEndpointOnly()) ? publicEndpointWebClient : webClient;
+    }
+
+    private String safeErrorMessage(String message) {
+        String normalized = message == null || message.isBlank() ? "未知错误" : message.replaceAll("\\s+", " ").trim();
+        return normalized.length() > 300 ? normalized.substring(0, 300) + "..." : normalized;
     }
     
     @Override
@@ -144,11 +188,11 @@ public class MoonshotService implements LLMService {
             requestBody.put("stream", stream);
             
             // 构建消息列表
-            List<Map<String, String>> messages = new ArrayList<>();
+            List<Map<String, Object>> messages = new ArrayList<>();
             
             // 添加系统提示词
             if (request.getSystemPrompt() != null && !request.getSystemPrompt().trim().isEmpty()) {
-                Map<String, String> systemMessage = new HashMap<>();
+                Map<String, Object> systemMessage = new HashMap<>();
                 systemMessage.put("role", "system");
                 systemMessage.put("content", request.getSystemPrompt());
                 messages.add(systemMessage);
@@ -157,14 +201,14 @@ public class MoonshotService implements LLMService {
             // 添加历史消息
             if (request.getMessages() != null && !request.getMessages().isEmpty()) {
                 for (LLMMessage msg : request.getMessages()) {
-                    Map<String, String> message = new HashMap<>();
+                    Map<String, Object> message = new HashMap<>();
                     message.put("role", msg.getRole());
-                    message.put("content", msg.getContent());
+                    message.put("content", messageContent(msg));
                     messages.add(message);
                 }
             } else if (request.getUserMessage() != null && !request.getUserMessage().trim().isEmpty()) {
                 // 添加用户消息
-                Map<String, String> userMessage = new HashMap<>();
+                Map<String, Object> userMessage = new HashMap<>();
                 userMessage.put("role", "user");
                 userMessage.put("content", request.getUserMessage());
                 messages.add(userMessage);
@@ -185,9 +229,59 @@ public class MoonshotService implements LLMService {
             if (request.getExtraParams() != null) {
                 requestBody.putAll(request.getExtraParams());
             }
+            applyThinkingMode(requestBody, request, model);
             
             return requestBody;
         });
+    }
+
+    private void applyThinkingMode(Map<String, Object> requestBody, LLMRequest request, String model) {
+        if (request.getThinking() == null || model == null) return;
+        String normalizedModel = model.trim().toLowerCase(Locale.ROOT);
+        // K2.5/K2.6 是混合思考模型，仅支持开关，不接受 reasoning_effort。
+        if (normalizedModel.startsWith("kimi-k2.5") || normalizedModel.startsWith("kimi-k2.6")) {
+            requestBody.put("thinking", Map.of("type", request.getThinking() ? "enabled" : "disabled"));
+            return;
+        }
+        boolean alwaysThinking = normalizedModel.startsWith("kimi-k3")
+                || normalizedModel.startsWith("kimi-k2.7-code")
+                || normalizedModel.contains("thinking");
+        if (alwaysThinking && !request.getThinking()) {
+            throw new IllegalArgumentException("所选 Kimi 模型固定开启思考，普通请求和普通截图无法使用；不支持关闭思考可以调用");
+        }
+        if (normalizedModel.startsWith("kimi-k3") && request.getThinking()) {
+            requestBody.put("reasoning_effort", kimiReasoningEffort(request.getReasoningEffort()));
+        }
+    }
+
+    private String kimiReasoningEffort(String value) {
+        if (!StringUtils.hasText(value)) return "high";
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
+            case "minimal", "low" -> "low";
+            case "medium", "high" -> "high";
+            case "xhigh", "max", "ultra" -> "max";
+            default -> "high";
+        };
+    }
+
+    private Object messageContent(LLMMessage message) {
+        if (message.getContentParts() == null || message.getContentParts().isEmpty()) return message.getContent();
+        return message.getContentParts().stream().map(this::contentPart).toList();
+    }
+
+    private Map<String, Object> contentPart(LLMContentPart part) {
+        if (LLMContentPart.TYPE_TEXT.equals(part.getType())) {
+            return Map.of("type", "text", "text", part.getText());
+        }
+        if (LLMContentPart.TYPE_IMAGE_URL.equals(part.getType()) && part.getImageUrl() != null) {
+            Map<String, Object> imageUrl = new LinkedHashMap<>();
+            imageUrl.put("url", part.getImageUrl().getUrl());
+            if (part.getImageUrl().getDetail() != null && !part.getImageUrl().getDetail().isBlank()) {
+                imageUrl.put("detail", part.getImageUrl().getDetail());
+            }
+            return Map.of("type", "image_url", "image_url", imageUrl);
+        }
+        throw new IllegalArgumentException("不支持的 Kimi 消息内容类型：" + part.getType());
     }
     
     /**
@@ -195,7 +289,6 @@ public class MoonshotService implements LLMService {
      */
     private LLMResponse parseResponse(String responseBody) {
         try {
-            log.debug("Kimi原始响应: {}", responseBody);
             JsonNode jsonNode = objectMapper.readTree(responseBody);
             
             // 检查是否有错误信息
@@ -207,7 +300,7 @@ public class MoonshotService implements LLMService {
                 } else if (errorNode.has("code")) {
                     errorMessage = "错误代码: " + errorNode.get("code").asText();
                 }
-                log.error("Kimi API返回错误: {}", errorMessage);
+                log.error("Kimi API返回业务错误");
                 return createErrorResponse(errorMessage);
             }
             
@@ -253,6 +346,12 @@ public class MoonshotService implements LLMService {
                         if (messageNode.has("content")) {
                             message.setContent(messageNode.get("content").asText());
                         }
+                        String reasoning = nullableText(messageNode, "reasoning_content");
+                        if (reasoning != null) {
+                            if (response.getExtraData() == null) response.setExtraData(new LinkedHashMap<>());
+                            response.getExtraData().put("reasoning_content", reasoning);
+                            response.getExtraData().put("reasoning_type", "content");
+                        }
                         
                         choice.setMessage(message);
                     }
@@ -262,7 +361,7 @@ public class MoonshotService implements LLMService {
                 
                 response.setChoices(choices);
             } else {
-                log.warn("Kimi响应中缺少choices字段，响应结构: {}", jsonNode.toString());
+                log.warn("Kimi响应中缺少choices字段");
             }
             
             // 解析使用情况
@@ -291,7 +390,7 @@ public class MoonshotService implements LLMService {
             return response;
             
         } catch (Exception e) {
-            log.error("解析Kimi响应失败，原始响应: {}, 错误: {}", responseBody, e.getMessage(), e);
+            log.error("解析Kimi响应失败: type={}", e.getClass().getSimpleName());
             return createErrorResponse("响应解析失败: " + e.getMessage());
         }
     }
@@ -301,7 +400,6 @@ public class MoonshotService implements LLMService {
      */
     private LLMResponse parseStreamResponse(String data) {
         try {
-            log.debug("Kimi流式响应片段: {}", data);
             JsonNode jsonNode = objectMapper.readTree(data);
             
             // 检查是否有错误信息
@@ -311,7 +409,7 @@ public class MoonshotService implements LLMService {
                 if (errorNode.has("message")) {
                     errorMessage = errorNode.get("message").asText();
                 }
-                log.error("Kimi流式API返回错误: {}", errorMessage);
+                log.error("Kimi流式API返回业务错误");
                 return createErrorResponse(errorMessage);
             }
             
@@ -345,7 +443,7 @@ public class MoonshotService implements LLMService {
                     if (choiceNode.has("finish_reason")) {
                         String finishReason = choiceNode.get("finish_reason").asText();
                         choice.setFinishReason(finishReason);
-                        if ("stop".equals(finishReason)) {
+                        if (!finishReason.isBlank() && !"null".equalsIgnoreCase(finishReason)) {
                             response.setFinished(true);
                         }
                     }
@@ -361,6 +459,12 @@ public class MoonshotService implements LLMService {
                         if (deltaNode.has("content")) {
                             delta.setContent(deltaNode.get("content").asText());
                         }
+                        String reasoning = nullableText(deltaNode, "reasoning_content");
+                        if (reasoning != null) {
+                            if (response.getExtraData() == null) response.setExtraData(new LinkedHashMap<>());
+                            response.getExtraData().put("reasoning_content_delta", reasoning);
+                            response.getExtraData().put("reasoning_type", "content");
+                        }
                         
                         choice.setDelta(delta);
                     }
@@ -370,13 +474,13 @@ public class MoonshotService implements LLMService {
                 
                 response.setChoices(choices);
             } else {
-                log.debug("Kimi流式响应中缺少choices字段，可能是心跳包: {}", data);
+                log.debug("Kimi流式响应中缺少choices字段");
             }
             
             return response;
             
         } catch (Exception e) {
-            log.error("解析Kimi流式响应失败，原始数据: {}, 错误: {}", data, e.getMessage(), e);
+            log.error("解析Kimi流式响应失败: type={}", e.getClass().getSimpleName());
             return null; // 流式响应解析失败时返回null，会被过滤掉
         }
     }
@@ -389,5 +493,24 @@ public class MoonshotService implements LLMService {
                 .setProvider(getProvider())
                 .setError(errorMessage)
                 .setFinished(true);
+    }
+
+    List<String> extractStreamPayloads(String chunk) {
+        if (!StringUtils.hasText(chunk)) return List.of();
+        List<String> payloads = new ArrayList<>();
+        for (String rawLine : chunk.replace("\r", "").split("\n")) {
+            String line = rawLine.trim();
+            if (line.isEmpty() || line.startsWith(":") || line.startsWith("event:")
+                    || line.startsWith("id:") || line.startsWith("retry:")) continue;
+            if (line.startsWith("data:")) line = line.substring(5).trim();
+            if (!line.isEmpty() && !"[DONE]".equalsIgnoreCase(line)) payloads.add(line);
+        }
+        return payloads;
+    }
+
+    private String nullableText(JsonNode node, String field) {
+        if (node == null || !node.has(field) || node.get(field).isNull()) return null;
+        String value = node.get(field).asText();
+        return value.isBlank() || "null".equalsIgnoreCase(value) ? null : value;
     }
 }

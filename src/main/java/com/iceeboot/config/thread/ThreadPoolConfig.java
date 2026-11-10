@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -45,7 +44,7 @@ public class ThreadPoolConfig {
      * 异步任务执行线程池
      */
     @Bean(name = "taskExecutor")
-    public Executor taskExecutor() {
+    public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // 核心线程数
         executor.setCorePoolSize(CORE_POOL_SIZE);
@@ -72,7 +71,7 @@ public class ThreadPoolConfig {
      * AI模型调用专用线程池
      */
     @Bean(name = "aiTaskExecutor")
-    public Executor aiTaskExecutor() {
+    public ThreadPoolTaskExecutor aiTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // AI调用通常耗时较长，设置较小的核心线程数
         executor.setCorePoolSize(5);

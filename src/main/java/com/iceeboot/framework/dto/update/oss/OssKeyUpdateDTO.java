@@ -2,6 +2,8 @@ package com.iceeboot.framework.dto.update.oss;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 /**
@@ -14,6 +16,8 @@ import lombok.Data;
 @Schema(description = "OSS密钥更新数据传输对象")
 public class OssKeyUpdateDTO {
 
+    @NotNull(message = "密钥ID不能为空")
+    @Positive(message = "密钥ID无效")
     @Schema(description = "主键ID")
     private Long id;
 
@@ -21,12 +25,10 @@ public class OssKeyUpdateDTO {
     @NotBlank(message = "OSS厂商不能为空")
     private String ossProvider;
 
-    @Schema(description = "Access Key ID")
-    @NotBlank(message = "Access Key ID不能为空")
+    @Schema(description = "Access Key ID，留空保留原值")
     private String accessKeyId;
 
-    @Schema(description = "Access Key Secret")
-    @NotBlank(message = "Access Key Secret不能为空")
+    @Schema(description = "Access Key Secret，留空保留原值")
     private String accessKeySecret;
 
     @Schema(description = "端点地址")

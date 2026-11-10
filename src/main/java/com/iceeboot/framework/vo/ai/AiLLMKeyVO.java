@@ -20,8 +20,14 @@ public class AiLLMKeyVO {
     @Schema(description = "密钥ID")
     private Long id;
 
+    @Schema(description = "密钥名称")
+    private String name;
+
     @Schema(description = "大模型厂商")
     private String llmProvider;
+
+    @Schema(description = "自定义请求地址")
+    private String url;
 
     @Schema(description = "备注")
     private String remark;

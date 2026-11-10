@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
+import com.iceeboot.common.utils.DesensitizeUtils;
 import com.iceeboot.common.service.oss.dto.OSSRequest;
 import com.iceeboot.common.service.oss.factory.OSSFactory;
 import com.iceeboot.common.service.oss.service.OSSService;
@@ -103,9 +104,26 @@ public class OssKeyServiceImpl extends ServiceImpl<OssKeyMapper, OssKeyDO> imple
 
     @Override
     public Boolean updateOssKey(OssKeyUpdateDTO dto) {
-        OssKeyDO ossKey = new OssKeyDO();
-        BeanUtils.copyProperties(dto, ossKey);
-        return this.updateById(ossKey);
+        if (dto.getId() == null || dto.getId() <= 0) throw new IceeBootException("密钥ID无效");
+        OssKeyDO current = this.getById(dto.getId());
+        if (current == null) throw new IceeBootException("OSS密钥不存在，请刷新列表");
+        if (!current.getOssProvider().equals(dto.getOssProvider())) throw new IceeBootException("不能修改密钥所属厂商");
+        OssKeyDO update = new OssKeyDO();
+        BeanUtils.copyProperties(dto, update);
+        // Null columns are omitted by the project's MyBatis update strategy. Do not
+        // write an old credential back during a concurrent metadata-only edit.
+        update.setAccessKeyId(replacementCredential(dto.getAccessKeyId(), current.getAccessKeyId()));
+        update.setAccessKeySecret(replacementCredential(dto.getAccessKeySecret(), current.getAccessKeySecret()));
+        if (dto.getDefaultBucket() != null) update.setDefaultBucket(dto.getDefaultBucket().strip());
+        return this.updateById(update);
+    }
+
+    private String replacementCredential(String submitted, String current) {
+        if (!StringUtils.hasText(submitted)) return null;
+        String value = submitted.strip();
+        if (value.equals(current) || value.equals(DesensitizeUtils.desensitizeCustom(current, 4, 4))) return null;
+        if (value.contains("****") || value.contains("••••")) throw new IceeBootException("不能保存脱敏密钥，请留空保留原值，或填写完整的新密钥");
+        return value;
     }
 
     @Override

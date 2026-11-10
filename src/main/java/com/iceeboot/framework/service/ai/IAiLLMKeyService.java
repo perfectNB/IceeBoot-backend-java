@@ -93,6 +93,15 @@ public interface IAiLLMKeyService extends IService<AiLLMKeyDO> {
     AiLLMKeyVO getAvailableKeyByProvider(String llmProvider);
 
     /**
+     * 根据厂商 + 密钥名称获取可用的密钥（名称唯一，直接命中）
+     *
+     * @param llmProvider 大模型厂商
+     * @param name        密钥名称
+     * @return 可用密钥，不存在返回 null
+     */
+    AiLLMKeyVO getAvailableKeyByProviderAndName(String llmProvider, String name);
+
+    /**
      * 验证密钥是否有效
      * 
      * @param id 密钥ID

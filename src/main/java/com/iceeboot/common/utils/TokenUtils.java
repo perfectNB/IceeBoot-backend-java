@@ -23,7 +23,7 @@ public class TokenUtils {
     public static String getToken() {
         try {
             SaRequest request = SaHolder.getRequest();
-            return getTokenFromRequest(request);
+            return resolveRequestToken(request);
         } catch (Exception e) {
             return null;
         }
@@ -35,7 +35,7 @@ public class TokenUtils {
      * @param request 请求对象
      * @return token值
      */
-    private static String getTokenFromRequest(SaRequest request) {
+    public static String resolveRequestToken(SaRequest request) {
         if (request == null) {
             return null;
         }
@@ -64,10 +64,10 @@ public class TokenUtils {
             return xAccessToken;
         }
         
-        // 5. 从请求参数获取
-        String paramToken = request.getParam("access_token");
-        if (StringUtils.hasText(paramToken)) {
-            return paramToken;
+        // 5. 从 Sa-Token 上下文获取（支持 Cookie，不从 URL 参数读取凭据）。
+        String token = StpUtil.getTokenValue();
+        if (StringUtils.hasText(token)) {
+            return token;
         }
         
         return null;

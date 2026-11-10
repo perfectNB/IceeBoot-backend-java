@@ -549,15 +549,14 @@ public class AuthServiceImpl implements IAuthService {
         
         // 从Redis获取登录数据
         String ticketKey = CacheConstants.Auth.WECHAT_TICKET + ticket;
-        String loginDataStr = (String) redisTemplate.opsForValue().get(ticketKey);
+        String loginDataStr = (String) redisTemplate.opsForValue().getAndDelete(ticketKey);
         
         if (!StringUtils.hasText(loginDataStr)) {
             log.error("微信扫码登录 - ticket已过期或不存在");
             throw new IceeBootException("登录凭证已过期，请重新扫码登录");
         }
         
-        // 删除ticket（一次性使用）
-        redisTemplate.delete(ticketKey);
+        // ticket 已通过 getAndDelete 原子消费，避免并发重复兑换。
         log.info("微信扫码登录 - 成功获取登录数据并删除ticket");
         
         // 解析登录数据

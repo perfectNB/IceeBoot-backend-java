@@ -16,6 +16,9 @@ import lombok.EqualsAndHashCode;
 @Schema(description = "AI大模型密钥查询对象")
 public class AiLLMKeyQuery extends BaseQuery {
 
+    @Schema(description = "密钥名称")
+    private String name;
+
     @Schema(description = "大模型厂商")
     private String llmProvider;
 

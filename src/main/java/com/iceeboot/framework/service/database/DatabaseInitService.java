@@ -21,6 +21,8 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -38,9 +40,11 @@ import java.util.*;
  */
 @Slf4j
 @Service
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class DatabaseInitService implements ApplicationRunner {
 
+    private static final int DECIMAL_PRECISION = 18;
     private final JdbcTemplate jdbcTemplate;
 
 
@@ -152,7 +156,7 @@ public class DatabaseInitService implements ApplicationRunner {
     private void addMissingColumns(Class<?> entityClass, String tableName) {
         try {
             // 获取表中现有的字段
-            Set<String> existingColumns = getExistingColumns(tableName);
+            Map<String, ColumnMetadata> existingColumns = getExistingColumns(tableName);
             
             // 获取实体类中定义的所有字段（包括父类字段）
             Map<String, String> entityColumns = getAllEntityColumns(entityClass);
@@ -162,33 +166,152 @@ public class DatabaseInitService implements ApplicationRunner {
                 String columnName = entry.getKey();
                 String columnDefinition = entry.getValue();
                 
-                if (!existingColumns.contains(columnName.toLowerCase())) {
+                ColumnMetadata existingColumn = existingColumns.get(columnName.toLowerCase());
+                if (existingColumn == null) {
+                    // 兼容已有自然/复合主键表，不能再补一个没有索引的 AUTO_INCREMENT id。
+                    if ("id".equals(columnName) && hasPrimaryKey(tableName)) continue;
                     String addColumnSql = String.format("ALTER TABLE `%s` ADD COLUMN %s", tableName, columnDefinition);
                     jdbcTemplate.execute(addColumnSql);
                     log.info("为表 {} 添加字段: {}", tableName, columnName);
                 }
             }
+
+            alignExplicitDecimalColumns(entityClass, tableName, existingColumns);
             
         } catch (Exception e) {
             log.error("为表 {} 添加缺失字段失败", tableName, e);
         }
     }
     
+    private boolean hasPrimaryKey(String tableName) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=? AND index_name='PRIMARY'", Integer.class, tableName);
+        return count != null && count > 0;
+    }
+
     /**
      * 获取表中现有的字段名
      */
-    private Set<String> getExistingColumns(String tableName) {
-        Set<String> columns = new HashSet<>();
+    private Map<String, ColumnMetadata> getExistingColumns(String tableName) {
+        Map<String, ColumnMetadata> columns = new HashMap<>();
         try {
-            String sql = "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ?";
-            List<String> columnNames = jdbcTemplate.queryForList(sql, String.class, tableName);
-            for (String columnName : columnNames) {
-                columns.add(columnName.toLowerCase());
+            String sql = """
+                    SELECT COLUMN_NAME, COLUMN_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE,
+                           IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE() AND table_name = ?
+                    """;
+            List<ColumnMetadata> columnMetadata = jdbcTemplate.query(sql, (rs, rowNum) -> new ColumnMetadata(
+                    rs.getString("COLUMN_NAME"),
+                    rs.getString("COLUMN_TYPE"),
+                    toInteger(rs.getObject("NUMERIC_PRECISION")),
+                    toInteger(rs.getObject("NUMERIC_SCALE")),
+                    "YES".equalsIgnoreCase(rs.getString("IS_NULLABLE")),
+                    rs.getObject("COLUMN_DEFAULT"),
+                    rs.getString("COLUMN_COMMENT")
+            ), tableName);
+            for (ColumnMetadata metadata : columnMetadata) {
+                columns.put(metadata.name().toLowerCase(), metadata);
             }
         } catch (Exception e) {
             log.error("获取表 {} 的字段信息失败", tableName, e);
         }
         return columns;
+    }
+
+    /**
+     * 只对显式声明 numericScale 的 BigDecimal 字段校准精度，避免影响充值、支付等两位小数字段。
+     */
+    private void alignExplicitDecimalColumns(Class<?> entityClass,
+                                             String tableName,
+                                             Map<String, ColumnMetadata> existingColumns) {
+        for (Field field : entityClass.getDeclaredFields()) {
+            Integer numericScale = getExplicitNumericScale(field);
+            if (numericScale == null) {
+                continue;
+            }
+
+            TableField tableField = field.getAnnotation(TableField.class);
+            String columnName = getColumnName(field, tableField);
+            ColumnMetadata metadata = existingColumns.get(columnName.toLowerCase());
+            if (metadata == null
+                    || (Objects.equals(metadata.numericPrecision(), DECIMAL_PRECISION)
+                    && Objects.equals(metadata.numericScale(), numericScale))) {
+                continue;
+            }
+
+            String alterColumnSql = buildDecimalColumnAlterSql(tableName, columnName, numericScale, metadata);
+            jdbcTemplate.execute(alterColumnSql);
+            log.info("已调整表 {} 字段 {} 精度为 DECIMAL({},{})",
+                    tableName, columnName, DECIMAL_PRECISION, numericScale);
+        }
+    }
+
+    private String buildDecimalColumnAlterSql(String tableName,
+                                              String columnName,
+                                              int numericScale,
+                                              ColumnMetadata metadata) {
+        StringBuilder sql = new StringBuilder("ALTER TABLE ")
+                .append(quoteIdentifier(tableName))
+                .append(" MODIFY COLUMN ")
+                .append(quoteIdentifier(columnName))
+                .append(" DECIMAL(")
+                .append(DECIMAL_PRECISION)
+                .append(",")
+                .append(numericScale)
+                .append(")");
+
+        if (metadata.columnType() != null
+                && metadata.columnType().toLowerCase().contains("unsigned")) {
+            sql.append(" UNSIGNED");
+        }
+        sql.append(metadata.nullable() ? " NULL" : " NOT NULL");
+        if (metadata.defaultValue() != null) {
+            sql.append(" DEFAULT '")
+                    .append(escapeSqlLiteral(String.valueOf(metadata.defaultValue())))
+                    .append("'");
+        } else if (metadata.nullable()) {
+            sql.append(" DEFAULT NULL");
+        }
+        if (metadata.comment() != null && !metadata.comment().isEmpty()) {
+            sql.append(" COMMENT '")
+                    .append(escapeSqlLiteral(metadata.comment()))
+                    .append("'");
+        }
+        return sql.toString();
+    }
+
+    private Integer getExplicitNumericScale(Field field) {
+        if (field.getType() != BigDecimal.class) {
+            return null;
+        }
+        TableField tableField = field.getAnnotation(TableField.class);
+        if (tableField == null || tableField.numericScale().isBlank()) {
+            return null;
+        }
+
+        int numericScale;
+        try {
+            numericScale = Integer.parseInt(tableField.numericScale());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("字段 " + field.getName() + " 的 numericScale 必须是整数", e);
+        }
+        if (numericScale < 0 || numericScale > DECIMAL_PRECISION) {
+            throw new IllegalArgumentException(
+                    "字段 " + field.getName() + " 的 numericScale 必须在 0 到 " + DECIMAL_PRECISION + " 之间");
+        }
+        return numericScale;
+    }
+
+    private static Integer toInteger(Object value) {
+        return value instanceof Number number ? number.intValue() : null;
+    }
+
+    private String quoteIdentifier(String identifier) {
+        return "`" + identifier.replace("`", "``") + "`";
+    }
+
+    private String escapeSqlLiteral(String value) {
+        return value.replace("'", "''");
     }
     
     /**
@@ -246,7 +369,7 @@ public class DatabaseInitService implements ApplicationRunner {
      */
     private String generateCreateTableSql(Class<?> entityClass, String tableName) {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE `").append(tableName).append("` (\n");
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(tableName).append("` (\n");
         
         // 获取所有字段定义
         Map<String, String> entityColumns = getAllEntityColumns(entityClass);
@@ -280,11 +403,11 @@ public class DatabaseInitService implements ApplicationRunner {
     /**
      * 获取字段对应的数据库列类型
      */
-    private String getColumnType(Field field) {
+    String getColumnType(Field field) {
         Class<?> fieldType = field.getType();
         
         if (fieldType == String.class) {
-            return "varchar(255)";
+            return "content".equalsIgnoreCase(field.getName()) ? "text" : "varchar(255)";
         } else if (fieldType == Integer.class || fieldType == int.class) {
             return "int";
         } else if (fieldType == Long.class || fieldType == long.class) {
@@ -296,7 +419,10 @@ public class DatabaseInitService implements ApplicationRunner {
         } else if (fieldType == Float.class || fieldType == float.class) {
             return "float";
         } else if (fieldType == BigDecimal.class) {
-            return "decimal(10,2)";
+            Integer numericScale = getExplicitNumericScale(field);
+            return numericScale == null
+                    ? "decimal(10,2)"
+                    : "decimal(" + DECIMAL_PRECISION + "," + numericScale + ")";
         } else if (fieldType == LocalDateTime.class) {
             return "datetime";
         } else if (fieldType == LocalDate.class) {
@@ -340,5 +466,14 @@ public class DatabaseInitService implements ApplicationRunner {
      */
     private String camelToUnderscore(String camelCase) {
         return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+    }
+
+    private record ColumnMetadata(String name,
+                                  String columnType,
+                                  Integer numericPrecision,
+                                  Integer numericScale,
+                                  boolean nullable,
+                                  Object defaultValue,
+                                  String comment) {
     }
 }

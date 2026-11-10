@@ -87,7 +87,7 @@ public class WenxinService implements LLMService {
                                     .retrieve()
                                     .bodyToFlux(String.class)
                                     .timeout(Duration.ofSeconds(request.getTimeout() != null ? request.getTimeout() : DEFAULT_TIMEOUT))
-                            .doOnNext(chunk -> log.info("接收到原始数据块: {}", chunk))
+                            // .doOnNext(chunk -> log.info("接收到原始数据块: {}", chunk))
                             .filter(chunk -> !chunk.trim().isEmpty() && !"[DONE]".equals(chunk.trim()))
                             .doOnNext(data -> log.info("处理JSON数据: {}", data))
                             .map(this::parseStreamResponse)

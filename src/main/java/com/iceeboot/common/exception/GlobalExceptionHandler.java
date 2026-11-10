@@ -18,6 +18,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.stream.Collectors;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String EVENT_STREAM = "text/event-stream";
 
     /**
      * 权限码异常
@@ -72,6 +76,16 @@ public class GlobalExceptionHandler {
         return R.unauthorized(ResponseMessage.Common.UNAUTHORIZED);
     }
 
+    /** Authentication storage failures are retryable service errors, never invalid credentials. */
+    @ExceptionHandler(AuthServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public R<Void> handleAuthServiceUnavailable(AuthServiceUnavailableException e, HttpServletRequest request) {
+        Throwable cause = e.getCause();
+        log.error("请求地址'{}',登录验证服务暂不可用, errorType={}", request.getRequestURI(),
+                cause == null ? "unknown" : cause.getClass().getSimpleName());
+        return R.fail(HttpStatus.SERVICE_UNAVAILABLE.value(), e.getMessage());
+    }
+
     /**
      * 请求方式不支持
      */
@@ -102,7 +116,8 @@ public class GlobalExceptionHandler {
         String requestURI = request.getRequestURI();
         log.warn("请求地址'{}',触发限流: {}, 限制: {}/{} 秒, 当前: {} 次", 
             requestURI, e.getMessage(), e.getLimitCount(), e.getTimeWindow(), e.getCurrentCount());
-        return R.fail(ResponseMessage.Common.RATE_LIMIT);
+        String message = e.getMessage();
+        return R.fail(message == null || message.isBlank() ? ResponseMessage.Common.RATE_LIMIT : message);
     }
 
     /**
@@ -158,6 +173,48 @@ public class GlobalExceptionHandler {
         log.error("请求地址'{}',发生自定义异常: {}", requestURI, e.getMessage());
         Integer code = e.getCode();
         return code != null ? R.fail(code, e.getMessage()) : R.fail(e.getMessage());
+    }
+
+    /**
+     * SSE/异步响应在客户端断开连接时会抛出该异常。
+     *
+     * <p>这是连接生命周期事件，不应再尝试写 JSON 错误体，
+     * 否则会在 text/event-stream 响应上再次触发 HttpMessageNotWritableException。</p>
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        if (isSseRequest(request) || isClientDisconnect(e)) {
+            log.warn("请求地址'{}',客户端已断开{}连接: {}", requestURI, isSseRequest(request) ? "SSE" : "HTTP", rootMessage(e));
+            return;
+        }
+        log.error("请求地址'{}',异步请求不可用", requestURI, e);
+    }
+
+    /**
+     * 如果前面的异常处理器在 SSE 响应上误写 JSON，会触发这个异常。
+     *
+     * <p>这里兜底吞掉 event-stream 场景，避免日志被二次异常淹没。</p>
+     */
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public Object handleHttpMessageNotWritableException(HttpMessageNotWritableException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        if (isSseRequest(request)) {
+            log.warn("请求地址'{}',SSE响应已提交，跳过JSON错误回写: {}", requestURI, rootMessage(e));
+            return null;
+        }
+        log.error("请求地址'{}',响应写出失败", requestURI, e);
+        return R.fail(ResponseMessage.Common.SYSTEM_ERROR);
+    }
+
+    /**
+     * 拦截未知的运行时异常
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public R<Void> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.warn("请求地址'{}',参数校验失败: {}", requestURI, e.getMessage());
+        return R.fail(e.getMessage());
     }
 
     /**
@@ -230,5 +287,46 @@ public class GlobalExceptionHandler {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',无法找到该资源.", requestURI, e);
         return R.notFound(ResponseMessage.Common.NOT_FOUND);
+    }
+
+    private boolean isSseRequest(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        String accept = request.getHeader("Accept");
+        if (accept != null && accept.contains(EVENT_STREAM)) {
+            return true;
+        }
+        String contentType = request.getContentType();
+        return contentType != null && contentType.contains(EVENT_STREAM);
+    }
+
+    private boolean isClientDisconnect(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase();
+                if (normalized.contains("broken pipe")
+                        || normalized.contains("connection reset by peer")
+                        || normalized.contains("disconnected client")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        String message = null;
+        while (current != null) {
+            if (current.getMessage() != null && !current.getMessage().isBlank()) {
+                message = current.getMessage();
+            }
+            current = current.getCause();
+        }
+        return message == null ? "" : message;
     }
 }
