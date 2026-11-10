@@ -10,7 +10,6 @@ import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.core.domain.R;
-import com.iceeboot.common.service.ai.agent.exception.AgentException;
 import com.iceeboot.common.service.oss.exception.OSSException;
 import com.iceeboot.common.service.sms.exception.SMSException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -153,16 +152,6 @@ public class GlobalExceptionHandler {
         return code != null ? R.fail(code + ": " + e.getMessage()) : R.fail(e.getMessage());
     }
 
-    /**
-     * Agent异常
-     */
-    @ExceptionHandler(AgentException.class)
-    public R<Void> handleAgentException(AgentException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',Agent操作异常: [{}] [{}] {}", requestURI, e.getProvider(), e.getErrorCode(), e.getMessage(), e);
-        String code = e.getErrorCode();
-        return code != null ? R.fail(code + ": " + e.getMessage()) : R.fail(e.getMessage());
-    }
 
     /**
      * iceeboot自定义异常

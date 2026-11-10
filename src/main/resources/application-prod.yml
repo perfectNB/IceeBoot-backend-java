@@ -79,41 +79,7 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
-  ai:
-    ollama:
-      base-url: http://localhost:11434
-      chat:
-        model: qwen3:8b
-    dashscope:
-      api-key: ${API_KEY}
-      embedding:
-        options:
-          model: text-embedding-v3
-      chat:
-        options:
-          model: deepseek-r1
-    vectorstore:
-      redis:
-        initialize-schema: true
-        index-name: iceeboot-index
-        prefix: iceeboot-prefix
-    mcp:
-    ## 如果没有mcp服务，则注掉下面的配置
-#      server:
-#        type: async
-#        name: iceeboot-define-mcp-server
-#        version: 1.0.0
-#      client:
-#        type: async
-#        request-timeout: 120
-#        toolcallback:
-#          enabled: true
-#        sse:
-#          connections:
-#            mcp-server1:
-#              url: http://localhost:8014
 
-# 日志配置
 logging:
   level:
     com.iceeboot: info

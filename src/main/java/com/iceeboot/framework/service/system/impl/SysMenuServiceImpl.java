@@ -110,6 +110,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
         vo.setRequiresAuth(getBooleanValue(menuMap, "requiresAuth"));
         vo.setStatus((String) menuMap.get("status"));
         vo.setLink((String) menuMap.get("link"));
+        Object permissions = menuMap.get("permissions");
+        if (permissions instanceof List<?> codes) {
+            vo.setPermissions(codes.stream().filter(String.class::isInstance)
+                    .map(String.class::cast).collect(Collectors.joining(",")));
+        } else if (permissions instanceof String codes) {
+            vo.setPermissions(codes);
+        }
+
         
         // 处理子菜单
         @SuppressWarnings("unchecked")

@@ -2,9 +2,13 @@ package com.iceeboot.config.interceptor;
 
 import com.iceeboot.common.exception.GlobalExceptionHandler;
 import com.iceeboot.common.utils.TokenUtils;
-import com.iceeboot.framework.controller.ai.AiChatController;
+import com.iceeboot.agent.web.AgentConsoleController;
+import com.iceeboot.agent.service.AgentConfigurationService;
+import com.iceeboot.agent.service.AgentExecutionService;
+import com.iceeboot.agent.persistence.AgentStore;
+import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.controller.pay.PayController;
-import com.iceeboot.framework.service.ai.IAiChatService;
+
 import com.iceeboot.framework.service.pay.IPayConfigService;
 import com.iceeboot.framework.service.pay.IPayRecordService;
 import com.iceeboot.framework.service.system.IAuthCacheService;
@@ -25,9 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FoundationPermissionTest {
     @Test void aiAndPaymentManagementCannotBypassConfiguredPermissions() throws Exception {
         var cache = mock(IAuthCacheService.class);
-        var ai = mock(IAiChatService.class);
+        var ai = mock(AgentConfigurationService.class);
         var configs = mock(IPayConfigService.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new AiChatController(ai),
+        var mvc = MockMvcBuilders.standaloneSetup(new AgentConsoleController(ai, mock(AgentExecutionService.class), mock(AgentStore.class), mock(ISysUserService.class)),
                         new PayController(mock(IPayRecordService.class), configs))
                 .addInterceptors(new PermissionInterceptor(cache))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
@@ -35,7 +39,7 @@ class FoundationPermissionTest {
         when(cache.getUserPermissions(7L)).thenReturn(List.of());
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
-            mvc.perform(delete("/v1/chat").contentType(MediaType.APPLICATION_JSON).content("[1]"))
+            mvc.perform(delete("/v1/agent-console/agents/1"))
                     .andExpect(status().isForbidden());
             mvc.perform(get("/v1/pay/configs")).andExpect(status().isForbidden());
             verifyNoInteractions(ai, configs);
