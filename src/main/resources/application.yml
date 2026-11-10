@@ -14,8 +14,9 @@ server:
       charset: UTF-8
   tomcat:
     uri-encoding: UTF-8
-    max-threads: 1000
-    min-spare-threads: 30
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:200}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:20}
   # 优雅关闭配置
   shutdown: graceful
 
@@ -29,6 +30,14 @@ spring:
   # 优雅关闭超时时间
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  task:
+    scheduling:
+      pool:
+        size: 4
+      thread-name-prefix: IceeBoot-Scheduler-
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
   # 排除Spring Security、Elasticsearch、RabbitMQ自动配置
   autoconfigure:
     exclude:

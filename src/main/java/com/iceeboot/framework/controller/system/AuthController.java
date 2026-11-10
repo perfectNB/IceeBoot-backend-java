@@ -17,7 +17,10 @@ import org.springframework.util.StringUtils;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLEncoder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.util.UriComponentsBuilder;
+import com.iceeboot.framework.dto.create.system.WechatTicketDTO;
+import jakarta.validation.Valid;
 import java.util.Map;
 
 /**
@@ -34,6 +37,9 @@ public class AuthController {
 
 
     private final IAuthService authService;
+
+    @Value("${YunGouOS.frontendUrl}")
+    private String frontendUrl;
 
 
     @Operation(summary = "用户登录", description = "用户名密码登录")
@@ -103,7 +109,8 @@ public class AuthController {
             String redirectUrl = authService.handleWechatCallback(code, state);
             response.sendRedirect(redirectUrl);
         } catch (Exception e) {
-            String fallbackUrl = "http://127.0.0.1:5173/?error=" + URLEncoder.encode("微信回调处理失败", "UTF-8");
+            String fallbackUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                    .replaceQueryParam("error", "微信回调处理失败").build().encode().toUriString();
             response.sendRedirect(fallbackUrl);
         }
     }
@@ -111,8 +118,10 @@ public class AuthController {
     @Operation(summary = "使用ticket换取登录信息", description = "前端使用ticket换取accessToken和用户信息")
     @PostMapping("/wechat/exchange-ticket")
     @RateLimit(count = 10, time = 60, limitType = RateLimitType.IP, message = "请求过于频繁，请稍后再试")
-    public R<LoginVO> exchangeTicket(@RequestParam(name = "ticket") String ticket) {
-        LoginVO loginVO = authService.exchangeTicket(ticket);
+    public R<LoginVO> exchangeTicket(@RequestParam(name = "ticket", required = false) String ticket,
+                                     @Valid @RequestBody(required = false) WechatTicketDTO body) {
+        String credential = body == null ? ticket : body.ticket();
+        LoginVO loginVO = authService.exchangeTicket(credential);
         return R.ok(loginVO);
     }
 
