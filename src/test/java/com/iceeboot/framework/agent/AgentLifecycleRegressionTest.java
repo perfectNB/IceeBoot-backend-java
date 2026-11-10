@@ -38,6 +38,9 @@ class AgentLifecycleRegressionTest {
             editedNode.put("name", "edited draft");
             AgentSpec edited = f.json.treeToValue(editedNode, AgentSpec.class);
             Object target = AopTestUtils.getTargetObject(f.store);
+            target =
+                    AopTestUtils.getUltimateTargetObject(
+                            ReflectionTestUtils.getField(target, "definition"));
             var mapper = (AgentDefinitionMapper) ReflectionTestUtils.getField(target, "agents");
             var readDone = new CountDownLatch(1);
             var resume = new CountDownLatch(1);

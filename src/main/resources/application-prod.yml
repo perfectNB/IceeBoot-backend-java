@@ -2,6 +2,11 @@
 iceeboot:
   agent:
     encryption-key: ${AI_CONFIG_ENCRYPTION_KEY:}
+    encryption-key-id: ${AI_CONFIG_ENCRYPTION_KEY_ID:primary}
+    decryption-keys:
+      legacy: ${AI_CONFIG_LEGACY_ENCRYPTION_KEY:}
+    daily-model-request-limit: ${AGENT_DAILY_MODEL_REQUEST_LIMIT:1000}
+    max-model-requests-per-run: ${AGENT_MAX_MODEL_REQUESTS_PER_RUN:100}
     workspace: ${AGENT_WORKSPACE:./.agentscope/iceeboot}
     project-api-base-url: ${AGENT_PROJECT_API_BASE_URL:http://127.0.0.1:9000/iceeboot/api}
     execution-timeout-seconds: ${AGENT_EXECUTION_TIMEOUT_SECONDS:300}

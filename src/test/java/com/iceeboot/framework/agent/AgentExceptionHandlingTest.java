@@ -77,8 +77,15 @@ class AgentExceptionHandlingTest {
                         mock(HarnessRuntimeFactory.class),
                         models,
                         new AgentProperties(),
-                        new ObjectMapper());
-        assertThatThrownBy(() -> service.invokeModel(new ModelInvokeRequest(1L, "input", null)))
+                        new ObjectMapper(),
+                        mock(com.iceeboot.framework.service.agent.IAgentQuotaService.class),
+                        new com.iceeboot.framework.service.agent.runtime.AgentRunControl(
+                                store, new AgentProperties()));
+        assertThatThrownBy(
+                        () ->
+                                service.invokeModel(
+                                        new ModelInvokeRequest(1L, "input", null),
+                                        new Caller("1", "token")))
                 .isInstanceOfSatisfying(
                         IceeBootException.class,
                         e -> {

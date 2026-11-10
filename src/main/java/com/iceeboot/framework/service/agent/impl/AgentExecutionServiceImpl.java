@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -28,7 +27,8 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
     private final HarnessRuntimeFactory harness;
     private final AgentModelFactory models;
     private final AgentProperties properties;
-    private final Semaphore capacity;
+    private final AgentRunControl control;
+    private final IAgentQuotaService quota;
     private final Set<String> activeSessions = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final ObjectMapper json;
 
@@ -37,32 +37,41 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             HarnessRuntimeFactory harness,
             AgentModelFactory models,
             AgentProperties properties,
-            ObjectMapper json) {
+            ObjectMapper json,
+            IAgentQuotaService quota,
+            AgentRunControl control) {
         this.store = store;
         this.harness = harness;
         this.models = models;
         this.properties = properties;
-        this.capacity = new Semaphore(properties.getMaxConcurrentRuns());
+        this.quota = quota;
+        this.control = control;
         this.json = json;
     }
 
     @Override
     public InvokeResult invoke(String code, InvokeRequest request, Caller caller) {
-        if (!capacity.tryAcquire())
-            throw new IceeBootException(
-                    ResultCodeEnum.ERROR.getCode(),
-                    ResponseMessage.Agent.EXECUTION_CAPACITY_EXCEEDED);
+        control.acquire();
         List<AutoCloseable> resources = new CopyOnWriteArrayList<>();
         RunRecorder recorder = null;
         String sessionKey = null;
         boolean sessionAcquired = false;
+        AgentRunControl.Registration registration = null;
         try {
             AgentView view = store.agentByCode(code);
             PublishedAgent p = store.release(view.activeReleaseId());
             if (!p.agent().enabled())
                 throw new IceeBootException(ResponseMessage.Agent.AGENT_RELEASE_DISABLED);
-            AtomicInteger budget = new AtomicInteger(100);
-            recorder = new RunRecorder(null, "", p, caller, store, budget);
+            AtomicInteger budget = new AtomicInteger(properties.getMaxModelRequestsPerRun());
+            recorder =
+                    new RunRecorder(
+                            null,
+                            "",
+                            p,
+                            caller,
+                            store,
+                            budget,
+                            () -> quota.acquire(caller.userId()));
             String session =
                     request.sessionId() == null || request.sessionId().isBlank()
                             ? recorder.id
@@ -77,20 +86,37 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                         ResponseMessage.Agent.EXECUTION_SESSION_BUSY);
             List<Msg> input = List.of(new UserMessage(request.input()));
             recorder.start(input);
+            registration = control.register(recorder.id);
+            registration.check();
             var agent = harness.create(p, caller, recorder, budget, resources, session);
             resources.add(agent);
+            registration.check();
             RuntimeContext context =
                     RuntimeContext.builder()
                             .userId(caller.userId())
                             .sessionId(session)
                             .runId(recorder.id)
                             .build();
-            var result =
-                    p.agent().outputFormat() == OutputFormat.JSON_SCHEMA
-                            ? agent.call(input, json.valueToTree(p.agent().outputSchema()), context)
-                            : agent.call(input, context);
+            AgentSessionLease lease = new AgentSessionLease(agent, context);
+            recorder.trackSession(lease);
+            resources.add(0, lease);
+            io.agentscope.core.agent.AgentRun<Msg> prepared =
+                    io.agentscope.core.agent.AgentRun.create(
+                            p.agent().code(),
+                            recorder.id,
+                            () ->
+                                    p.agent().outputFormat() == OutputFormat.JSON_SCHEMA
+                                            ? agent.call(
+                                                    input,
+                                                    json.valueToTree(p.agent().outputSchema()),
+                                                    context)
+                                            : agent.call(input, context));
+            registration.bind(prepared::interrupt);
             Msg response =
-                    result.block(Duration.ofSeconds(properties.getExecutionTimeoutSeconds()));
+                    prepared.stream()
+                            .last()
+                            .block(Duration.ofSeconds(properties.getExecutionTimeoutSeconds()));
+            registration.check();
             RunDetail detail = store.runDetail(recorder.rootId);
             return new InvokeResult(
                     recorder.rootId,
@@ -99,57 +125,152 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                     detail.totalOutputTokens(),
                     detail.usageKnown());
         } catch (RuntimeException e) {
-            if (recorder != null) {
-                try {
-                    recorder.fail();
-                } catch (RuntimeException recordingFailure) {
-                    if (recordingFailure != e) e.addSuppressed(recordingFailure);
-                }
-            }
+            recordTermination(recorder, registration, e);
+            if (registration != null && registration.cancelled())
+                throw new IceeBootException(409, ResponseMessage.Agent.EXECUTION_CANCELLED, e);
+            if (isTimeout(e))
+                throw new IceeBootException(504, ResponseMessage.Agent.EXECUTION_TIMED_OUT, e);
             if (e instanceof IceeBootException businessException) throw businessException;
             throw new IceeBootException(
                     ResultCodeEnum.ERROR.getCode(), ResponseMessage.Agent.EXECUTION_FAILED, e);
         } finally {
-            for (int i = resources.size() - 1; i >= 0; i--)
+            if (registration != null) registration.close();
+            List<AutoCloseable> closing = List.copyOf(resources);
+            for (int i = closing.size() - 1; i >= 0; i--)
                 try {
-                    resources.get(i).close();
+                    closing.get(i).close();
                 } catch (Exception ignored) {
                     /* 终态清理继续释放其他资源，不输出凭据。 */
                 }
             if (sessionAcquired) activeSessions.remove(sessionKey);
-            capacity.release();
+            control.release();
         }
     }
 
-    /** 普通业务直接调用模型，不创建 Agent，也不装配任何工具。 */
+    /** 直接模型调用使用相同的额度和账本，不装配 Agent 工具。 */
     @Override
-    public String invokeModel(ModelInvokeRequest request) {
+    public String invokeModel(ModelInvokeRequest request, Caller caller) {
+        control.acquire();
+        RunRecorder recorder = null;
+        AgentRunControl.Registration registration = null;
         try {
-            return callModel(request);
-        } catch (IceeBootException e) {
-            throw e;
-        } catch (RuntimeException e) {
+            ModelConfig model = store.model(request.modelConfigId());
+            AgentSpec spec =
+                    new AgentSpec(
+                            0L,
+                            "model_" + model.id(),
+                            model.name(),
+                            "",
+                            "",
+                            "",
+                            model.id(),
+                            1,
+                            true,
+                            false,
+                            null,
+                            false,
+                            OutputFormat.TEXT,
+                            Map.of(),
+                            model.generation(),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            Map.of());
+            PublishedAgent invocation =
+                    new PublishedAgent("", 0, spec, model, List.of(), List.of());
+            recorder =
+                    new RunRecorder(
+                            null,
+                            "",
+                            invocation,
+                            caller,
+                            store,
+                            new AtomicInteger(1),
+                            () -> quota.acquire(caller.userId()));
+            List<Msg> messages = new ArrayList<>();
+            if (request.systemPrompt() != null && !request.systemPrompt().isBlank())
+                messages.add(
+                        Msg.builder()
+                                .role(MsgRole.SYSTEM)
+                                .textContent(request.systemPrompt())
+                                .build());
+            messages.add(new UserMessage(request.input()));
+            recorder.start(messages);
+            registration = control.register(recorder.id);
+            registration.check();
+            StringBuilder output = new StringBuilder();
+            var task =
+                    recorder.observe(models.create(model, null)).stream(
+                                    messages, List.of(), models.options(model, null))
+                            .doOnNext(
+                                    response -> {
+                                        if (response.getContent() != null)
+                                            response.getContent().stream()
+                                                    .filter(TextBlock.class::isInstance)
+                                                    .map(TextBlock.class::cast)
+                                                    .forEach(
+                                                            block ->
+                                                                    output.append(block.getText()));
+                                    })
+                            .then();
+            registration
+                    .apply(task)
+                    .block(
+                            Duration.ofSeconds(
+                                    Math.min(120, properties.getExecutionTimeoutSeconds())));
+            registration.check();
+            recorder.succeed(output.toString());
+            return output.toString();
+        } catch (RuntimeException error) {
+            recordTermination(recorder, registration, error);
+            if (registration != null && registration.cancelled())
+                throw new IceeBootException(409, ResponseMessage.Agent.EXECUTION_CANCELLED, error);
+            if (isTimeout(error))
+                throw new IceeBootException(504, ResponseMessage.Agent.EXECUTION_TIMED_OUT, error);
+            if (error instanceof IceeBootException business) throw business;
             throw new IceeBootException(
-                    ResultCodeEnum.ERROR.getCode(), ResponseMessage.Agent.MODEL_INVOKE_FAILED, e);
+                    ResultCodeEnum.ERROR.getCode(),
+                    ResponseMessage.Agent.MODEL_INVOKE_FAILED,
+                    error);
+        } finally {
+            if (registration != null) registration.close();
+            control.release();
         }
     }
 
-    private String callModel(ModelInvokeRequest request) {
-        ModelConfig m = store.model(request.modelConfigId());
-        List<Msg> messages = new ArrayList<>();
-        if (request.systemPrompt() != null && !request.systemPrompt().isBlank())
-            messages.add(
-                    Msg.builder().role(MsgRole.SYSTEM).textContent(request.systemPrompt()).build());
-        messages.add(new UserMessage(request.input()));
-        StringBuilder result = new StringBuilder();
-        models.create(m, null).stream(messages, List.of(), models.options(m, null))
-                .doOnNext(
-                        r ->
-                                r.getContent().stream()
-                                        .filter(TextBlock.class::isInstance)
-                                        .map(TextBlock.class::cast)
-                                        .forEach(b -> result.append(b.getText())))
-                .blockLast(Duration.ofSeconds(120));
-        return result.toString();
+    private void recordTermination(
+            RunRecorder recorder,
+            AgentRunControl.Registration registration,
+            RuntimeException error) {
+        if (recorder == null) return;
+        try {
+            if (registration != null && registration.cancelled()) {
+                recorder.finish("CANCELLED", ResponseMessage.Agent.EXECUTION_CANCELLED);
+                store.finishRun(
+                        recorder.id, "CANCELLED", "", ResponseMessage.Agent.EXECUTION_CANCELLED);
+            } else if (isTimeout(error)) {
+                com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
+                        recorder.id, "TIMEOUT", recorder.traceId(), error);
+                store.diagnose(recorder.id, "TIMEOUT", recorder.traceId());
+                store.finishRun(
+                        recorder.id, "TIMED_OUT", "", ResponseMessage.Agent.EXECUTION_TIMED_OUT);
+            } else recorder.fail(error);
+        } catch (RuntimeException recordingFailure) {
+            if (recordingFailure != error) error.addSuppressed(recordingFailure);
+        }
+    }
+
+    private static boolean isTimeout(Throwable error) {
+        Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Throwable cause = error; cause != null && seen.add(cause); cause = cause.getCause())
+            if (cause instanceof java.util.concurrent.TimeoutException) return true;
+        return false;
+    }
+
+    @Override
+    public void cancel(String id) {
+        control.cancel(id);
     }
 }

@@ -117,7 +117,7 @@ class AgentPersistenceTest {
         String storedHeaders =
                 f.jdbc.queryForObject(
                         "SELECT headers_json FROM t_agent_mcp WHERE id=?", String.class, mcp.id());
-        assertThat(storedHeaders).contains("enc:v1:").doesNotContain("secret-header");
+        assertThat(storedHeaders).contains("enc:v2:primary:").doesNotContain("secret-header");
         assertThat(f.configs.capability(mcp.id()).mcp().headers())
                 .containsEntry("Authorization", "********");
         for (var entry : resources.entrySet()) {

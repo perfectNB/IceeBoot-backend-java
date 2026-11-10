@@ -55,6 +55,22 @@ public class AgentRunDO implements java.io.Serializable {
     @TableField(value = "output_text", jdbcType = JdbcType.LONGVARCHAR)
     private String outputText;
 
+    @Schema(description = "请求取消执行")
+    @TableField("cancel_requested")
+    private Boolean cancelRequested;
+
+    @Schema(description = "节点最近心跳")
+    @TableField("heartbeat_at")
+    private LocalDateTime heartbeatAt;
+
+    @Schema(description = "安全错误分类")
+    @TableField("error_code")
+    private String errorCode;
+
+    @Schema(description = "关联请求追踪 ID")
+    @TableField("trace_id")
+    private String traceId;
+
     @Schema(description = "错误信息")
     @TableField(value = "error_text")
     private String errorText;

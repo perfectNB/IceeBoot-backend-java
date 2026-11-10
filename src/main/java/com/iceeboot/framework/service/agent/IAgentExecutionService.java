@@ -6,5 +6,7 @@ import com.iceeboot.framework.model.agent.*;
 public interface IAgentExecutionService {
     InvokeResult invoke(String code, InvokeRequest request, Caller caller);
 
-    String invokeModel(ModelInvokeRequest request);
+    String invokeModel(ModelInvokeRequest request, Caller caller);
+
+    void cancel(String id);
 }

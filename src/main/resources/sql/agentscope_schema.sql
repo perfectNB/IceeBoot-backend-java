@@ -174,6 +174,10 @@ CREATE TABLE IF NOT EXISTS t_agent_run (
     status VARCHAR(24) NOT NULL,
     input_text LONGTEXT NOT NULL,
     output_text LONGTEXT NOT NULL,
+    cancel_requested BOOLEAN NOT NULL DEFAULT FALSE,
+    heartbeat_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    error_code VARCHAR(64) NOT NULL DEFAULT '',
+    trace_id VARCHAR(64) NOT NULL DEFAULT '',
     error_text VARCHAR(500) NOT NULL DEFAULT '',
     input_tokens BIGINT NOT NULL DEFAULT 0,
     output_tokens BIGINT NOT NULL DEFAULT 0,
@@ -207,4 +211,15 @@ CREATE TABLE IF NOT EXISTS t_agent_model_call (
     del_flag TINYINT NOT NULL DEFAULT 0,
     KEY idx_agent_model_call_root(root_run_id),
     KEY idx_agent_model_call_run(run_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS t_agent_usage_quota (
+ id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ user_id VARCHAR(64) NOT NULL,
+ usage_day DATE NOT NULL,
+ used_requests BIGINT NOT NULL DEFAULT 0,
+ create_by VARCHAR(64), create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ update_by VARCHAR(64), update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ del_flag TINYINT NOT NULL DEFAULT 0,
+ UNIQUE KEY uk_agent_daily_quota(user_id,usage_day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -32,6 +32,7 @@ public final class ConfiguredTool extends ToolBase {
     private final IAgentPersistenceService store;
     private final ISysUserService users;
     private final boolean sandboxEnabled;
+    private final java.util.function.Consumer<Throwable> onFailure;
 
     public ConfiguredTool(
             Capability c,
@@ -41,6 +42,32 @@ public final class ConfiguredTool extends ToolBase {
             IAgentPersistenceService store,
             ISysUserService users,
             boolean sandboxEnabled) {
+        this(
+                c,
+                caller,
+                properties,
+                secrets,
+                store,
+                users,
+                sandboxEnabled,
+                error ->
+                        com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
+                                c.code(),
+                                "TOOL",
+                                com.iceeboot.framework.service.agent.support.AgentDiagnostics
+                                        .traceId(),
+                                error));
+    }
+
+    public ConfiguredTool(
+            Capability c,
+            Caller caller,
+            AgentProperties properties,
+            AgentSecrets secrets,
+            IAgentPersistenceService store,
+            ISysUserService users,
+            boolean sandboxEnabled,
+            java.util.function.Consumer<Throwable> onFailure) {
         super(
                 ToolBase.builder()
                         .name(c.code())
@@ -48,6 +75,7 @@ public final class ConfiguredTool extends ToolBase {
                         .inputSchema(c.tool().inputSchema())
                         .readOnly("GET".equals(c.tool().method()))
                         .concurrencySafe(false));
+        this.onFailure = onFailure;
         this.definition = c;
         this.caller = caller;
         this.properties = properties;
@@ -151,13 +179,14 @@ public final class ConfiguredTool extends ToolBase {
                                                                     getName()));
                         })
                 .onErrorResume(
-                        e ->
-                                Mono.just(
-                                        ToolResultBlock.error(
-                                                        ResponseMessage.Agent.TOOL_EXECUTION_FAILED)
-                                                .withIdAndName(
-                                                        param.getToolUseBlock().getId(),
-                                                        getName())));
+                        e -> {
+                            onFailure.accept(e);
+                            return Mono.just(
+                                    ToolResultBlock.error(
+                                                    ResponseMessage.Agent.TOOL_EXECUTION_FAILED)
+                                            .withIdAndName(
+                                                    param.getToolUseBlock().getId(), getName()));
+                        });
     }
 
     private static String encode(String value) {

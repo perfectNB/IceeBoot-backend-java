@@ -72,7 +72,8 @@ public class HarnessRuntimeFactory {
                                 secrets,
                                 store,
                                 users,
-                                p.agent().sandboxEnabled()));
+                                p.agent().sandboxEnabled(),
+                                recorder::toolFailure));
         }
         for (var c : p.capabilities())
             if (c.kind() == CapabilityKind.MCP) {
@@ -113,13 +114,7 @@ public class HarnessRuntimeFactory {
                                     Mono.defer(
                                             () -> {
                                                 RunRecorder childRun =
-                                                        new RunRecorder(
-                                                                recorder.rootId,
-                                                                recorder.id,
-                                                                child,
-                                                                caller,
-                                                                store,
-                                                                budget);
+                                                        recorder.child(child, caller);
                                                 var input = List.<Msg>of(new UserMessage(task));
                                                 childRun.start(input);
                                                 return Mono.defer(
@@ -143,6 +138,12 @@ public class HarnessRuntimeFactory {
                                                                                     .runId(
                                                                                             childRun.id)
                                                                                     .build();
+                                                                    AgentSessionLease lease =
+                                                                            new AgentSessionLease(
+                                                                                    childAgent,
+                                                                                    ctx);
+                                                                    childRun.trackSession(lease);
+                                                                    resources.add(0, lease);
                                                                     Mono<Msg> call =
                                                                             child.agent()
                                                                                                     .outputFormat()
@@ -166,12 +167,20 @@ public class HarnessRuntimeFactory {
                                                                                                     ctx);
                                                                     return call.doFinally(
                                                                             signal -> {
-                                                                                childAgent.close();
+                                                                                try {
+                                                                                    childAgent
+                                                                                            .close();
+                                                                                } finally {
+                                                                                    lease.close();
+                                                                                    resources
+                                                                                            .remove(
+                                                                                                    lease);
+                                                                                }
                                                                                 resources.remove(
                                                                                         childAgent);
                                                                             });
                                                                 })
-                                                        .doOnError(e -> childRun.fail());
+                                                        .doOnError(childRun::fail);
                                             })));
         }
         var permissions = PermissionContextState.builder().mode(PermissionMode.DONT_ASK);

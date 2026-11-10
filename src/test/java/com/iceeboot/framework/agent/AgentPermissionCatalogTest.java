@@ -40,18 +40,18 @@ class AgentPermissionCatalogTest {
                     + " DEFAULT 0)");
         jdbc.execute(
                 "CREATE TABLE t_role(id BIGINT PRIMARY KEY,code VARCHAR(64),status"
-                    + " VARCHAR(24),del_flag INT DEFAULT 0)");
+                        + " VARCHAR(24),del_flag INT DEFAULT 0)");
         jdbc.execute(
                 "CREATE TABLE t_role_menu(id BIGINT AUTO_INCREMENT PRIMARY KEY,role_id"
                     + " BIGINT,menu_id BIGINT,create_time DATETIME,update_time DATETIME,del_flag"
                     + " INT DEFAULT 0)");
         jdbc.execute(
                 "CREATE TABLE t_role_permission(id BIGINT AUTO_INCREMENT PRIMARY KEY,role_id"
-                    + " BIGINT,permission_id BIGINT,create_time DATETIME,update_time"
-                    + " DATETIME,del_flag INT DEFAULT 0)");
+                        + " BIGINT,permission_id BIGINT,create_time DATETIME,update_time"
+                        + " DATETIME,del_flag INT DEFAULT 0)");
         jdbc.update(
                 "INSERT INTO t_role(id,code,status) VALUES"
-                    + " (1,'superAdmin','active'),(2,'admin','active')");
+                        + " (1,'superAdmin','active'),(2,'admin','active')");
         String old =
                 Files.readString(Path.of("docs/sql/20261110_agentscope_harness.sql"))
                         .substring(
@@ -65,7 +65,10 @@ class AgentPermissionCatalogTest {
                             old.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
             // H2 使用 JDBC 开启事务；只去掉 MySQL 的事务命令，执行相同的菜单/权限 DML。
             String migration =
-                    Files.readString(Path.of("docs/sql/20261111_agent_console_permissions.sql"))
+                    (Files.readString(Path.of("docs/sql/20261111_agent_console_permissions.sql"))
+                                    + Files.readString(
+                                            Path.of(
+                                                    "docs/sql/20261111_agent_operations_permissions.sql")))
                             .replace("START TRANSACTION;", "")
                             .replace("COMMIT;", "");
             connection.setAutoCommit(false);
@@ -77,24 +80,33 @@ class AgentPermissionCatalogTest {
                 connection.commit();
             }
         }
+        var versioned =
+                new com.iceeboot.framework.service.database.AgentSchemaMigrationService(source);
+        versioned.migrateSchema();
+        versioned.migratePermissions();
+        versioned.migratePermissions();
+        assertThat(
+                        jdbc.queryForObject(
+                                "SELECT COUNT(*) FROM t_agent_schema_history", Integer.class))
+                .isEqualTo(4);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_menu WHERE path LIKE"
-                                    + " '/admin/agent-console%' AND del_flag=0",
+                                        + " '/admin/agent-console%' AND del_flag=0",
                                 Integer.class))
                 .isEqualTo(9);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_permission WHERE path LIKE"
-                                    + " '/v1/agent-console/%' AND del_flag=0",
+                                        + " '/v1/agent-console/%' AND del_flag=0",
                                 Integer.class))
-                .isEqualTo(44);
+                .isEqualTo(47);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_role_permission WHERE role_id=1 AND"
-                                    + " del_flag=0",
+                                        + " del_flag=0",
                                 Integer.class))
-                .isEqualTo(44);
+                .isEqualTo(47);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_role_menu WHERE role_id=1 AND del_flag=0",
@@ -106,14 +118,7 @@ class AgentPermissionCatalogTest {
                                 Integer.class))
                 .isZero();
         var keys = new HashSet<String>();
-        for (Class<?> controller :
-                List.of(
-                        AgentConsoleController.class,
-                        AgentSkillController.class,
-                        AgentToolController.class,
-                        AgentMcpController.class,
-                        AgentSandboxTemplateController.class,
-                        AgentKnowledgeController.class)) {
+        for (Class<?> controller : AgentControllerCatalog.controllers()) {
             String root = controller.getAnnotation(RequestMapping.class).value()[0];
             for (var method : controller.getDeclaredMethods()) {
                 String verb = null;
@@ -152,6 +157,6 @@ class AgentPermissionCatalogTest {
                 }
             }
         }
-        assertThat(keys).hasSize(44);
+        assertThat(keys).hasSize(47);
     }
 }

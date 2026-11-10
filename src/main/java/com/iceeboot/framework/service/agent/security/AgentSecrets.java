@@ -20,6 +20,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class AgentSecrets {
     public static final String MASK = "********";
     private static final String PREFIX = "enc:v1:";
+    private static final String VERSIONED_PREFIX = "enc:v2:";
     private final AgentProperties properties;
 
     public AgentSecrets(AgentProperties properties) {
@@ -27,9 +28,17 @@ public class AgentSecrets {
     }
 
     public String merge(String value, String previous) {
-        if (value == null || MASK.equals(value)) return previous;
+        if (value == null || MASK.equals(value)) {
+            if (previous == null
+                    || previous.isEmpty()
+                    || previous.startsWith(
+                            VERSIONED_PREFIX + properties.getEncryptionKeyId() + ":"))
+                return previous;
+            // 轮换期间读取到的旧值也必须以当前版本写回，避免并发编辑把旧密文重新带回数据库。
+            return reencrypt(previous);
+        }
         if (value.isBlank()) return "";
-        if (value.startsWith(PREFIX))
+        if (value.startsWith("enc:"))
             throw new IceeBootException(
                     ResponseMessage.Agent.SECRET_CIPHERTEXT_SUBMISSION_FORBIDDEN);
         return encrypt(value);
@@ -38,15 +47,22 @@ public class AgentSecrets {
     public String encrypt(String value) {
         if (value == null || value.isEmpty()) return "";
         try {
+            validateActiveKey();
             byte[] nonce = new byte[12];
             new SecureRandom().nextBytes(nonce);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, key(), new GCMParameterSpec(128, nonce));
+            cipher.init(
+                    Cipher.ENCRYPT_MODE,
+                    key(properties.getEncryptionKeyId()),
+                    new GCMParameterSpec(128, nonce));
             byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
             byte[] payload = new byte[nonce.length + encrypted.length];
             System.arraycopy(nonce, 0, payload, 0, nonce.length);
             System.arraycopy(encrypted, 0, payload, nonce.length, encrypted.length);
-            return PREFIX + Base64.getEncoder().encodeToString(payload);
+            return VERSIONED_PREFIX
+                    + properties.getEncryptionKeyId()
+                    + ":"
+                    + Base64.getEncoder().encodeToString(payload);
         } catch (IceeBootException e) {
             throw e;
         } catch (Exception e) {
@@ -59,14 +75,31 @@ public class AgentSecrets {
 
     public String decrypt(String value) {
         if (value == null || value.isEmpty()) return "";
-        if (!value.startsWith(PREFIX))
-            throw new IceeBootException(
-                    ResultCodeEnum.ERROR.getCode(),
-                    ResponseMessage.Agent.SECRET_CIPHERTEXT_INVALID);
         try {
-            byte[] payload = Base64.getDecoder().decode(value.substring(PREFIX.length()));
+            String keyId;
+            String encoded;
+            if (value.startsWith(PREFIX)) {
+                keyId = "legacy";
+                encoded = value.substring(PREFIX.length());
+            } else if (value.startsWith(VERSIONED_PREFIX)) {
+                int separator = value.indexOf(':', VERSIONED_PREFIX.length());
+                if (separator < 0)
+                    throw new IceeBootException(
+                            ResultCodeEnum.ERROR.getCode(),
+                            ResponseMessage.Agent.SECRET_CIPHERTEXT_INVALID);
+                keyId = value.substring(VERSIONED_PREFIX.length(), separator);
+                encoded = value.substring(separator + 1);
+            } else
+                throw new IceeBootException(
+                        ResultCodeEnum.ERROR.getCode(),
+                        ResponseMessage.Agent.SECRET_CIPHERTEXT_INVALID);
+            byte[] payload = Base64.getDecoder().decode(encoded);
+            if (payload.length < 28)
+                throw new IceeBootException(
+                        ResultCodeEnum.ERROR.getCode(),
+                        ResponseMessage.Agent.SECRET_CIPHERTEXT_INVALID);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(128, payload, 0, 12));
+            cipher.init(Cipher.DECRYPT_MODE, key(keyId), new GCMParameterSpec(128, payload, 0, 12));
             return new String(
                     cipher.doFinal(payload, 12, payload.length - 12), StandardCharsets.UTF_8);
         } catch (IceeBootException e) {
@@ -79,9 +112,48 @@ public class AgentSecrets {
         }
     }
 
-    private SecretKeySpec key() {
+    @jakarta.annotation.PostConstruct
+    public void validateConfiguredKeys() {
+        if (properties.getEncryptionKey() != null && !properties.getEncryptionKey().isBlank())
+            validateActiveKey();
+        for (var entry : properties.getDecryptionKeys().entrySet())
+            if (entry.getValue() != null && !entry.getValue().isBlank()) {
+                if (entry.getKey().equals(properties.getEncryptionKeyId())
+                        && !entry.getValue().equals(properties.getEncryptionKey()))
+                    throw new IceeBootException(ResponseMessage.Agent.SECRET_KEY_ID_INVALID);
+                key(entry.getKey());
+            }
+    }
+
+    public void validateActiveKey() {
+        if ("legacy".equals(properties.getEncryptionKeyId()))
+            throw new IceeBootException(ResponseMessage.Agent.SECRET_KEY_ID_INVALID);
+        key(properties.getEncryptionKeyId());
+    }
+
+    public String reencrypt(String value) {
+        return value == null || value.isEmpty() ? value : encrypt(decrypt(value));
+    }
+
+    private SecretKeySpec key(String keyId) {
         try {
-            byte[] key = Base64.getDecoder().decode(properties.getEncryptionKey());
+            if (keyId == null || !keyId.matches("[a-zA-Z0-9_-]{1,40}"))
+                throw new IceeBootException(
+                        ResultCodeEnum.ERROR.getCode(),
+                        ResponseMessage.Agent.SECRET_KEY_ID_INVALID);
+            String encoded;
+            if (keyId.equals(properties.getEncryptionKeyId()))
+                encoded = properties.getEncryptionKey();
+            else {
+                encoded = properties.getDecryptionKeys().get(keyId);
+                if ((encoded == null || encoded.isBlank()) && "legacy".equals(keyId))
+                    encoded = properties.getEncryptionKey();
+                if (encoded == null || encoded.isBlank())
+                    throw new IceeBootException(
+                            ResultCodeEnum.ERROR.getCode(),
+                            ResponseMessage.Agent.SECRET_KEY_VERSION_MISSING);
+            }
+            byte[] key = Base64.getDecoder().decode(encoded);
             if (key.length != 32)
                 throw new IceeBootException(
                         ResultCodeEnum.ERROR.getCode(),

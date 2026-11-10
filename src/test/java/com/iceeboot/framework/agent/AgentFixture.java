@@ -54,6 +54,8 @@ class AgentFixture {
         var sessionFactory = factory.getObject();
         for (Class<?> mapper :
                 java.util.List.of(
+                        com.iceeboot.framework.mapper.agent.AgentSecretMapper.class,
+                        com.iceeboot.framework.mapper.agent.AgentUsageQuotaMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentModelMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentCapabilityMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentSkillMapper.class,
@@ -69,32 +71,71 @@ class AgentFixture {
                 sessionFactory.getConfiguration().addMapper(mapper);
         }
         session = new org.mybatis.spring.SqlSessionTemplate(sessionFactory);
-        var target =
-                new com.iceeboot.framework.service.agent.impl.AgentPersistenceServiceImpl(
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentModelMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentCapabilityMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentSkillMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentToolMapper.class),
-                        session.getMapper(com.iceeboot.framework.mapper.agent.AgentMcpMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentSandboxTemplateMapper
-                                        .class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentKnowledgeMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentDefinitionMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentReleaseMapper.class),
-                        session.getMapper(com.iceeboot.framework.mapper.agent.AgentRunMapper.class),
-                        session.getMapper(
-                                com.iceeboot.framework.mapper.agent.AgentModelCallMapper.class),
-                        json);
+        var codec = new com.iceeboot.framework.service.agent.support.AgentJsonCodec(json);
         var transactionManager =
                 new org.springframework.jdbc.datasource.DataSourceTransactionManager(data);
+        var model =
+                transactional(
+                        new com.iceeboot.framework.service.agent.impl.AgentModelStorageServiceImpl(
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentModelMapper.class),
+                                codec),
+                        transactionManager);
+        var resource =
+                transactional(
+                        new com.iceeboot.framework.service.agent.impl
+                                .AgentResourceStorageServiceImpl(
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentCapabilityMapper
+                                                .class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentSkillMapper.class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentToolMapper.class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentMcpMapper.class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent
+                                                .AgentSandboxTemplateMapper.class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentKnowledgeMapper
+                                                .class),
+                                codec),
+                        transactionManager);
+        var definition =
+                transactional(
+                        new com.iceeboot.framework.service.agent.impl
+                                .AgentDefinitionStorageServiceImpl(
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentDefinitionMapper
+                                                .class),
+                                codec),
+                        transactionManager);
+        var release =
+                transactional(
+                        new com.iceeboot.framework.service.agent.impl
+                                .AgentReleaseStorageServiceImpl(
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentDefinitionMapper
+                                                .class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentReleaseMapper
+                                                .class),
+                                codec),
+                        transactionManager);
+        var run =
+                transactional(
+                        new com.iceeboot.framework.service.agent.impl.AgentRunStorageServiceImpl(
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentRunMapper.class),
+                                session.getMapper(
+                                        com.iceeboot.framework.mapper.agent.AgentModelCallMapper
+                                                .class),
+                                codec),
+                        transactionManager);
+        var target =
+                new com.iceeboot.framework.service.agent.impl.AgentPersistenceServiceImpl(
+                        model, resource, definition, release, run, codec);
         var proxy = new org.springframework.aop.framework.ProxyFactory(target);
         proxy.addAdvice(
                 new org.springframework.transaction.interceptor.TransactionInterceptor(
@@ -113,6 +154,40 @@ class AgentFixture {
                         new org.springframework.transaction.annotation
                                 .AnnotationTransactionAttributeSource()));
         configs = (IAgentConfigurationService) configProxy.getProxy();
+    }
+
+    private static <T> T transactional(
+            T target, org.springframework.transaction.PlatformTransactionManager manager) {
+        var proxy = new org.springframework.aop.framework.ProxyFactory(target);
+        proxy.setProxyTargetClass(true);
+        proxy.addAdvice(
+                new org.springframework.transaction.interceptor.TransactionInterceptor(
+                        manager,
+                        new org.springframework.transaction.annotation
+                                .AnnotationTransactionAttributeSource()));
+        return (T) proxy.getProxy();
+    }
+
+    com.iceeboot.framework.service.agent.IAgentQuotaService quota() {
+        return transactional(
+                new com.iceeboot.framework.service.agent.impl.AgentQuotaServiceImpl(
+                        session.getMapper(
+                                com.iceeboot.framework.mapper.agent.AgentUsageQuotaMapper.class),
+                        properties),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(
+                        jdbc.getDataSource()));
+    }
+
+    com.iceeboot.framework.service.agent.IAgentSecretRotationService rotation() {
+        return transactional(
+                new com.iceeboot.framework.service.agent.impl.AgentSecretRotationServiceImpl(
+                        session.getMapper(
+                                com.iceeboot.framework.mapper.agent.AgentSecretMapper.class),
+                        secrets,
+                        properties,
+                        json),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(
+                        jdbc.getDataSource()));
     }
 
     private static <T> T entityService(T service, Object mapper) {

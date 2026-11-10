@@ -69,4 +69,14 @@ public interface IAgentPersistenceService {
     List<RunView> runs();
 
     RunDetail runDetail(String root);
+
+    boolean requestCancellation(String id);
+
+    boolean cancellationRequested(String id);
+
+    void heartbeat(String id);
+
+    void diagnose(String id, String code, String trace);
+
+    int interruptStale(long seconds);
 }

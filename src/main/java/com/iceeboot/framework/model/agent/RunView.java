@@ -23,4 +23,7 @@ public record RunView(
         long outputTokens,
         boolean usageKnown,
         LocalDateTime startedAt,
-        LocalDateTime finishedAt) {}
+        LocalDateTime finishedAt,
+        String errorCode,
+        String traceId,
+        boolean cancelRequested) {}

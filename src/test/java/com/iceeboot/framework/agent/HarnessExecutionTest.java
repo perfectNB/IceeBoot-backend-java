@@ -37,7 +37,13 @@ class HarnessExecutionTest {
         var factory = new HarnessRuntimeFactory(models, f.properties, f.secrets, f.store, users);
         service =
                 new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
-                        f.store, factory, models, f.properties, f.json);
+                        f.store,
+                        factory,
+                        models,
+                        f.properties,
+                        f.json,
+                        f.quota(),
+                        new AgentRunControl(f.store, f.properties));
     }
 
     static Model model(BiFunction<List<Msg>, List<ToolSchema>, ChatResponse> handler) {

@@ -61,4 +61,13 @@ public class AgentRunVO {
 
     @Schema(description = "结束时间")
     private LocalDateTime finishedAt;
+
+    @Schema(description = "安全错误分类")
+    private String errorCode;
+
+    @Schema(description = "请求追踪 ID")
+    private String traceId;
+
+    @Schema(description = "已请求取消，等待执行节点停止")
+    private boolean cancelRequested;
 }

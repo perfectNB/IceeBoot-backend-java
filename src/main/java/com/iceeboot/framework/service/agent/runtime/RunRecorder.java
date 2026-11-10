@@ -31,6 +31,9 @@ public final class RunRecorder implements MiddlewareBase {
     private final AtomicBoolean started = new AtomicBoolean();
     private final AtomicBoolean ended = new AtomicBoolean();
     private final AtomicInteger modelBudget;
+    private final Runnable acquireQuota;
+    private AgentSessionLease sessionLease;
+    private final String traceId;
     private volatile String output = "";
 
     public RunRecorder(
@@ -40,6 +43,39 @@ public final class RunRecorder implements MiddlewareBase {
             Caller caller,
             IAgentPersistenceService store,
             AtomicInteger budget) {
+        this(rootId, parentId, p, caller, store, budget, () -> {});
+    }
+
+    public RunRecorder(
+            String rootId,
+            String parentId,
+            PublishedAgent p,
+            Caller caller,
+            IAgentPersistenceService store,
+            AtomicInteger budget,
+            Runnable acquireQuota) {
+        this(
+                rootId,
+                parentId,
+                p,
+                caller,
+                store,
+                budget,
+                acquireQuota,
+                com.iceeboot.framework.service.agent.support.AgentDiagnostics.traceId());
+    }
+
+    private RunRecorder(
+            String rootId,
+            String parentId,
+            PublishedAgent p,
+            Caller caller,
+            IAgentPersistenceService store,
+            AtomicInteger budget,
+            Runnable acquireQuota,
+            String traceId) {
+        this.acquireQuota = acquireQuota;
+        this.traceId = traceId;
         this.rootId = rootId == null ? id : rootId;
         this.parentId = parentId;
         this.snapshot = p;
@@ -49,8 +85,56 @@ public final class RunRecorder implements MiddlewareBase {
     }
 
     public void start(List<Msg> messages) {
-        if (started.compareAndSet(false, true))
+        if (started.compareAndSet(false, true)) {
             store.startRun(id, rootId, parentId, snapshot, caller.userId(), store.json(messages));
+            store.diagnose(id, "", traceId);
+        }
+    }
+
+    public String traceId() {
+        return traceId;
+    }
+
+    public void trackSession(AgentSessionLease lease) {
+        sessionLease = lease;
+    }
+
+    public RunRecorder child(PublishedAgent child, Caller childCaller) {
+        return new RunRecorder(
+                rootId, id, child, childCaller, store, modelBudget, acquireQuota, traceId);
+    }
+
+    public void toolFailure(Throwable error) {
+        com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
+                id, "TOOL", traceId, error);
+    }
+
+    public void fail(Throwable error) {
+        if (isCancellation(error)) {
+            finish("CANCELLED", ResponseMessage.Agent.EXECUTION_CANCELLED);
+            return;
+        }
+        if (!ended.get()) {
+            String code =
+                    com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
+                            id, "EXECUTION", traceId, error);
+            store.diagnose(id, code, traceId);
+            fail();
+        }
+    }
+
+    private static boolean isCancellation(Throwable error) {
+        java.util.Set<Throwable> seen =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        for (Throwable cause = error; cause != null && seen.add(cause); cause = cause.getCause())
+            if (cause instanceof java.util.concurrent.CancellationException
+                    || reactor.core.Exceptions.isCancel(cause)) return true;
+        return false;
+    }
+
+    public void succeed(String result) {
+        output = result;
+        finish("SUCCEEDED", "");
     }
 
     public void fail() {
@@ -89,12 +173,14 @@ public final class RunRecorder implements MiddlewareBase {
                     List<Msg> messages, List<ToolSchema> tools, GenerateOptions options) {
                 return Flux.defer(
                         () -> {
+                            if (sessionLease != null) sessionLease.capture();
                             if (modelBudget.decrementAndGet() < 0)
                                 return Flux.error(
                                         new IceeBootException(
                                                 ResultCodeEnum.ERROR.getCode(),
                                                 ResponseMessage.Agent
                                                         .EXECUTION_MODEL_BUDGET_EXCEEDED));
+                            acquireQuota.run();
                             String callId = UUID.randomUUID().toString();
                             AtomicReference<ChatUsage> usage = new AtomicReference<>();
                             StringBuilder content = new StringBuilder();
@@ -125,7 +211,15 @@ public final class RunRecorder implements MiddlewareBase {
                                                             .append('\n');
                                             })
                                     .doOnComplete(save)
-                                    .doOnError(e -> save.run())
+                                    .doOnError(
+                                            e -> {
+                                                String code =
+                                                        com.iceeboot.framework.service.agent.support
+                                                                .AgentDiagnostics.failure(
+                                                                id, "MODEL", traceId, e);
+                                                store.diagnose(id, code, traceId);
+                                                save.run();
+                                            })
                                     .doOnCancel(save);
                         });
             }
@@ -155,7 +249,7 @@ public final class RunRecorder implements MiddlewareBase {
                                         }
                                     })
                             .doOnComplete(() -> finish("SUCCEEDED", ""))
-                            .doOnError(e -> fail())
+                            .doOnError(this::fail)
                             .doOnCancel(
                                     () ->
                                             finish(

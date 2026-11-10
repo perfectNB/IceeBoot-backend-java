@@ -204,7 +204,13 @@ class CapabilityRuntimeTest {
                         models, f.properties, f.secrets, f.store, mock(ISysUserService.class));
         var service =
                 new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
-                        f.store, factory, models, f.properties, f.json);
+                        f.store,
+                        factory,
+                        models,
+                        f.properties,
+                        f.json,
+                        f.quota(),
+                        new AgentRunControl(f.store, f.properties));
         assertThat(
                         service.invoke(
                                         "agent",

@@ -24,7 +24,7 @@ class AgentConfigurationTest {
         var m = f.model();
         assertThat(m.apiKey()).isEqualTo(AgentSecrets.MASK);
         var raw = f.store.model(m.id());
-        assertThat(raw.apiKey()).startsWith("enc:v1:").doesNotContain("test-key");
+        assertThat(raw.apiKey()).startsWith("enc:v2:primary:").doesNotContain("test-key");
         assertThat(f.secrets.decrypt(raw.apiKey())).isEqualTo("test-key");
         f.configs.saveModel(m);
         assertThat(f.secrets.decrypt(f.store.model(m.id()).apiKey())).isEqualTo("test-key");

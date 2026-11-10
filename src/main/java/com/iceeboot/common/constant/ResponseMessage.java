@@ -248,6 +248,18 @@ public class ResponseMessage {
         private Agent() {
         }
 
+        public static final String SECRET_KEY_ID_INVALID = "加密密钥标识不合法";
+        public static final String SECRET_KEY_VERSION_MISSING = "缺少历史解密密钥，请检查密钥版本配置";
+        public static final String SECRET_ROTATION_FAILED = "凭据轮换失败，数据已回滚";
+        public static final String QUOTA_EXCEEDED = "今日模型调用额度已用完";
+        public static final String QUOTA_UPDATE_FAILED = "更新模型调用额度失败";
+        public static final String CANCEL_NOT_RUNNING = "任务已结束或不存在";
+        public static final String RUN_INTERRUPTED = "执行节点失去心跳，任务已中断";
+        public static final String SCHEMA_LEGACY_DATA_PENDING = "检测到尚未迁移的旧 AgentScope 数据，请先执行历史数据迁移";
+        public static final String EXECUTION_TIMED_OUT = "执行超时，任务已停止";
+        public static final String SCHEMA_MIGRATION_FAILED = "智能体数据库升级失败，请检查迁移日志";
+        public static final String SCHEMA_CHECKSUM_MISMATCH = "已执行的数据库迁移内容发生变化";
+        public static final String SCHEMA_LOCK_FAILED = "获取数据库升级锁失败";
         public static final String MODEL_PROVIDER_PROTOCOL_MISMATCH = "供应商与协议不匹配";
         public static final String MODEL_OPENAI_PROTOCOL_REQUIRED = "该供应商应使用 OpenAI 兼容协议";
         public static final String MODEL_RESPONSES_PROVIDER_UNSUPPORTED = "当前仅为 GPT 开放 Responses 协议";

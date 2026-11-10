@@ -40,7 +40,7 @@ import java.util.*;
  */
 @Slf4j
 @Service
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 100)
 @RequiredArgsConstructor
 public class DatabaseInitService implements ApplicationRunner {
 

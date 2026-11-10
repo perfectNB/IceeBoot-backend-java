@@ -220,7 +220,7 @@ class AgentResourceApiTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.version").value(1));
             assertThat(f.store.agent(agentId).activeVersion()).isEqualTo(1);
-            assertThat(f.store.model(modelId).apiKey()).startsWith("enc:v1:");
+            assertThat(f.store.model(modelId).apiKey()).startsWith("enc:v2:primary:");
         }
     }
 }

@@ -83,10 +83,11 @@ public class AgentConsoleController {
     @PostMapping("/models/invoke")
     @RequirePermission(dynamic = true)
     public R<String> invokeModel(@Valid @RequestBody AgentModelInvokeDTO request) {
-        admin();
+        Caller caller = admin();
         return R.ok(
                 ResponseMessage.Agent.INVOKE_SUCCESS,
-                execution.invokeModel(converter.convert(request, ModelInvokeRequest.class)));
+                execution.invokeModel(
+                        converter.convert(request, ModelInvokeRequest.class), caller));
     }
 
     @Operation(summary = "Get /capabilities")
