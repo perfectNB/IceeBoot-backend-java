@@ -96,6 +96,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         //此请求接口不存在数据库权限表，则不需要拦截
         if (requiredPermissions.length == 0) {
+            request.setAttribute(SSE_AUTHORIZED, Boolean.TRUE);
             return true;
         }
         

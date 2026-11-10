@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.ai.saa;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.utils.tool.JapanMovieActorTool;
 import com.iceeboot.common.utils.tool.JapanMoviePathTool;
 import jakarta.annotation.Resource;
@@ -33,6 +34,7 @@ public class ToolCallingController {
     private ChatClient qwenChatClient;
 
     @GetMapping("/tool/chat")
+    @RequirePermission(dynamic = true)
     public String chat(@RequestParam(name = "msg", defaultValue = "来点欧美电影") String msg) {
         // 1.工具注册到工具集合里
         ToolCallback[] tools = ToolCallbacks.from(new JapanMoviePathTool());
@@ -49,6 +51,7 @@ public class ToolCallingController {
 
 
     @GetMapping("/tool/streamChat")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat2(@RequestParam(name = "msg", defaultValue = "高市早苗是谁") String msg) {
         return qwenChatClient.prompt()
                 .user(msg)

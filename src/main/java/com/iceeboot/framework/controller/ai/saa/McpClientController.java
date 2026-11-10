@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.ai.saa;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,12 +28,14 @@ public class McpClientController {
 
 
     @GetMapping("/mcpclient/chat")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat(@RequestParam(name = "msg", defaultValue = "北京") String msg) {
         log.info("使用了mcp");
         return qwenChatClient.prompt(msg).stream().content();
     }
 
     @RequestMapping("/mcpclient/chat2")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat2(@RequestParam(name = "msg", defaultValue = "北京") String msg) {
         log.info("未使用mcp");
         return qwenChatModel.stream(msg);

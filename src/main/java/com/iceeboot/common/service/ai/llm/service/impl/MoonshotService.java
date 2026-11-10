@@ -247,7 +247,7 @@ public class MoonshotService implements LLMService {
                 || normalizedModel.startsWith("kimi-k2.7-code")
                 || normalizedModel.contains("thinking");
         if (alwaysThinking && !request.getThinking()) {
-            throw new IllegalArgumentException("所选 Kimi 模型固定开启思考，普通请求和普通截图无法使用；不支持关闭思考可以调用");
+            throw new IllegalArgumentException("所选 Kimi 模型固定开启思考，不支持关闭思考");
         }
         if (normalizedModel.startsWith("kimi-k3") && request.getThinking()) {
             requestBody.put("reasoning_effort", kimiReasoningEffort(request.getReasoningEffort()));

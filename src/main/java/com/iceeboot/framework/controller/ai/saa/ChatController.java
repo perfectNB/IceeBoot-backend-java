@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.ai.saa;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -38,18 +39,21 @@ public class ChatController {
 
     //========================chatModel=============================
     @GetMapping(value = "/deepSeekChatModelStream")
+    @RequirePermission(dynamic = true)
     public Flux<String> deepSeekChatModelStream(@RequestParam(name = "question", defaultValue = "你是？") String question) {
         log.info("对话内容:{}", question);
         return deepseekChatModel.stream(question);
     }
 
     @GetMapping(value = "/qwenChatModelStream")
+    @RequirePermission(dynamic = true)
     public Flux<String> qwenChatModelStream(@RequestParam(name = "question", defaultValue = "你是？") String question) {
         log.info("对话内容:{}", question);
         return qwenChatModel.stream(question);
     }
 
     @GetMapping(value = "/deepSeekChatModel")
+    @RequirePermission(dynamic = true)
     public String deepSeekChatModel(@RequestParam(name = "msg", defaultValue = "我是你爹") String msg) {
         String result = deepseekChatModel.call(msg);
         log.info("对话内容，{},生成结果{}",msg,result);
@@ -57,6 +61,7 @@ public class ChatController {
     }
 
     @GetMapping(value = "/qwenChatModel")
+    @RequirePermission(dynamic = true)
     public String qwenChatModel(@RequestParam(name = "msg", defaultValue = "我是你爹") String msg) {
         String result = qwenChatModel.call(msg);
         log.info("对话内容，{},生成结果{}",msg,result);
@@ -67,18 +72,21 @@ public class ChatController {
     //========================chatClient=============================
 
     @GetMapping(value = "/deepSeekChatClientStream")
+    @RequirePermission(dynamic = true)
     public Flux<String> deepSeekChatClientStream(@RequestParam(name = "question", defaultValue = "你是？") String question) {
         log.info("question:{}", question);
         return deepseekChatClient.prompt(question).stream().content();
     }
 
     @GetMapping(value = "/qwenChatClientStream")
+    @RequirePermission(dynamic = true)
     public Flux<String> qwenChatClientStream(@RequestParam(name = "question", defaultValue = "你是？") String question) {
         log.info("question:{}", question);
         return qwenChatClient.prompt(question).stream().content();
     }
 
     @GetMapping(value = "/deepSeekChatClient")
+    @RequirePermission(dynamic = true)
     public String deepSeekChatClient(@RequestParam(name = "msg", defaultValue = "我是你爹") String msg) {
         String result = deepseekChatModel.call(msg);
         log.info("对话内容，{},生成结果{}",msg,result);
@@ -86,6 +94,7 @@ public class ChatController {
     }
 
     @GetMapping(value = "/qwenChatChatClient")
+    @RequirePermission(dynamic = true)
     public String qwenChatChatClient(@RequestParam(name = "msg", defaultValue = "我是你爹") String msg) {
         String result = qwenChatModel.call(msg);
         log.info("对话内容，{},生成结果{}",msg,result);

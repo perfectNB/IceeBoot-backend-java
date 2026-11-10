@@ -185,6 +185,9 @@ iceeboot:
     refresh-token-expire-seconds: 604800
     wechat-default-role-id: 3
     exclude-paths:
+      # 支付平台通过签名认证回调，无需后台登录。
+      - /v1/pay/callback
+      - /iceeboot/api/v1/pay/callback
       - /v1/auth/test/**
       - /v1/auth/wechat/auth-url
       - /v1/auth/wechat/innerQrCodeInfo-url
@@ -192,8 +195,6 @@ iceeboot:
       - /v1/auth/wechat/check/**
       - /v1/auth/wechat/qr/**
       - /v1/auth/wechat/exchange-ticket
-      - /v1/saa/**
-      - /v1/chat/ali
       - /v1/auth/login
       - /v1/auth/refresh
       - /v1/auth/register
@@ -211,8 +212,6 @@ iceeboot:
       - /iceeboot/api/v1/auth/wechat/callback
       - /iceeboot/api/v1/auth/wechat/exchange-ticket
       - /iceeboot/api/v1/auth/wechat/innerQrCodeInfo-url
-      - /iceeboot/api/v1/saa/**
-      - /iceeboot/api/v1/chat/ali
       - /iceeboot/api/v1/auth/login
       - /iceeboot/api/v1/auth/refresh
       - /iceeboot/api/v1/auth/register
