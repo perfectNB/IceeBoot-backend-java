@@ -15,7 +15,6 @@ import com.iceeboot.common.constant.SocialConstant;
 import com.iceeboot.common.constant.SystemConstants;
 import com.iceeboot.common.enums.ResultCodeEnum;
 import com.iceeboot.common.exception.IceeBootException;
-import com.iceeboot.common.utils.Md5Utils;
 import com.iceeboot.common.utils.DesensitizeUtils;
 import com.iceeboot.common.utils.PasswordUtil;
 import com.iceeboot.common.utils.TokenUtils;
@@ -41,7 +40,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import org.springframework.web.util.UriComponentsBuilder;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -75,9 +74,6 @@ public class AuthServiceImpl implements IAuthService {
     @Value("${YunGouOS.wechatCallbackUrl}")
     private String wechatCallbackUrl;
 
-    @Value("${YunGouOS.stateSecret}")
-    private String stateSecret;
-
     @Value("${YunGouOS.ticketExpireSeconds}")
     private Integer ticketExpireSeconds;
 
@@ -89,9 +85,6 @@ public class AuthServiceImpl implements IAuthService {
 
     @Value("${iceeboot.auth.wechat-default-role-id:3}")
     private Long wechatDefaultRoleId;
-
-    @Value("${spring.profiles.active:test}")
-    private String activeProfile;
 
     private final ISysUserService userService;
 
@@ -126,6 +119,28 @@ public class AuthServiceImpl implements IAuthService {
             + " if v then redis.call('DEL', KEYS[1]); redis.call('SET', KEYS[2], '1', 'EX', ARGV[1]); return v; end;"
             + " if redis.call('EXISTS', KEYS[2]) == 1 then return 'CONSUMED'; end;"
             + " return nil;";
+
+    // 与 RedisTemplate 的 Jackson 值序列化保持一致：token 为 JSON 字符串，用户 ID 和 TTL 为数字。
+    private static final DefaultRedisScript<Long> REPLACE_REFRESH_TOKEN_SCRIPT = new DefaultRedisScript<>("""
+            local old = redis.call('GET', KEYS[1]);
+            if old then
+                local token = cjson.decode(old);
+                redis.call('DEL', cjson.decode(ARGV[4]) .. token, cjson.decode(ARGV[5]) .. token);
+            end;
+            redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[3]);
+            redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3]);
+            return 1;
+            """, Long.class);
+
+    private static final DefaultRedisScript<Long> REVOKE_REFRESH_TOKEN_SCRIPT = new DefaultRedisScript<>("""
+            local old = redis.call('GET', KEYS[1]);
+            if old then
+                local token = cjson.decode(old);
+                redis.call('DEL', cjson.decode(ARGV[1]) .. token, cjson.decode(ARGV[2]) .. token);
+            end;
+            redis.call('DEL', KEYS[1]);
+            return 1;
+            """, Long.class);
 
     @Override
     public LoginVO login(LoginDTO loginDTO) {
@@ -277,7 +292,7 @@ public class AuthServiceImpl implements IAuthService {
         
         // 获取微信授权URL
         String type = "open-url";
-        String authUrl = yunGouWxApiClient.getWxOauthUrl(mchId, wechatCallbackUrl, type, params, key);
+        String authUrl = yunGouWxApiClient.getWxOauthUrl(mchId, buildWechatCallbackUrl(state), type, params, key);
         
         log.info("微信扫码登录 - 授权URL生成成功");
         return authUrl;
@@ -286,30 +301,26 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public Object getWechatQr() {
         JSONObject params = new JSONObject();
+        String state = generateState();
+        params.put("state", state);
+        redisTemplate.opsForValue().set(CacheConstants.Auth.WECHAT_STATE + state,
+                state, stateExpireSeconds.longValue(), TimeUnit.SECONDS);
         WxWebLoginBiz loginBiz = yunGouWxApiClient.getWebLogin(
-                mchId,
-                wechatCallbackUrl,
-                params,
-                key
-        );
-        String state = loginBiz.getState();
-        if (StringUtils.hasText(state)) {
-            String stateKey = CacheConstants.Auth.WECHAT_STATE + state;
-            redisTemplate.opsForValue().set(stateKey, state, stateExpireSeconds.longValue(), TimeUnit.SECONDS);
-        }
+                mchId, buildWechatCallbackUrl(state), params, key);
 
         return loginBiz;
     }
 
-    /**
-     * 生成state参数（基于时间戳和密钥的签名）
-     */
+    /** 为每次授权生成独立且不可预测的 state。 */
     private String generateState() {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String raw = timestamp + ":" + stateSecret;
-        return Md5Utils.encrypt(raw);
+        return generateRandomString(32);
     }
-    
+
+    private String buildWechatCallbackUrl(String state) {
+        return UriComponentsBuilder.fromUriString(wechatCallbackUrl)
+                .replaceQueryParam("state", state).build().encode().toUriString();
+    }
+
     /**
      * 验证state参数
      */
@@ -318,37 +329,18 @@ public class AuthServiceImpl implements IAuthService {
             return false;
         }
         
-        // 从Redis验证state是否存在
-        String stateKey = CacheConstants.Auth.WECHAT_STATE + state;
-        String cachedState = (String) redisTemplate.opsForValue().get(stateKey);
-        
-        if (cachedState != null && cachedState.equals(state)) {
-            // 验证成功后删除state（一次性使用）
-            redisTemplate.delete(stateKey);
-            return true;
-        }
-        
-        return false;
+        // 原子消费，两个并发回调不能重复使用同一个 state。
+        Object cachedState = redisTemplate.opsForValue().getAndDelete(CacheConstants.Auth.WECHAT_STATE + state);
+        return state.equals(cachedState);
     }
 
     @Override
     public String handleWechatCallback(String code, String state) throws UnsupportedEncodingException {
-        log.info("微信OAuth回调 - 开始处理, code: {}, state: {}", code != null ? "***" : "null", state);
-        boolean isProd = "prod".equalsIgnoreCase(activeProfile);
-        if (isProd) {
-            if (state == null) {
-                log.warn("微信OAuth回调 - state参数为空（prod环境）");
-                return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
-            }
-            if (!verifyState(state)) {
-                log.error("微信OAuth回调 - state验证失败");
-                return buildErrorRedirectUrl("安全验证失败，请重新扫码登录✌️");
-            }
-            log.info("微信OAuth回调 - state验证成功");
-        } else {
-            log.warn("微信OAuth回调 - 非prod环境，跳过state验证");
+        if (!verifyState(state)) {
+            log.warn("微信OAuth回调 - state校验失败");
+            return buildErrorRedirectUrl("安全验证失败，请重新扫码登录");
         }
-        
+
         // 验证授权码
         if (!StringUtils.hasText(code)) {
             log.warn("微信OAuth回调 - 用户未同意授权或授权码为空");
@@ -424,10 +416,8 @@ public class AuthServiceImpl implements IAuthService {
         log.info("微信OAuth回调 - 已生成ticket，有效期: {}秒", ticketExpireSeconds);
         
         // 构建重定向URL（返回前端）
-        String redirectUrl = frontendUrl + "/?ticket=" + ticket;
-        log.info("微信OAuth回调 - 重定向到前端: {}", redirectUrl);
-        
-        return redirectUrl;
+        return UriComponentsBuilder.fromUriString(frontendUrl)
+                .fragment("ticket=" + ticket).build().encode().toUriString();
     }
     
     /**
@@ -537,7 +527,8 @@ public class AuthServiceImpl implements IAuthService {
      * 构建错误重定向URL
      */
     private String buildErrorRedirectUrl(String errorMsg) throws UnsupportedEncodingException {
-        return frontendUrl + "/?error=" + URLEncoder.encode(errorMsg, "UTF-8");
+        return UriComponentsBuilder.fromUriString(frontendUrl)
+                .replaceQueryParam("error", errorMsg).build().encode().toUriString();
     }
 
     @Override
@@ -663,31 +654,17 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     private void storeRefreshToken(Long userId, String refreshToken) {
-        String userRefreshKey = getUserRefreshTokenKey(userId);
-        Object oldTokenObj = redisTemplate.opsForValue().get(userRefreshKey);
-        if (oldTokenObj != null) {
-            String oldToken = oldTokenObj.toString();
-            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN + oldToken);
-            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN_CONSUMED + oldToken);
-        }
-
-        String refreshKey = CacheConstants.Auth.REFRESH_TOKEN + refreshToken;
-        redisTemplate.opsForValue().set(refreshKey, userId, refreshTokenExpireSeconds, TimeUnit.SECONDS);
-        redisTemplate.opsForValue().set(userRefreshKey, refreshToken, refreshTokenExpireSeconds, TimeUnit.SECONDS);
+        redisTemplate.execute(REPLACE_REFRESH_TOKEN_SCRIPT,
+                List.of(getUserRefreshTokenKey(userId), CacheConstants.Auth.REFRESH_TOKEN + refreshToken),
+                refreshToken, userId, refreshTokenExpireSeconds,
+                CacheConstants.Auth.REFRESH_TOKEN, CacheConstants.Auth.REFRESH_TOKEN_CONSUMED);
     }
 
     private void revokeUserRefreshToken(Long userId) {
-        if (userId == null) {
-            return;
-        }
-        String userRefreshKey = getUserRefreshTokenKey(userId);
-        Object oldTokenObj = redisTemplate.opsForValue().get(userRefreshKey);
-        if (oldTokenObj != null) {
-            String oldToken = oldTokenObj.toString();
-            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN + oldToken);
-            redisTemplate.delete(CacheConstants.Auth.REFRESH_TOKEN_CONSUMED + oldToken);
-        }
-        redisTemplate.delete(userRefreshKey);
+        if (userId == null) return;
+        redisTemplate.execute(REVOKE_REFRESH_TOKEN_SCRIPT,
+                List.of(getUserRefreshTokenKey(userId)),
+                CacheConstants.Auth.REFRESH_TOKEN, CacheConstants.Auth.REFRESH_TOKEN_CONSUMED);
     }
 
     private String getUserRefreshTokenKey(Long userId) {

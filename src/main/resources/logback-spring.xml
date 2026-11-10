@@ -1,59 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- 从 application.yml 读取日志路径 -->
+    <springProperty scope="context" name="LOG_FILE" source="logging.file.name" defaultValue="logs/iceeboot.log"/>
+    <springProperty scope="context" name="LOG_MAX_SIZE" source="logging.file.max-size" defaultValue="10MB"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY" source="logging.file.max-history" defaultValue="30"/>
+    <springProperty scope="context" name="LOG_LEVEL_COM" source="logging.level.com.iceeboot" defaultValue="INFO"/>
+    <springProperty scope="context" name="LOG_LEVEL_SPRING" source="logging.level.org.springframework" defaultValue="WARN"/>
+    <springProperty scope="context" name="LOG_LEVEL_MYBATIS" source="logging.level.org.mybatis" defaultValue="WARN"/>
 
-    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="iceeboot"/>
+    <springProperty scope="context" name="LOG_TOTAL_SIZE_CAP" source="logging.file.total-size-cap" defaultValue="512MB"/>
 
-    <!-- 控制台输出 -->
+    <!-- 控制台 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{50} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <!-- 文件输出 -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/${APP_NAME}.log</file>
+    <!-- 滚动文件：按大小（10MB）和时间（天）滚动，最多保留 30 个文件 -->
+    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/${APP_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>50MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>2GB</totalSizeCap>
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${LOG_TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{50} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <!-- 开发环境 -->
-    <springProfile name="dev">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
+    <!-- 项目日志 -->
+    <logger name="com.iceeboot" level="${LOG_LEVEL_COM}"/>
+    <logger name="org.springframework" level="${LOG_LEVEL_SPRING}"/>
+    <logger name="org.mybatis" level="${LOG_LEVEL_MYBATIS}"/>
 
-    <!-- 测试环境 -->
-    <springProfile name="test">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
-        </root>
-    </springProfile>
-
-    <!-- 生产环境 -->
-    <springProfile name="prod">
-        <root level="WARN">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
-        </root>
-    </springProfile>
-
-    <!-- 默认（无 profile 激活时） -->
-    <springProfile name="default">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
-
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROLLING_FILE"/>
+    </root>
 </configuration>

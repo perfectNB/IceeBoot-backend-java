@@ -118,19 +118,19 @@ logging:
   level:
     com.iceeboot: info
     org.springframework: warn
-    org.mybatis: info
+    org.mybatis: warn
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   file:
-    name: logs/iceeboot-test.log
+    name: logs/iceeboot-prod.log
     max-size: 50MB
     max-history: 30
 
 # MyBatis Plus配置
 mybatis-plus:
   configuration:
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
   global-config:
     db-config:
       logic-delete-field: deleted
