@@ -4,6 +4,7 @@ import com.alibaba.cloud.ai.advisor.DocumentRetrievalAdvisor;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetriever;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeDocumentRetrieverOptions;
+import com.iceeboot.common.annotation.RequirePermission;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class BailianRagController {
 
 
     @GetMapping("/chat")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat(@RequestParam(name = "msg", defaultValue = "有哪些剧本杀") String msg) {
         // 百炼 RAG 构建器
         DocumentRetriever retriever = new DashScopeDocumentRetriever(dashScopeApi,

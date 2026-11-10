@@ -76,6 +76,7 @@ public class AiChatController {
 
     @Operation(summary = "删除对话会话", description = "单个删除或批量删除对话")
     @DeleteMapping
+    @RequirePermission(dynamic = true)
     public R<Void> deleteLogs(@RequestBody List<Long> ids) {
         boolean success = aiChatService.deleteSession(ids);
         return success ? R.ok(ResponseMessage.Common.DELETE_SUCCESS) : R.fail(ResponseMessage.Common.DELETE_FAIL);
@@ -91,7 +92,7 @@ public class AiChatController {
 
     @Operation(summary = "流式对话")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public Flux<String> streamChat(@Validated @RequestBody StreamChatRequest request) {
         return aiChatService.streamChat(request)
                 .map(response -> {
@@ -123,7 +124,7 @@ public class AiChatController {
 
     @Operation(summary = "获取对话里的消息")
     @GetMapping("/message")
-//    @RequirePermission(dynamic = true)
+    @RequirePermission(dynamic = true)
     public R<PageResult<AiChatMessageVO>> getMessage(AiChatMessageQuery query) {
         PageResult<AiChatMessageVO> result = aiChatService.getMessage(query);
         return R.ok(result);
@@ -131,6 +132,7 @@ public class AiChatController {
 
     @Operation(summary = "工具调用流式对话")
     @PostMapping(value = "/tool/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RequirePermission(dynamic = true)
     public Flux<String> toolStreamChat(@Validated @RequestBody StreamChatRequest request) {
         return aiChatService.toolStreamChat(request);
     }
@@ -139,6 +141,7 @@ public class AiChatController {
 
     @Operation(summary = "rag知识库流式对话")
     @PostMapping(value = "/rag/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RequirePermission(dynamic = true)
     public Flux<String> ragStreamChat(@Validated @RequestBody StreamChatRequest request) {
         return aiChatService.ragStreamChat(request);
     }

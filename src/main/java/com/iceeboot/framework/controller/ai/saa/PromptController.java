@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.ai.saa;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class PromptController {
 
 
     @GetMapping("/prompt/chat")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat(@RequestParam(name = "question", defaultValue = "王源抽芙蓉王") String question) {
         return deepseekChatClient.prompt()
                 // AI 能力边界
@@ -55,6 +57,7 @@ public class PromptController {
 
 
     @GetMapping("/prompt/chat2")
+    @RequirePermission(dynamic = true)
     public Flux<ChatResponse> chat2(@RequestParam(name = "question", defaultValue = "来点瑟瑟的故事") String question) {
         // 系统消息
         SystemMessage systemMessage = new SystemMessage("你是一个讲故事的助手,每个故事控制在300字以内");
@@ -70,6 +73,7 @@ public class PromptController {
 
 
     @GetMapping("/prompt/chat3")
+    @RequirePermission(dynamic = true)
     public Flux<String> chat3(@RequestParam(name = "question", defaultValue = "来个孙吧故事") String question) {
         // 系统消息
         SystemMessage systemMessage = new SystemMessage("你是一个讲故事的助手," +
@@ -87,6 +91,7 @@ public class PromptController {
 
 
     @GetMapping("/prompt/chat4")
+    @RequirePermission(dynamic = true)
     public String chat4(@RequestParam(name = "question", defaultValue = "来个孙吧老哥和小红书集美恋爱的故事") String question) {
         AssistantMessage assistantMessage = deepseekChatClient.prompt()
                 .user(question)
@@ -101,6 +106,7 @@ public class PromptController {
 
 
     @GetMapping("/prompt/chat5")
+    @RequirePermission(dynamic = true)
     public String chat5(@RequestParam(name = "question", defaultValue = "长沙") String city) {
 
         String answer = deepseekChatClient.prompt()

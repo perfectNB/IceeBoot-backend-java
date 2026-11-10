@@ -61,11 +61,22 @@ public class SystemConstants {
      * 大模型厂商常量
      */
     public static class SaaModel {
-        /** deepseek v3 */
-        public static final String DEEPSEEK_MODEL = "deepseek-v3";
+        /** DeepSeek V3.2（DashScope） */
+        public static final String DEEPSEEK_MODEL = "deepseek-v3.2";
+
+        /** DeepSeek V4 Pro（官方 DeepSeek API） */
+        public static final String DEEPSEEK_V4_PRO = "deepseek-v4-pro";
+
+        /** DeepSeek V4 Flash（DashScope） */
+        public static final String DEEPSEEK_V4_FLASH = "deepseek-v4-flash";
 
         /** 千问 */
-        public static final String QWEN_MODEL = "qwen-max";
+        public static final String QWEN_PLUS = "qwen-plus";
+
+        public static final String QWEN_MAX = "qwen-max";
+
+        /** GLM */
+        public static final String GLM_47 = "glm-4.7";
 
 
     }
@@ -471,12 +482,12 @@ public class SystemConstants {
     }
 
 
-    public static class chat {
+    public static class ChatType {
         /** 大模型 */
-        public static final Integer LLMCHAT = 1;
+        public static final Integer LLM_CHAT = 1;
 
-        /** rag */
-        public static final Integer RAGCHAT = 2;
+        /** RAG */
+        public static final Integer RAG_CHAT = 2;
 
     }
 

@@ -6,6 +6,9 @@
  */
 package com.iceeboot.framework.service.pay.impl;
 
+import com.iceeboot.common.constant.ApplicationConstants;
+import com.iceeboot.common.constant.PaymentBusinessStatuses;
+import com.iceeboot.common.constant.PaymentBusinessTypes;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,6 +17,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
+import com.iceeboot.common.service.pay.client.YunGouCashierPayRequest;
+import com.iceeboot.common.service.pay.client.YunGouPayClient;
 import com.iceeboot.common.service.pay.factory.PayFactory;
 import com.iceeboot.common.service.pay.service.PayService;
 import com.iceeboot.common.utils.TokenUtils;
@@ -27,7 +32,7 @@ import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.pay.PayRecordVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.util.PaySignUtil;
-import com.yungouos.pay.wxpay.WxPay;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -37,10 +42,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -72,6 +78,8 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
 
     private final ISysUserService sysUserService;
 
+    private final YunGouPayClient yunGouPayClient;
+
     /** 支付方式：微信 */
     private static final Integer PAY_TYPE_WECHAT = 1;
     
@@ -87,6 +95,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     /** 支付状态：退款 */
     private static final Integer PAY_STATUS_REFUND = 4;
 
+    /** YunGouOS 回调成功响应体 */
+    private static final String CALLBACK_SUCCESS_RESPONSE = "SUCCESS";
+
     @Override
     public PageResult<PayRecordVO> getPayRecordPage(PayRecordQuery query) {
         log.info("分页查询支付记录，查询条件：{}", query);
@@ -101,6 +112,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
                 .eq(query.getPayType() != null, PayRecordDO::getPayType, query.getPayType())
                 .eq(query.getPayStatus() != null, PayRecordDO::getPayStatus, query.getPayStatus())
                 .eq(query.getConfigId() != null, PayRecordDO::getConfigId, query.getConfigId())
+                .eq(StringUtils.hasText(query.getApplicationCode()), PayRecordDO::getApplicationCode, query.getApplicationCode())
+                .eq(StringUtils.hasText(query.getBusinessType()), PayRecordDO::getBusinessType, query.getBusinessType())
+                .eq(StringUtils.hasText(query.getBusinessStatus()), PayRecordDO::getBusinessStatus, query.getBusinessStatus())
                 .ge(query.getStartTime() != null, PayRecordDO::getCreateTime, query.getStartTime())
                 .le(query.getEndTime() != null, PayRecordDO::getCreateTime, query.getEndTime())
                 .orderByDesc(PayRecordDO::getCreateTime);
@@ -144,6 +158,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         
         // 获取当前用户ID
         Long userId = TokenUtils.getCurrentUserId();
+        if (userId == null) throw new IceeBootException("请先登录");
         
         // 防止频繁请求
         String redisKey = CacheConstants.Pay.QR_LIMIT + userId;
@@ -160,11 +175,16 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         }
 
         // 生成商户订单号
-        String outTradeNo = System.currentTimeMillis() + "";
+        String outTradeNo = cn.hutool.core.util.IdUtil.getSnowflakeNextIdStr();
 
         // 创建支付记录
         PayRecordDO payRecord = new PayRecordDO()
                 .setOutTradeNo(outTradeNo)
+                .setUserId(userId)
+                .setApplicationCode(ApplicationConstants.PLATFORM)
+                .setBusinessType(PaymentBusinessTypes.PAY_CONFIG)
+                .setBusinessStatus(PaymentBusinessStatuses.PENDING)
+                .setBusinessRetryCount(0)
                 .setOrderName(config.getConfigName())
                 .setPayType(PAY_TYPE_WECHAT)
                 .setConfigId(configId)
@@ -186,21 +206,15 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
             String amount = amountYuan.toString();
 
             // 使用收银台支付（cashierPay）
-            String qrCodeUrl = WxPay.cashierPay(
-                    outTradeNo,           // 商户订单号
-                    amount,               // 支付金额（元）
-                    mchId,                // 商户号
-                    config.getConfigName(), // 订单标题
-                    null,                 // 商品描述
-                    null,                 // 附加数据
-                    notifyUrl,            // 异步回调地址
-                    null,                 // 同步回调地址
-                    null,                 // auto参数
-                    null,                 // autoOpenType参数
-                    null,                 // 配置参数
-                    null,                 // 开发者参数
-                    key                   // 密钥
-            );
+            String qrCodeUrl = yunGouPayClient.cashierPay(YunGouCashierPayRequest.builder()
+                    .outTradeNo(outTradeNo)
+                    .totalFee(amount)
+                    .mchId(mchId)
+                    .body(config.getConfigName())
+                    .attach(ApplicationConstants.PLATFORM)
+                    .notifyUrl(notifyUrl)
+                    .key(key)
+                    .build());
 
             // 标记订单已创建（用于回调时验证）
             redisTemplate.opsForValue().set(
@@ -223,10 +237,10 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     @Transactional(rollbackFor = Exception.class)
     public String handlePaymentCallback(HttpServletRequest request) {
         log.info("接收支付回调");
-        
+
         try {
             // 验证签名
-            boolean flag = PaySignUtil.checkNotifySign(request, key);
+            boolean flag = verifyNotifySign(request);
             if (!flag) {
                 log.error("支付回调签名验证失败");
                 return "fail";
@@ -235,18 +249,34 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
             log.info("支付回调签名验证成功");
 
             // 获取回调参数
+            String code = request.getParameter("code");
             String outTradeNo = request.getParameter("outTradeNo");
             String orderNo = request.getParameter("orderNo");
+            String payNo = request.getParameter("payNo");
+            String money = request.getParameter("money");
+            String callbackMchId = request.getParameter("mchId");
+            String tradeNo = StringUtils.hasText(payNo) ? payNo : orderNo;
 
-            log.info("支付回调参数 - 商户订单号：{}，平台订单号：{}", outTradeNo, orderNo);
-
-            // 验证订单是否存在于Redis（防止重复回调）
-            String tempKey = CacheConstants.Pay.PAY_ORDER_TEMP + outTradeNo;
-            String tempFlag = (String) redisTemplate.opsForValue().get(tempKey);
-            if (StrUtil.isBlank(tempFlag)) {
-                log.warn("支付回调 - 订单已处理或不存在，订单号：{}", outTradeNo);
+            log.info("支付回调参数 - code：{}，商户订单号：{}，平台订单号：{}，支付订单号：{}，金额：{}，商户号：{}",
+                    code, outTradeNo, orderNo, payNo, money, callbackMchId);
+            // YunGouOS 官方回调：code = 1 表示支付成功
+            if (!"1".equals(code)) {
+                log.warn("支付回调 - 支付未成功，订单号：{}，code：{}", outTradeNo, code);
                 return "fail";
             }
+            if (!StringUtils.hasText(outTradeNo)) {
+                log.error("支付回调 - 缺少商户订单号");
+                return "fail";
+            }
+            if (!StringUtils.hasText(tradeNo)) {
+                log.error("支付回调 - 缺少平台订单号，订单号：{}", outTradeNo);
+                return "fail";
+            }
+            if (!StringUtils.hasText(callbackMchId) || !mchId.equals(callbackMchId)) {
+                log.error("支付回调 - 商户号不匹配，订单号：{}，回调商户号：{}", outTradeNo, callbackMchId);
+                return "fail";
+            }
+            String tempKey = CacheConstants.Pay.PAY_ORDER_TEMP + outTradeNo;
 
             // 查询支付记录
             PayRecordDO payRecord = getByOutTradeNo(outTradeNo);
@@ -255,43 +285,104 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
                 return "fail";
             }
 
-            // 检查订单状态，避免重复处理
-            if (PAY_STATUS_SUCCESS.equals(payRecord.getPayStatus())) {
-                log.warn("支付回调 - 订单已支付成功，跳过处理，订单号：{}", outTradeNo);
-                // 删除临时标记
-                redisTemplate.delete(tempKey);
-                return "success";
-            }
-
-            // 更新支付记录
-            payRecord.setTradeNo(orderNo);
-            payRecord.setPayStatus(PAY_STATUS_SUCCESS);
-            boolean updated = this.updateById(payRecord);
-
-            if (updated) {
-                log.info("支付回调 - 订单支付成功，订单号：{}，平台订单号：{}", outTradeNo, orderNo);
-                
-                // 执行支付成功后的业务逻辑（使用策略模式）
-                try {
-                    executePaymentStrategy(payRecord);
-                } catch (Exception e) {
-                    log.error("支付回调 - 执行业务策略失败，订单号：{}，错误：{}", outTradeNo, e.getMessage(), e);
-                    // 业务逻辑失败不影响支付成功回调
-                    // 可以考虑加入重试队列或人工处理
-                }
-                
-                // 删除临时标记
-                redisTemplate.delete(tempKey);
-                
-                return "success";
-            } else {
-                log.error("支付回调 - 更新支付记录失败，订单号：{}", outTradeNo);
+            // 校验回调金额与本地订单金额一致
+            if (!isValidCallbackAmount(money, payRecord)) {
+                log.error("支付回调 - 金额校验失败，订单号：{}，回调金额：{}，订单金额：{}",
+                        outTradeNo, money, resolveExpectedAmountYuan(payRecord));
                 return "fail";
             }
+
+            // 检查订单状态，避免重复处理
+            if (PAY_STATUS_SUCCESS.equals(payRecord.getPayStatus())) {
+                processPaymentBusiness(payRecord);
+                redisTemplate.delete(tempKey);
+                return CALLBACK_SUCCESS_RESPONSE;
+            }
+
+            Integer payAmountFen = resolvePayAmountFen(payRecord);
+            if (payAmountFen == null) {
+                log.error("支付回调 - 无法计算pay_amount，订单号：{}，payAmount：{}，amount：{}",
+                        outTradeNo, payRecord.getPayAmount(), payRecord.getAmount());
+                return "fail";
+            }
+
+            // 原子更新：仅“支付中”订单可更新成功，避免并发回调重复执行业务逻辑
+            int affected = baseMapper.updateToSuccessIfPaying(
+                    outTradeNo, tradeNo, payAmountFen, PAY_STATUS_SUCCESS, PAY_STATUS_PAYING);
+
+            if (affected == 1) {
+                payRecord.setTradeNo(tradeNo);
+                payRecord.setPayAmount(payAmountFen);
+                payRecord.setPayStatus(PAY_STATUS_SUCCESS);
+                log.info("支付回调 - 订单支付成功，订单号：{}，平台订单号：{}", outTradeNo, tradeNo);
+
+                processPaymentBusiness(payRecord);
+                
+                redisTemplate.delete(tempKey);
+                return CALLBACK_SUCCESS_RESPONSE;
+            }
+
+            // 可能是并发回调已由其他线程更新为成功，按幂等返回 success
+            PayRecordDO latestRecord = baseMapper.selectByOutTradeNoForUpdate(outTradeNo);
+            if (latestRecord != null && PAY_STATUS_SUCCESS.equals(latestRecord.getPayStatus())) {
+                log.info("支付回调 - 并发幂等命中，订单已处理成功，订单号：{}", outTradeNo);
+                redisTemplate.delete(tempKey);
+                return CALLBACK_SUCCESS_RESPONSE;
+            }
+
+            log.error("支付回调 - 订单状态异常，订单号：{}，当前状态：{}",
+                    outTradeNo, latestRecord == null ? null : latestRecord.getPayStatus());
+            return "fail";
 
         } catch (Exception e) {
             log.error("支付回调处理异常：{}", e.getMessage(), e);
             return "fail";
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean retryPaymentBusiness(Long payRecordId) {
+        if (payRecordId == null) {
+            return false;
+        }
+        PayRecordDO payRecord = this.getById(payRecordId);
+        if (payRecord == null || !PAY_STATUS_SUCCESS.equals(payRecord.getPayStatus())) {
+            return false;
+        }
+        return processPaymentBusiness(payRecord);
+    }
+
+    private boolean processPaymentBusiness(PayRecordDO payRecord) {
+        if (PaymentBusinessStatuses.SUCCESS.equals(payRecord.getBusinessStatus())) {
+            return true;
+        }
+        int claimed = baseMapper.claimBusinessProcessing(
+                payRecord.getId(),
+                PaymentBusinessStatuses.PROCESSING,
+                PaymentBusinessStatuses.PENDING,
+                PaymentBusinessStatuses.FAILED);
+        if (claimed != 1) {
+            PayRecordDO latest = this.getById(payRecord.getId());
+            return latest != null && PaymentBusinessStatuses.SUCCESS.equals(latest.getBusinessStatus());
+        }
+
+        try {
+            executePaymentStrategy(payRecord);
+            baseMapper.updateBusinessSuccess(payRecord.getId(), PaymentBusinessStatuses.SUCCESS);
+            return true;
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            if (!StringUtils.hasText(errorMessage)) {
+                errorMessage = e.getClass().getSimpleName();
+            }
+            if (errorMessage.length() > 240) {
+                errorMessage = errorMessage.substring(0, 240);
+            }
+            baseMapper.updateBusinessFailed(payRecord.getId(), PaymentBusinessStatuses.FAILED, errorMessage);
+            log.error("支付业务处理失败，已进入补偿队列，payRecordId={}, outTradeNo={}",
+                    payRecord.getId(), payRecord.getOutTradeNo(), e);
+            return false;
         }
     }
 
@@ -320,8 +411,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         
         PayConfigDO config = paymentConfigService.getById(configId);
         if (config == null) {
-            log.error("执行支付策略 - 找不到支付配置，configId: {}", configId);
-            return;
+            throw new IceeBootException("支付配置不存在：" + configId);
         }
         
         // 2. 获取策略编码
@@ -333,15 +423,20 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         
         // 3. 检查策略是否存在
         if (!strategyFactory.hasStrategy(payCode)) {
-            log.error("执行支付策略 - 未找到策略实现，payCode: {}", payCode);
-            return;
+            throw new IceeBootException("支付策略不存在：" + payCode);
         }
         
         // 4. 获取用户ID
-        Long userId = Long.valueOf(payRecord.getCreateBy());
+        Long userId = payRecord.getUserId();
+        if (userId == null && StrUtil.isNotBlank(payRecord.getCreateBy())) {
+            try {
+                userId = Long.valueOf(payRecord.getCreateBy());
+            } catch (NumberFormatException e) {
+                log.error("执行支付策略 - 用户ID格式错误，createBy: {}", payRecord.getCreateBy());
+            }
+        }
         if (userId == null) {
-            log.error("执行支付策略 - 用户ID为空");
-            return;
+            throw new IceeBootException("支付订单缺少用户信息");
         }
         
         // 5. 获取策略实例并执行
@@ -444,5 +539,82 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
                 return "未知";
         }
     }
-}
 
+    /**
+     * 校验回调金额与订单金额是否一致（单位：元）
+     */
+    private boolean isValidCallbackAmount(String callbackMoney, PayRecordDO payRecord) {
+        if (!StringUtils.hasText(callbackMoney)) {
+            return false;
+        }
+        BigDecimal expectedAmountYuan = resolveExpectedAmountYuan(payRecord);
+        if (expectedAmountYuan == null) {
+            return false;
+        }
+        try {
+            BigDecimal callbackAmountYuan = new BigDecimal(callbackMoney);
+            return callbackAmountYuan.compareTo(expectedAmountYuan) == 0;
+        } catch (Exception e) {
+            log.error("支付回调 - 金额格式错误，callbackMoney: {}", callbackMoney, e);
+            return false;
+        }
+    }
+
+    /**
+     * 获取订单应付金额（单位：元）
+     */
+    private BigDecimal resolveExpectedAmountYuan(PayRecordDO payRecord) {
+        if (payRecord.getPayAmount() != null) {
+            return new BigDecimal(payRecord.getPayAmount())
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        }
+        if (payRecord.getAmount() != null) {
+            return payRecord.getAmount().setScale(2, RoundingMode.HALF_UP);
+        }
+        return null;
+    }
+
+    /**
+     * 解析订单支付金额（单位：分）
+     */
+    private Integer resolvePayAmountFen(PayRecordDO payRecord) {
+        if (payRecord.getPayAmount() != null) {
+            return payRecord.getPayAmount();
+        }
+        BigDecimal expectedAmountYuan = resolveExpectedAmountYuan(payRecord);
+        if (expectedAmountYuan == null) {
+            return null;
+        }
+        try {
+            return expectedAmountYuan
+                    .movePointRight(2)
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .intValueExact();
+        } catch (Exception e) {
+            log.error("支付回调 - 金额转分失败，amountYuan: {}", expectedAmountYuan, e);
+            return null;
+        }
+    }
+
+    /**
+     * 兼容 Jakarta Servlet 环境的验签逻辑
+     */
+    private boolean verifyNotifySign(HttpServletRequest request) {
+        String sign = request.getParameter("sign");
+        if (!StringUtils.hasText(sign)) {
+            log.error("支付回调 - 缺少签名参数sign");
+            return false;
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("code", request.getParameter("code"));
+        params.put("orderNo", request.getParameter("orderNo"));
+        params.put("outTradeNo", request.getParameter("outTradeNo"));
+        params.put("payNo", request.getParameter("payNo"));
+        params.put("money", request.getParameter("money"));
+        params.put("mchId", request.getParameter("mchId"));
+        String localSign = PaySignUtil.createSign(params, key);
+
+        return sign.equals(localSign);
+    }
+}

@@ -61,6 +61,21 @@ public class PayRecordVO {
     @Schema(description = "用户ID")
     private Long userId;
 
+    @Schema(description = "所属项目编码")
+    private String applicationCode;
+
+    @Schema(description = "支付业务类型")
+    private String businessType;
+
+    @Schema(description = "业务到账状态")
+    private String businessStatus;
+
+    @Schema(description = "业务补偿重试次数")
+    private Integer businessRetryCount;
+
+    @Schema(description = "最近一次业务处理错误")
+    private String businessError;
+
     @Schema(description = "用户名")
     private String username;
 
@@ -78,4 +93,3 @@ public class PayRecordVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 }
-

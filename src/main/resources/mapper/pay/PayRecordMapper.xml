@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iceeboot.framework.mapper.pay.PayRecordMapper">
+
+
+    <select id="selectByOutTradeNo"
+            resultType="com.iceeboot.framework.entity.pay.PayRecordDO">
+        SELECT *
+        FROM t_pay_record
+        WHERE out_trade_no = #{outTradeNo}
+        LIMIT 1
+    </select>
+
+    <update id="updateToSuccessIfPaying">
+        UPDATE t_pay_record
+        SET trade_no = IFNULL(#{tradeNo}, trade_no),
+            pay_amount = IFNULL(#{payAmount}, pay_amount),
+            pay_status = #{successStatus}
+        WHERE out_trade_no = #{outTradeNo}
+          AND pay_status = #{expectedStatus}
+          AND del_flag = 0
+        LIMIT 1
+    </update>
+
+    <update id="claimBusinessProcessing">
+        UPDATE t_pay_record
+        SET business_status = #{processingStatus},
+            business_error = NULL,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND del_flag = 0
+          AND (business_status IS NULL OR business_status IN (#{pendingStatus}, #{failedStatus}))
+        LIMIT 1
+    </update>
+
+    <update id="updateBusinessSuccess">
+        UPDATE t_pay_record
+        SET business_status = #{successStatus},
+            business_error = NULL,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND del_flag = 0
+        LIMIT 1
+    </update>
+
+    <update id="updateBusinessFailed">
+        UPDATE t_pay_record
+        SET business_status = #{failedStatus},
+            business_retry_count = COALESCE(business_retry_count, 0) + 1,
+            business_error = #{errorMessage},
+            update_time = NOW()
+        WHERE id = #{id}
+          AND del_flag = 0
+        LIMIT 1
+    </update>
+
+    <select id="selectBusinessCompensationRecords"
+            resultType="com.iceeboot.framework.entity.pay.PayRecordDO">
+        SELECT *
+        FROM t_pay_record
+        WHERE pay_status = #{payStatus}
+          AND business_status = #{failedStatus}
+          AND COALESCE(business_retry_count, 0) &lt; #{maxRetryCount}
+          AND del_flag = 0
+        ORDER BY update_time ASC, id ASC
+        LIMIT #{limit}
+    </select>
+
+    <update id="resetStaleBusinessProcessing">
+        UPDATE t_pay_record
+        SET business_status = #{failedStatus},
+            business_error = '业务处理超时，等待重新补偿',
+            update_time = NOW()
+        WHERE business_status = #{processingStatus}
+          AND update_time &lt; #{staleBefore}
+          AND del_flag = 0
+    </update>
+
+</mapper>

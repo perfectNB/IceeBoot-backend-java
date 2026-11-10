@@ -101,7 +101,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         }
 
         if (query.getType()==null){
-            wrapper.eq(AiChatSessionDO::getType, SystemConstants.chat.LLMCHAT);
+            wrapper.eq(AiChatSessionDO::getType, SystemConstants.ChatType.LLM_CHAT);
         }else{
             wrapper.eq(AiChatSessionDO::getType, query.getType());
         }
@@ -141,7 +141,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatSessionMapper, AiChatSe
         AiChatSessionDO session = new AiChatSessionDO();
         BeanUtils.copyProperties(dto, session);
         if (session.getType() == null){
-            session.setType(SystemConstants.chat.LLMCHAT);
+            session.setType(SystemConstants.ChatType.LLM_CHAT);
         }
         return this.save(session);
     }

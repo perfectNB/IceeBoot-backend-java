@@ -11,6 +11,7 @@ import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.framework.entity.pay.PayRecordDO;
 import com.iceeboot.framework.query.pay.PayRecordQuery;
 import com.iceeboot.framework.vo.pay.PayRecordVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -60,7 +61,9 @@ public interface IPayRecordService extends IService<PayRecordDO> {
      * @param request HTTP请求
      * @return 处理结果
      */
-    String handlePaymentCallback(javax.servlet.http.HttpServletRequest request);
+    String handlePaymentCallback(HttpServletRequest request);
+
+    boolean retryPaymentBusiness(Long payRecordId);
 
     /**
      * 删除支付记录
@@ -70,4 +73,3 @@ public interface IPayRecordService extends IService<PayRecordDO> {
      */
     boolean deletePayRecords(List<Long> ids);
 }
-

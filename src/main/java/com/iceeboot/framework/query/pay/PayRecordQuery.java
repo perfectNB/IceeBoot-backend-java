@@ -36,10 +36,18 @@ public class PayRecordQuery extends BaseQuery {
     @Schema(description = "支付配置ID")
     private Long configId;
 
+    @Schema(description = "所属项目编码")
+    private String applicationCode;
+
+    @Schema(description = "支付业务类型")
+    private String businessType;
+
+    @Schema(description = "业务到账状态")
+    private String businessStatus;
+
     @Schema(description = "开始时间")
     private LocalDateTime startTime;
 
     @Schema(description = "结束时间")
     private LocalDateTime endTime;
 }
-

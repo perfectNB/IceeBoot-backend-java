@@ -35,9 +35,37 @@ public class PayRecordDO extends IceeBootDO {
     @TableField("trade_no")
     private String tradeNo;
 
+    @Schema(description = "用户ID")
+    @TableField("user_id")
+    private Long userId;
+
+    @Schema(description = "所属项目编码")
+    @TableField("application_code")
+    private String applicationCode;
+
+    @Schema(description = "支付业务类型")
+    @TableField("business_type")
+    private String businessType;
+
+    @Schema(description = "业务到账状态")
+    @TableField("business_status")
+    private String businessStatus;
+
+    @Schema(description = "业务补偿重试次数")
+    @TableField("business_retry_count")
+    private Integer businessRetryCount;
+
+    @Schema(description = "最近一次业务处理错误")
+    @TableField("business_error")
+    private String businessError;
+
     @Schema(description = "订单名称")
     @TableField("order_name")
     private String orderName;
+
+    @Schema(description = "订单描述")
+    @TableField("description")
+    private String description;
 
     @Schema(description = "支付方式（1-微信，2-支付宝，3-网银）")
     @TableField("pay_type")
@@ -46,6 +74,14 @@ public class PayRecordDO extends IceeBootDO {
     @Schema(description = "支付配置ID")
     @TableField("config_id")
     private Long configId;
+
+    @Schema(description = "支付金额")
+    @TableField(value = "amount", numericScale = "4")
+    private java.math.BigDecimal amount;
+
+    @Schema(description = "实际到账金额")
+    @TableField(value = "actual_amount", numericScale = "4")
+    private java.math.BigDecimal actualAmount;
 
     @Schema(description = "支付金额（单位：分）")
     @TableField("pay_amount")
@@ -59,4 +95,3 @@ public class PayRecordDO extends IceeBootDO {
     @TableField("remark")
     private String remark;
 }
-

@@ -31,7 +31,7 @@
 
 不迁移 framework/skill、Skill 控制器、Skill 资源、自研 NativeToolLoop、工具终止控制器或模型工具循环。
 
-通知中心、多应用支付分发等新增功能未纳入最小基础迁移。Activiti 审批、OSS、SMS、Email 等原有 base 功能保留。现有供应商的增删、Coze/Dify 清理和 AgentScope 接入另行进行。
+前次最小迁移未纳入通知与支付扩展；后续已继续同步通用部分，详见 `docs/foundation-sync-20261110.md`。产品专用支付分发仍排除。Activiti 审批、OSS、SMS、Email 等原有 base 功能保留。现有供应商的增删、Coze/Dify 清理和 AgentScope 接入另行进行。
 
 本仓库 master 已无业务命名占位类，本次没有新增 project 业务代码。master 原有 AI 演示入口保持原状，后续接入 AgentScope 时再统一整理；它们没有被当成生产 Agent/Skill 引擎迁入。
 

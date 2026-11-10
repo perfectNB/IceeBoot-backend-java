@@ -28,7 +28,7 @@ import com.iceeboot.framework.vo.system.LoginVO;
 import com.iceeboot.framework.vo.system.SysUserVO;
 import com.yungouos.pay.entity.WxOauthInfo;
 import com.yungouos.pay.entity.WxWebLoginBiz;
-import com.yungouos.pay.wxapi.WxApi;
+import com.iceeboot.common.service.pay.client.YunGouWxApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -102,6 +102,8 @@ public class AuthServiceImpl implements IAuthService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final TransactionTemplate transactionTemplate;
+
+    private final YunGouWxApiClient yunGouWxApiClient;
 
     private static final Integer TYPE = SocialConstant.SOCIAL_TYPE_WECHAT;
 
@@ -275,7 +277,7 @@ public class AuthServiceImpl implements IAuthService {
         
         // 获取微信授权URL
         String type = "open-url";
-        String authUrl = WxApi.getWxOauthUrl(mchId, wechatCallbackUrl, type, params, key);
+        String authUrl = yunGouWxApiClient.getWxOauthUrl(mchId, wechatCallbackUrl, type, params, key);
         
         log.info("微信扫码登录 - 授权URL生成成功");
         return authUrl;
@@ -284,7 +286,7 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public Object getWechatQr() {
         JSONObject params = new JSONObject();
-        WxWebLoginBiz loginBiz = WxApi.getWebLogin(
+        WxWebLoginBiz loginBiz = yunGouWxApiClient.getWebLogin(
                 mchId,
                 wechatCallbackUrl,
                 params,
@@ -356,7 +358,7 @@ public class AuthServiceImpl implements IAuthService {
         // 获取微信用户信息
         WxOauthInfo wxOauthInfo;
         try {
-            wxOauthInfo = WxApi.getWxOauthInfo(mchId, code, key);
+            wxOauthInfo = yunGouWxApiClient.getWxOauthInfo(mchId, code, key);
             log.info("微信OAuth回调 - 成功获取微信用户信息");
         } catch (Exception e) {
             log.error("微信OAuth回调 - 获取微信用户信息失败: {}", e.getMessage(), e);

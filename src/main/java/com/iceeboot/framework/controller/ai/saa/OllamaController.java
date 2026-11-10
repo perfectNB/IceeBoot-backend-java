@@ -1,5 +1,6 @@
 package com.iceeboot.framework.controller.ai.saa;
 
+import com.iceeboot.common.annotation.RequirePermission;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +27,12 @@ public class OllamaController {
 
     @Resource
     @Qualifier("ollamaChatModel")
+
     private ChatModel chatModel;
 
 
     @GetMapping("/ollama/chat")
+    @RequirePermission(dynamic = true)
     public String chat(@RequestParam(name = "msg") String msg) {
         String result = chatModel.call(msg);
         log.info("对话内容，{},生成结果{}",msg,result);
@@ -37,6 +40,7 @@ public class OllamaController {
     }
 
     @GetMapping("/ollama/streamchat")
+    @RequirePermission(dynamic = true)
     public Flux<String> streamchat(@RequestParam(name = "msg", defaultValue = "操你妈") String msg) {
         return chatModel.stream(msg);
     }

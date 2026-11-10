@@ -16,6 +16,7 @@ import static org.mockito.Mockito.*;
 class PermissionRedispatchTest {
     static class Endpoint {
         @RequirePermission("sample:read") public void read() {}
+        @RequirePermission(dynamic = true) public void dynamicRead() {}
     }
     @Test void onlyAnAlreadyAuthorizedStreamMaySkipRedispatchChecks() throws Exception {
         var cache = mock(IAuthCacheService.class);
@@ -35,6 +36,21 @@ class PermissionRedispatchTest {
             unverified.setDispatcherType(DispatcherType.ASYNC);
             assertThatThrownBy(() -> interceptor.preHandle(unverified, new MockHttpServletResponse(), handler))
                     .isInstanceOf(cn.dev33.satoken.exception.NotPermissionException.class);
+        }
+    }
+    @Test void authenticatedDynamicStreamWithoutConfiguredPermissionMayResumeAfterTokenRotation() throws Exception {
+        var cache = mock(IAuthCacheService.class);
+        when(cache.getUrlPermissions("/sample")).thenReturn(List.of());
+        var interceptor = new PermissionInterceptor(cache);
+        var handler = new HandlerMethod(new Endpoint(), Endpoint.class.getMethod("dynamicRead"));
+        var request = new MockHttpServletRequest("GET", "/sample");
+        request.addHeader("Accept", "text/event-stream");
+        try (var tokens = mockStatic(TokenUtils.class)) {
+            tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
+            assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), handler)).isTrue();
+            tokens.when(TokenUtils::getCurrentUserId).thenReturn(null);
+            request.setDispatcherType(DispatcherType.ASYNC);
+            assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), handler)).isTrue();
         }
     }
 }
