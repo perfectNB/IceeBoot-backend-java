@@ -1,3 +1,16 @@
+# AgentScope 运行配置。真实凭据通过部署环境注入。
+iceeboot:
+  agent:
+    encryption-key: ${AI_CONFIG_ENCRYPTION_KEY:}
+    workspace: ${AGENT_WORKSPACE:./.agentscope/iceeboot}
+    project-api-base-url: ${AGENT_PROJECT_API_BASE_URL:http://127.0.0.1:9000/iceeboot/api}
+    execution-timeout-seconds: ${AGENT_EXECUTION_TIMEOUT_SECONDS:300}
+    max-concurrent-runs: ${AGENT_MAX_CONCURRENT_RUNS:8}
+    e2b:
+      api-key: ${ALIYUN_E2B_API_KEY:}
+      api-base-url: ${ALIYUN_E2B_API_BASE_URL:}
+      domain: ${ALIYUN_E2B_DOMAIN:}
+
 spring:
   # 数据源配置
   datasource:

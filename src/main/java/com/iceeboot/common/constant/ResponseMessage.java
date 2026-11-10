@@ -69,6 +69,7 @@ public class ResponseMessage {
     }
 
     public static class Permission {
+        public static final String PERMISSION_CONFIG_MISSING = "接口权限未配置，拒绝访问";
         public static final String PERMISSION_CODE_EXISTS = "权限编码已存在";
         public static final String PERMISSION_CREATE_SUCCESS = "权限创建成功";
         public static final String PERMISSION_CREATE_FAIL = "权限创建失败";
@@ -240,5 +241,109 @@ public class ResponseMessage {
 
     private ResponseMessage() {
         // 工具类，禁止实例化
+    }
+
+    /** AgentScope 配置、资源管理和执行相关消息。 */
+    public static final class Agent {
+        private Agent() {
+        }
+
+        public static final String MODEL_PROVIDER_PROTOCOL_MISMATCH = "供应商与协议不匹配";
+        public static final String MODEL_OPENAI_PROTOCOL_REQUIRED = "该供应商应使用 OpenAI 兼容协议";
+        public static final String MODEL_RESPONSES_PROVIDER_UNSUPPORTED = "当前仅为 GPT 开放 Responses 协议";
+        public static final String MODEL_API_KEY_REQUIRED = "请填写 API Key";
+        public static final String MODEL_DISABLED = "模型配置已禁用";
+        public static final String MODEL_NOT_FOUND = "模型配置不存在";
+        public static final String MODEL_CREATE_FAILED = "创建模型配置失败";
+        public static final String MODEL_CREATE_CLIENT_FAILED = "模型客户端创建失败，请检查模型配置";
+        public static final String MODEL_INVOKE_FAILED = "模型调用失败，请检查模型连接配置";
+        public static final String CAPABILITY_NOT_FOUND = "能力不存在";
+        public static final String CAPABILITY_IDENTITY_IMMUTABLE = "能力类型和编码创建后不能修改";
+        public static final String CAPABILITY_CREATE_FAILED = "创建资源失败";
+        public static final String CAPABILITY_BINDING_INVALID = "绑定能力类型错误或已禁用：%s";
+        public static final String RESOURCE_TYPE_MISMATCH = "资源类型不匹配";
+        public static final String RESOURCE_DETAIL_NOT_FOUND = "资源明细不存在";
+        public static final String RESOURCE_DETAIL_MISSING = "资源明细不存在：%s";
+        public static final String RESOURCE_DETAIL_SAVE_FAILED = "资源明细不存在或保存失败";
+        public static final String SKILL_CONTENT_REQUIRED = "请填写 Skill 内容";
+        public static final String SKILL_CONTENT_TOO_LONG = "Skill 内容过长";
+        public static final String SKILL_RESOURCES_TOO_MANY = "每个 Skill 最多 100 个资源";
+        public static final String SKILL_RESOURCES_TOO_LARGE = "单个 Skill 的资源总量不能超过 5MB";
+        public static final String SKILL_RESOURCE_CONTENT_TOO_LONG = "资源内容过长";
+        public static final String SKILL_TOOL_BINDING_INVALID = "Skill 只能关联 Tool";
+        public static final String SKILL_RESOURCE_PATH_INVALID = "资源路径必须是安全的相对文件路径";
+        public static final String TOOL_CODE_RESERVED = "工具编码与内置能力名称冲突";
+        public static final String TOOL_EXECUTION_CONFIG_REQUIRED = "请配置工具执行方式";
+        public static final String TOOL_INPUT_SCHEMA_OBJECT_REQUIRED = "工具参数必须是 object JSON Schema";
+        public static final String TOOL_SCRIPT_REQUIRED = "请填写脚本命令";
+        public static final String TOOL_HTTP_METHOD_UNSUPPORTED = "不支持的 HTTP 方法";
+        public static final String TOOL_SCRIPT_REQUIRES_SANDBOX = "脚本工具需要启用 E2B 沙箱";
+        public static final String TOOL_SANDBOX_UNAVAILABLE = "该 Agent 未配置 E2B 执行能力";
+        public static final String TOOL_PROJECT_PERMISSION_DENIED = "调用者没有项目接口所需权限";
+        public static final String TOOL_PROJECT_PATH_INVALID = "项目接口必须是以 / 开头的相对路径";
+        public static final String TOOL_PROJECT_PERMISSION_REQUIRED = "项目接口必须指定权限码";
+        public static final String TOOL_EXECUTION_FAILED = "工具执行失败，请检查工具配置";
+        public static final String KNOWLEDGE_HTTP_REQUIRED = "知识库通过检索 HTTP 接口接入";
+        public static final String MCP_CONFIG_REQUIRED = "请配置 MCP";
+        public static final String MCP_ALLOWED_TOOLS_REQUIRED = "请明确填写允许调用的 MCP 工具名";
+        public static final String MCP_CONNECT_FAILED = "MCP 连接失败";
+        public static final String MCP_TOOL_NOT_FOUND = "MCP 配置包含不存在的工具：%s";
+        public static final String SANDBOX_TEMPLATE_REQUIRED = "请填写阿里云 E2B 模板 ID 或名称";
+        public static final String SANDBOX_TEMPLATE_NOT_SELECTED = "请选择沙箱模板";
+        public static final String SANDBOX_CONNECTION_NOT_CONFIGURED = "请在 application 中配置阿里云 E2B 连接信息";
+        public static final String SANDBOX_RELEASE_TEMPLATE_MISSING = "发布版本没有沙箱模板";
+        public static final String AGENT_NOT_FOUND = "智能体不存在";
+        public static final String AGENT_CREATE_FAILED = "创建智能体失败";
+        public static final String AGENT_CODE_IMMUTABLE = "Agent code 创建后不可修改";
+        public static final String AGENT_NOT_PUBLISHED = "智能体尚未发布";
+        public static final String AGENT_RELEASE_DISABLED = "智能体发布版本已禁用";
+        public static final String AGENT_OUTPUT_SCHEMA_REQUIRED = "请填写 object 类型的输出 JSON Schema";
+        public static final String AGENT_ENVIRONMENT_KEY_INVALID = "环境变量名只能包含字母、数字和下划线，且不能以数字开头";
+        public static final String AGENT_CHILD_SELF_REFERENCE = "不能关联自身";
+        public static final String AGENT_CHILD_DISABLED = "子智能体已禁用";
+        public static final String AGENT_CHILD_RELEASE_DISABLED = "子智能体发布版本已禁用";
+        public static final String AGENT_CHILD_DEPTH_EXCEEDED = "父子智能体层级最多 5 层";
+        public static final String AGENT_CHILD_CYCLE = "父子智能体存在循环关联";
+        public static final String AGENT_CHILD_EXECUTION_FAILED = "子智能体执行失败，请检查执行记录";
+        public static final String RELEASE_CREATE_FAILED = "创建发布版本失败";
+        public static final String RELEASE_RESOURCE_READ_ONLY = "发布资源只读";
+        public static final String GENERATION_RESERVED_PARAMETER = "扩展参数不能覆盖模型、消息、工具或输出协议";
+        public static final String ENDPOINT_INVALID = "请输入有效 HTTP(S) 地址，不允许内嵌认证信息";
+        public static final String HEADER_OR_ENVIRONMENT_KEY_INVALID = "环境变量或请求头名称不合法";
+        public static final String EXECUTION_CAPACITY_EXCEEDED = "当前执行任务较多，请稍后重试";
+        public static final String EXECUTION_SESSION_ID_INVALID = "会话编码仅允许字母、数字、下划线和连字符";
+        public static final String EXECUTION_SESSION_BUSY = "当前会话正在执行，请等待完成后再次调用";
+        public static final String EXECUTION_FAILED = "执行失败，请检查模型、工具和沙箱配置";
+        public static final String EXECUTION_CANCELLED = "执行已取消";
+        public static final String EXECUTION_MAX_ROUNDS_EXCEEDED = "智能体达到最大执行轮次";
+        public static final String EXECUTION_MODEL_BUDGET_EXCEEDED = "本次父子智能体调用已超过模型请求总预算";
+        public static final String EXECUTION_WORKSPACE_CREATE_FAILED = "无法创建运行工作区";
+        public static final String RUN_NOT_FOUND = "执行记录不存在";
+        public static final String RUN_CREATE_FAILED = "创建执行记录失败";
+        public static final String MODEL_CALL_RECORD_FAILED = "写入模型调用记录失败";
+        public static final String SCHEMA_CONTENT_MISMATCH = "内容不符合配置的 JSON Schema";
+        public static final String SCHEMA_LOCAL_REFERENCES_ONLY = "JSON Schema 只允许内部引用";
+        public static final String SCHEMA_INVALID = "JSON Schema 配置不合法";
+        public static final String SCHEMA_OUTPUT_MISMATCH = "智能体输出不符合 JSON Schema";
+        public static final String SCHEMA_OUTPUT_SERIALIZATION_FAILED = "结构化结果无法序列化";
+        public static final String CONFIG_SERIALIZATION_FAILED = "配置无法序列化";
+        public static final String CONFIG_CORRUPTED = "配置格式损坏";
+        public static final String CONFIG_RESOURCE_LIST_CORRUPTED = "资源列表格式损坏";
+        public static final String CONFIG_RESOURCE_PARAMETERS_CORRUPTED = "资源参数格式损坏";
+        public static final String API_CONVERSION_FAILED = "智能体接口数据转换失败";
+        public static final String SECRET_CIPHERTEXT_SUBMISSION_FORBIDDEN = "不能直接提交密文";
+        public static final String SECRET_CIPHERTEXT_INVALID = "敏感配置不是有效密文";
+        public static final String SECRET_ENCRYPTION_FAILED = "敏感配置加密失败";
+        public static final String SECRET_DECRYPTION_FAILED = "敏感配置解密失败，请检查加密主密钥";
+        public static final String SECRET_MASTER_KEY_INVALID = "请配置 AI_CONFIG_ENCRYPTION_KEY：Base64 编码的 32 字节主密钥";
+        public static final String SUPER_ADMIN_REQUIRED = "仅超级管理员可以使用智能体控制台";
+        public static final String PERMISSION_DENIED = "没有使用该功能的权限";
+        public static final String LOGIN_REQUIRED = "请先登录";
+        public static final String IDENTITY_OR_VERSION_EXISTS = "编码或发布版本已存在，请刷新后重试";
+        public static final String REQUEST_INVALID = "请检查必填项、编码格式及参数范围";
+        public static final String OPERATION_FAILED = "操作失败，请检查模型、能力及运行环境配置";
+        public static final String INVOKE_SUCCESS = "调用成功";
+        public static final String ID_REQUIRED = "ID不能为空";
+        public static final String ID_INVALID = "ID必须为正数";
     }
 }

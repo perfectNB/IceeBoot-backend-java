@@ -9,12 +9,15 @@ package com.iceeboot.framework.service.system.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.iceeboot.common.constant.CacheConstants;
 import com.iceeboot.common.constant.SystemConstants;
+import com.iceeboot.common.exception.AuthServiceUnavailableException;
 import com.iceeboot.framework.entity.system.*;
 import com.iceeboot.framework.mapper.system.*;
 import com.iceeboot.framework.service.system.IAuthCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -752,66 +755,88 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         return map;
     }
 
+    private static final AntPathMatcher URL_MATCHER = new AntPathMatcher();
+    private static final Set<String> HTTP_METHODS =
+            Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "*");
+
     @Override
-    @SuppressWarnings("unchecked")
     public List<String> getUrlPermissions(String url) {
-        if (url == null || url.isEmpty()) {
-            return new ArrayList<>();
-        }
+        return matchUrlPermissions(url, null);
+    }
 
-        Map<String, List<String>> allMappings = getAllUrlPermissions();
-        if (allMappings == null || allMappings.isEmpty()) {
-            return new ArrayList<>();
-        }
+    @Override
+    public List<String> getUrlPermissions(String url, String method) {
+        if (!StringUtils.hasText(method)) return List.of();
+        return matchUrlPermissions(url, method.toUpperCase(Locale.ROOT));
+    }
 
-        // 精确匹配
-        List<String> permissions = allMappings.get(url);
-        if (permissions != null) {
-            return new ArrayList<>(permissions);
+    private List<String> matchUrlPermissions(String url, String method) {
+        if (!StringUtils.hasText(url)) return List.of();
+        Map<String, List<String>> mappings = getAllUrlPermissions();
+        Comparator<String> paths = URL_MATCHER.getPatternComparator(url);
+        List<Map.Entry<String, List<String>>> matches = mappings.entrySet().stream()
+                .filter(entry -> method == null || routeMethod(entry.getKey()).equals(method)
+                        || routeMethod(entry.getKey()).equals("*"))
+                .filter(entry -> URL_MATCHER.match(routePath(entry.getKey()), url))
+                .sorted((left, right) -> {
+                    int comparison = paths.compare(routePath(left.getKey()), routePath(right.getKey()));
+                    if (comparison != 0) return comparison;
+                    if (method != null) {
+                        comparison = Boolean.compare(routeMethod(left.getKey()).equals("*"), routeMethod(right.getKey()).equals("*"));
+                        if (comparison != 0) return comparison;
+                    }
+                    return left.getKey().compareTo(right.getKey());
+                }).toList();
+        if (matches.isEmpty()) return List.of();
+        if (method != null) {
+            List<String> permissions = matches.getFirst().getValue();
+            return permissions == null ? List.of() : List.copyOf(permissions);
         }
+        // 无方法参数的旧调用仅用于查询，不参与拦截器授权。
+        String selectedPath = routePath(matches.getFirst().getKey());
+        return matches.stream().filter(entry -> routePath(entry.getKey()).equals(selectedPath))
+                .map(Map.Entry::getValue).filter(Objects::nonNull).flatMap(List::stream)
+                .filter(StringUtils::hasText).distinct().toList();
+    }
 
-        // 模糊匹配（支持通配符）
-        for (Map.Entry<String, List<String>> entry : allMappings.entrySet()) {
-            String pattern = entry.getKey();
-            if (isUrlMatch(url, pattern)) {
-                return new ArrayList<>(entry.getValue());
-            }
-        }
+    private static String routeMethod(String key) {
+        return key.substring(0, key.indexOf(' '));
+    }
 
-        return new ArrayList<>();
+    private static String routePath(String key) {
+        return key.substring(key.indexOf(' ') + 1);
+    }
+
+    private static boolean isMethodAwareKey(String key) {
+        if (key == null) return false;
+        int separator = key.indexOf(' ');
+        return separator > 0 && HTTP_METHODS.contains(key.substring(0, separator))
+                && key.substring(separator + 1).startsWith("/");
     }
 
     @Override
     public void setUrlPermissions(String url, List<String> permissions) {
-        if (url == null || url.isEmpty()) {
-            return;
-        }
-
-        Map<String, List<String>> allMappings = getAllUrlPermissions();
-        if (allMappings == null) {
-            allMappings = new HashMap<>();
-        }
-
-        if (permissions == null || permissions.isEmpty()) {
-            allMappings.remove(url);
-        } else {
-            allMappings.put(url, new ArrayList<>(permissions));
-        }
-
-        redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, allMappings);
+        if (!StringUtils.hasText(url)) return;
+        Map<String, List<String>> mappings = new HashMap<>(getAllUrlPermissions());
+        // 保留旧设置接口的“所有 HTTP 方法”语义，方法专属配置由权限表维护。
+        String key = "* " + url;
+        mappings.keySet().removeIf(route -> routePath(route).equals(url));
+        if (permissions == null || permissions.isEmpty()) mappings.remove(key);
+        else mappings.put(key, List.copyOf(permissions));
+        redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, mappings);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, List<String>> getAllUrlPermissions() {
-        Map<String, List<String>> mappings = (Map<String, List<String>>) redisTemplate.opsForValue().get(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
-
-        if (mappings == null) {
+        Map<String, List<String>> mappings = (Map<String, List<String>>) redisTemplate.opsForValue()
+                .get(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
+        // 旧缓存只按 URL 存储，不能直接参与新的方法级授权。
+        if (mappings == null || mappings.keySet().stream().anyMatch(key -> !isMethodAwareKey(key))) {
             mappings = loadUrlPermissionsFromDB();
             redisTemplate.opsForValue().set(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY, mappings);
         }
-
-        return mappings != null ? mappings : new HashMap<>();
+        return mappings;
     }
 
     @Override
@@ -819,70 +844,28 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
         redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
     }
 
-    /**
-     * 从数据库加载URL权限映射
-     * 从权限表中获取所有权限，根据权限的path字段构建URL权限映射
-     */
     private Map<String, List<String>> loadUrlPermissionsFromDB() {
         Map<String, List<String>> mappings = new HashMap<>();
-
         try {
-            // 从数据库获取所有权限
             List<PermissionDO> permissions = permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
                     .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
+                    .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
                     .eq(PermissionDO::getType, "api")
-                    .isNotNull(PermissionDO::getPath)
-                    .ne(PermissionDO::getPath, ""));
-
-            // 根据权限的path字段构建URL权限映射
+                    .isNotNull(PermissionDO::getPath).ne(PermissionDO::getPath, ""));
             for (PermissionDO permission : permissions) {
                 String path = permission.getPath();
                 String code = permission.getCode();
-
-                if (path != null && !path.isEmpty() && code != null && !code.isEmpty()) {
-                    mappings.computeIfAbsent(path, k -> new ArrayList<>()).add(code);
+                if (!StringUtils.hasText(path) || !StringUtils.hasText(code)) continue;
+                String methods = StringUtils.hasText(permission.getMethod()) ? permission.getMethod().trim().toUpperCase(Locale.ROOT) : "*";
+                for (String method : methods.split("[,\\s]+")) {
+                    if (!HTTP_METHODS.contains(method)) continue;
+                    List<String> codes = mappings.computeIfAbsent(method + " " + path, key -> new ArrayList<>());
+                    if (!codes.contains(code)) codes.add(code);
                 }
             }
-
-
         } catch (Exception e) {
-            // 如果查询出错，返回默认的示例数据
-            mappings.put("/v1/users", Arrays.asList("user:view"));
-            mappings.put("/v1/users/**", Arrays.asList("user:view"));
-            mappings.put("/v1/system/**", Arrays.asList("system:admin"));
+            throw new AuthServiceUnavailableException(e);
         }
-
         return mappings;
-    }
-
-    /**
-     * URL匹配检查（支持通配符）
-     *
-     * @param url     实际请求URL
-     * @param pattern 匹配模式
-     * @return 是否匹配
-     */
-    private boolean isUrlMatch(String url, String pattern) {
-        if (url == null || pattern == null) {
-            return false;
-        }
-
-        // 精确匹配
-        if (url.equals(pattern)) {
-            return true;
-        }
-
-        // 通配符匹配
-        if (pattern.endsWith("/**")) {
-            String prefix = pattern.substring(0, pattern.length() - 3);
-            return url.startsWith(prefix);
-        }
-
-        if (pattern.endsWith("/*")) {
-            String prefix = pattern.substring(0, pattern.length() - 2);
-            return url.startsWith(prefix) && url.indexOf('/', prefix.length()) == -1;
-        }
-
-        return false;
     }
 }

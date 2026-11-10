@@ -38,9 +38,10 @@ class PermissionRedispatchTest {
                     .isInstanceOf(cn.dev33.satoken.exception.NotPermissionException.class);
         }
     }
-    @Test void authenticatedDynamicStreamWithoutConfiguredPermissionMayResumeAfterTokenRotation() throws Exception {
+    @Test void authorizedDynamicStreamMayResumeAfterTokenRotation() throws Exception {
         var cache = mock(IAuthCacheService.class);
-        when(cache.getUrlPermissions("/sample")).thenReturn(List.of());
+        when(cache.getUrlPermissions(eq("/sample"), anyString())).thenReturn(List.of("sample:read"));
+        when(cache.getUserPermissions(7L)).thenReturn(List.of(Map.of("code", "sample:read")));
         var interceptor = new PermissionInterceptor(cache);
         var handler = new HandlerMethod(new Endpoint(), Endpoint.class.getMethod("dynamicRead"));
         var request = new MockHttpServletRequest("GET", "/sample");
@@ -51,6 +52,23 @@ class PermissionRedispatchTest {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(null);
             request.setDispatcherType(DispatcherType.ASYNC);
             assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), handler)).isTrue();
+        }
+    }
+    @Test void missingDynamicMappingCannotAuthorizeAsyncRedispatch() throws Exception {
+        var cache = mock(IAuthCacheService.class);
+        when(cache.getUrlPermissions(eq("/sample"), anyString())).thenReturn(List.of());
+        var interceptor = new PermissionInterceptor(cache);
+        var handler = new HandlerMethod(new Endpoint(), Endpoint.class.getMethod("dynamicRead"));
+        var request = new MockHttpServletRequest("GET", "/sample");
+        request.addHeader("Accept", "text/event-stream");
+        try (var tokens = mockStatic(TokenUtils.class)) {
+            tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
+            assertThatThrownBy(() -> interceptor.preHandle(request, new MockHttpServletResponse(), handler))
+                    .isInstanceOf(cn.dev33.satoken.exception.NotPermissionException.class);
+            tokens.when(TokenUtils::getCurrentUserId).thenReturn(null);
+            request.setDispatcherType(DispatcherType.ASYNC);
+            assertThatThrownBy(() -> interceptor.preHandle(request, new MockHttpServletResponse(), handler))
+                    .isInstanceOf(cn.dev33.satoken.exception.NotPermissionException.class);
         }
     }
 }

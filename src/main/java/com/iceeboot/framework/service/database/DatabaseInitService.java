@@ -407,6 +407,10 @@ public class DatabaseInitService implements ApplicationRunner {
         Class<?> fieldType = field.getType();
         
         if (fieldType == String.class) {
+            TableField tableField = field.getAnnotation(TableField.class);
+            if (tableField != null && tableField.jdbcType() == org.apache.ibatis.type.JdbcType.LONGVARCHAR) {
+                return "longtext";
+            }
             return "content".equalsIgnoreCase(field.getName()) ? "text" : "varchar(255)";
         } else if (fieldType == Integer.class || fieldType == int.class) {
             return "int";

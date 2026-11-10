@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iceeboot.framework.mapper.agent.AgentDefinitionMapper">
+    <select id="lockById" resultType="java.lang.Long">SELECT id FROM t_agent_definition WHERE id=#{id} AND del_flag=0 FOR UPDATE</select>
+    <select id="selectWithStats" resultType="com.iceeboot.framework.entity.agent.AgentDefinitionDO">
+        SELECT a.*, COALESCE(p.version,0) active_version,
+               (SELECT COUNT(*) FROM t_agent_run r WHERE r.agent_id=a.id AND r.del_flag=0) call_count
+        FROM t_agent_definition a
+        LEFT JOIN t_agent_release p ON p.id=a.active_release_id AND p.del_flag=0
+        WHERE a.del_flag=0
+        <if test="id != null">AND a.id=#{id}</if>
+        <if test="code != null">AND a.code=#{code}</if>
+        ORDER BY a.id DESC LIMIT 1000
+    </select>
+</mapper>

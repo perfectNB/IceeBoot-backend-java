@@ -8,6 +8,7 @@ package com.iceeboot.config.interceptor;
 
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.iceeboot.common.annotation.RequirePermission;
+import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.service.system.IAuthCacheService;
 import jakarta.servlet.DispatcherType;
@@ -88,16 +89,19 @@ public class PermissionInterceptor implements HandlerInterceptor {
             // 动态权限查询：从Redis中根据URL获取权限编码
             String requestUrl = getRequestUrl(request);
             //获取在数据库中需要有拦截的接口
-            List<String> urlPermissions = authCacheService.getUrlPermissions(requestUrl);
-            requiredPermissions = urlPermissions.toArray(new String[0]);
+            List<String> urlPermissions = authCacheService.getUrlPermissions(requestUrl, request.getMethod());
+            requiredPermissions = urlPermissions == null ? new String[0] : urlPermissions.toArray(new String[0]);
         } else {
             // 静态权限验证：使用注解中指定的权限编码
             requiredPermissions = getRequiredPermissions(annotation);
         }
-        //此请求接口不存在数据库权限表，则不需要拦截
+        requiredPermissions = Arrays.stream(requiredPermissions)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toArray(String[]::new);
+        // 已声明权限校验的接口必须配置有效权限，缺失配置时禁止放行。
         if (requiredPermissions.length == 0) {
-            request.setAttribute(SSE_AUTHORIZED, Boolean.TRUE);
-            return true;
+            throw new NotPermissionException(ResponseMessage.Permission.PERMISSION_CONFIG_MISSING);
         }
         
         // 获取用户权限
@@ -177,7 +181,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         
         if (requiredPermissions == null || requiredPermissions.length == 0) {
-            return true;
+            return false;
         }
         
         if (requireAll) {

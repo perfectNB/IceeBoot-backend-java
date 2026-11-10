@@ -75,12 +75,15 @@ public interface IAuthCacheService {
     void refreshUserCache(Long userId);
     
     /**
-     * 获取URL权限映射
+     * 查询匹配路径的权限编码（跨方法汇总，不用于请求授权）
      *
      * @param url 请求URL
      * @return 权限编码列表
      */
     List<String> getUrlPermissions(String url);
+
+    /** 按 HTTP 方法与 URL 查询权限，支持数据库中的路径变量和通配符。 */
+    List<String> getUrlPermissions(String url, String method);
     
     /**
      * 设置URL权限映射
@@ -93,7 +96,7 @@ public interface IAuthCacheService {
     /**
      * 获取所有URL权限映射
      *
-     * @return URL权限映射Map
+     * @return 以 HTTP 方法与路径模板组成键的权限映射，例如 GET /v1/users/{id}
      */
     Map<String, List<String>> getAllUrlPermissions();
     

@@ -52,6 +52,8 @@ public class RoleCacheInitService implements ApplicationRunner {
         log.info("角色缓存初始化服务启动，开始加载角色权限和菜单缓存...");
         
         try {
+            // 清除旧版本可能缓存的示例映射，后续请求按真实权限配置重建。
+            redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
             // 初始化角色权限和菜单缓存
             initRoleCache();
             

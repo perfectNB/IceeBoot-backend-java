@@ -1,0 +1,64 @@
+package com.iceeboot.framework.vo.agent;
+
+import com.iceeboot.framework.enums.agent.*;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.*;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/** 智能体执行记录响应视图。 */
+@Data
+@Schema(description = "智能体执行记录响应视图")
+public class AgentRunVO {
+    @Schema(description = "主键 ID")
+    private String id;
+
+    @Schema(description = "根执行记录 ID")
+    private String rootRunId;
+
+    @Schema(description = "父执行记录 ID")
+    private String parentRunId;
+
+    @Schema(description = "智能体 ID")
+    private Long agentId;
+
+    @Schema(description = "智能体编码")
+    private String agentCode;
+
+    @Schema(description = "版本号")
+    private int version;
+
+    @Schema(description = "调用用户 ID")
+    private String userId;
+
+    @Schema(description = "执行状态")
+    private String status;
+
+    @Schema(description = "调用输入")
+    private String input;
+
+    @Schema(description = "调用输出")
+    private String output;
+
+    @Schema(description = "错误信息")
+    private String error;
+
+    @Schema(description = "输入 Token 数")
+    private long inputTokens;
+
+    @Schema(description = "输出 Token 数")
+    private long outputTokens;
+
+    @Schema(description = "是否取得真实用量")
+    private boolean usageKnown;
+
+    @Schema(description = "开始时间")
+    private LocalDateTime startedAt;
+
+    @Schema(description = "结束时间")
+    private LocalDateTime finishedAt;
+}

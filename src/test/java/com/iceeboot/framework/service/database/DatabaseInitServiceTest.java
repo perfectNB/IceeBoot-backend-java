@@ -14,6 +14,7 @@ class DatabaseInitServiceTest {
         @TableField(numericScale="19") BigDecimal oversized;
         @TableField(numericScale="invalid") BigDecimal malformed;
         String content;
+        @TableField(jdbcType = org.apache.ibatis.type.JdbcType.LONGVARCHAR) String snapshotJson;
     }
     @Test void explicitDecimalScaleIsPreserved() throws Exception {
         assertThat(service.getColumnType(Fixture.class.getDeclaredField("preciseAmount"))).isEqualTo("decimal(18,4)");
@@ -28,5 +29,8 @@ class DatabaseInitServiceTest {
     }
     @Test void contentFieldsUseText() throws Exception {
         assertThat(service.getColumnType(Fixture.class.getDeclaredField("content"))).isEqualTo("text");
+    }
+    @Test void explicitLongTextFieldsPreserveAgentResourcesAndSnapshots() throws Exception {
+        assertThat(service.getColumnType(Fixture.class.getDeclaredField("snapshotJson"))).isEqualTo("longtext");
     }
 }

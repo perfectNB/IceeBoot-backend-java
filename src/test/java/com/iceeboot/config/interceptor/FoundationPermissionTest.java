@@ -2,10 +2,10 @@ package com.iceeboot.config.interceptor;
 
 import com.iceeboot.common.exception.GlobalExceptionHandler;
 import com.iceeboot.common.utils.TokenUtils;
-import com.iceeboot.agent.web.AgentConsoleController;
-import com.iceeboot.agent.service.AgentConfigurationService;
-import com.iceeboot.agent.service.AgentExecutionService;
-import com.iceeboot.agent.persistence.AgentStore;
+import com.iceeboot.framework.controller.agent.AgentConsoleController;
+import com.iceeboot.framework.service.agent.IAgentConfigurationService;
+import com.iceeboot.framework.service.agent.IAgentExecutionService;
+import com.iceeboot.framework.service.agent.IAgentPersistenceService;
 import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.controller.pay.PayController;
 
@@ -29,13 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FoundationPermissionTest {
     @Test void aiAndPaymentManagementCannotBypassConfiguredPermissions() throws Exception {
         var cache = mock(IAuthCacheService.class);
-        var ai = mock(AgentConfigurationService.class);
+        var ai = mock(IAgentConfigurationService.class);
         var configs = mock(IPayConfigService.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new AgentConsoleController(ai, mock(AgentExecutionService.class), mock(AgentStore.class), mock(ISysUserService.class)),
+        var mvc = MockMvcBuilders.standaloneSetup(new AgentConsoleController(ai, mock(IAgentExecutionService.class), mock(IAgentPersistenceService.class), mock(ISysUserService.class), new com.iceeboot.framework.service.agent.convert.AgentApiConverter(new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules())),
                         new PayController(mock(IPayRecordService.class), configs))
                 .addInterceptors(new PermissionInterceptor(cache))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
-        when(cache.getUrlPermissions(anyString())).thenReturn(List.of("fixture:manage"));
+        when(cache.getUrlPermissions(anyString(), anyString())).thenReturn(List.of("fixture:manage"));
         when(cache.getUserPermissions(7L)).thenReturn(List.of());
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);

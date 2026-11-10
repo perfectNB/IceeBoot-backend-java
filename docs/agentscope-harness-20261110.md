@@ -4,30 +4,30 @@
 
 本模块采用与 talkplatform-agent-swarm 相同的主要分层：项目负责配置、版本、权限和执行账本，AgentScope Harness 负责推理与工具执行循环。锁定 AgentScope Java `2.1.0-BETA1`，不覆盖 SDK 内核类，不引入参考项目的企业 AI Gateway、电脑纳管或团队业务模块。
 
-新代码位于 `com.iceeboot.agent`：
+代码已按当前项目规范迁入 `com.iceeboot.framework`，结构、表设计和升级步骤见 [framework 分层重构说明](agentscope-framework-20261111.md)。
 
-- `model`：控制台、发布快照和执行记录的明确数据契约。
-- `persistence`：参数绑定的数据库访问。
-- `security`：敏感配置的 AES-256-GCM 加密和脱敏。
-- `service`：配置管理、事务发布、按 code 调用和会话并发控制。
-- `runtime`：SDK 模型创建、只读 Skill 仓库、能力装配、同步子 Agent 委派和用量记录。
-- `web`：明确权限码及超级管理员身份校验。
+- `entity/agent`、`mapper/agent`：独立 DO 与 MyBatis Plus Mapper。
+- `dto/create/agent`、`dto/update/agent`、`vo/agent`：创建/更新请求与响应视图。
+- `service/agent`、`service/agent/impl`：服务接口、实现与事务协调。
+- `service/agent/runtime`、`model/agent`、`enums/agent`：SDK 装配及内部不可变模型。
+- `framework/controller/agent`：接口入口；`config/agent`：环境配置绑定。
+- `common/constant/ResponseMessage.Agent`：模块消息常量；`common/exception/agent`：接口异常处理。
 
 不再保留 Coze、Dify、Spring AI Alibaba、百炼 Agent/模型/知识库、Ollama 与演示 RAG 控制器。原供应商 HTTP/SSE 策略由 AgentScope 模型组件替代。Activiti 审批、OSS、SMS、Email、登录与支付基础模块保留。
 
 ## 数据库与权限
 
-先执行 `docs/sql/20261110_agentscope_harness.sql`，再部署后端和前端。SQL 可重复执行，不删除历史 AI 表，不修改 Activiti 表。
+新环境先执行 `src/main/resources/sql/agentscope_schema.sql` 创建规范化表，再执行 `docs/sql/20261111_agent_console_permissions.sql` 补齐菜单和动态权限。已部署旧版本的环境按 [重构升级步骤](agentscope-framework-20261111.md) 执行 `docs/sql/20261111_agentscope_framework.sql` 和菜单/权限脚本。
 
-新增六张表：`ai_model_config`、`ai_capability`、`ai_agent_definition`、`ai_agent_release`、`ai_agent_run`、`ai_model_call`。Skill 正文、脚本和资源内容保存在能力配置 JSON 中；发布时完整复制到不可变快照，运行时不读取编辑态替换能力。
+配置资源迁入 `t_agent_*` 表，Skill、Tool、MCP、知识库和沙箱模板独立存储。资源注册表分配统一 ID，旧绑定 ID 保持不变。发布版本继续保存包含完整资源的不可变 JSON 快照。
 
-新控制台拥有九个菜单项，新增接口的权限仅分配给角色编码 `superAdmin`。所有新接口同时要求登录、明确的 `ai:*` 权限码和超级管理员身份。没有数据库 URL 权限映射时也不放行。普通管理员不能通过单独添加权限码绕过角色限制。
+新控制台拥有九个菜单项、八个功能页面，新增接口的权限仅分配给角色编码 `superAdmin`。44 个接口统一使用 `@RequirePermission(dynamic = true)`，从数据库按 HTTP 方法与路径模板获取 `ai:*` 权限码，同时要求登录和超级管理员身份。没有有效映射时不放行，GET 权限不能授权同一路径的 DELETE。普通管理员不能通过单独添加权限码绕过角色限制。
 
 角色权限缓存由现有启动初始化器刷新。已登录的前端需要刷新用户信息或重新登录，以获取新菜单。
 
 ## 部署配置
 
-在环境变量中设置：
+运行配置分别位于 `application-dev.yml`、`application-test.yml`、`application-prod.yml`。选择对应 Profile，并在环境变量中设置：
 
 - `AI_CONFIG_ENCRYPTION_KEY`：Base64 编码的随机 32 字节主密钥。可使用 `openssl rand -base64 32` 生成，交给部署环境或密钥管理系统保存；不可提交 Git。更换该密钥需要迁移现有密文，不能直接覆盖。
 - `ALIYUN_E2B_API_KEY`、`ALIYUN_E2B_API_BASE_URL`、`ALIYUN_E2B_DOMAIN`：阿里云 E2B 平台连接信息，在 application 的 `iceeboot.agent.e2b` 中绑定。
@@ -56,10 +56,11 @@
 
 接口前缀：`/iceeboot/api/v1/agent-console`。
 
-- `GET/POST /models`、`DELETE /models/{id}`：模型连接管理。
+- `GET/POST/PUT /models`、`DELETE /models/{id}`：模型连接管理。
 - `POST /models/invoke`：业务直接调用模型，不进入 Agent 循环；请求包含 `modelConfigId`、`input` 和可选 `systemPrompt`。
-- `GET/POST /capabilities`、`DELETE /capabilities/{id}`：Skill、Tool、MCP、知识库和沙箱模板管理。
-- `GET/POST /agents`、`GET/DELETE /agents/{id}`：Agent 草稿管理。
+- `/skills`、`/tools`、`/mcps`、`/knowledge`、`/sandbox-templates`：前端使用的独立资源接口，每组提供 GET 列表、GET `/{id}` 详情、POST 新增、PUT 更新和 DELETE `/{id}` 删除。
+- `GET/POST/PUT /capabilities`、`DELETE /capabilities/{id}`：保留的兼容资源接口。
+- `GET/POST/PUT /agents`、`GET/DELETE /agents/{id}`：Agent 草稿管理。
 - `POST /agents/{id}/publish`、`GET /agents/{id}/releases`：发布与历史版本。
 - `POST /agents/by-code/{code}/invoke`：调用已发布 Agent，请求示例：
 
@@ -91,3 +92,10 @@
 - 本地应用连接指定 MySQL 与独立测试 Redis，验证匿名 401、普通用户 403、超级管理员 200，新菜单携带权限字段。
 - MySQL 自动回滚事务验证配置加密保存、发布版本和 Token 账本；没有保留该验证的测试数据。
 - 未使用真实模型供应商或云上 E2B 进行付费联调。
+
+### 接口与权限对齐记录（2026-11-11）
+
+- 前端五类资源接入各自的 CRUD 接口，模型和智能体编辑使用 PUT；资源菜单切换时重新加载，丢弃过期请求结果。
+- 后端 151 项测试：145 项通过、6 项环境相关测试跳过；前端八项接口测试、类型检查和生产构建通过。
+- 用户指定 MySQL `zboot` 已创建 11 张规范化表，九个菜单、44 条方法与路径权限及超级管理员关联均已核对。原六张表为空并保留，其他角色授权未改动，执行前保存本模块 RBAC 备份。
+- 部署新代码后重启后端并重新登录前端，使运行进程和菜单缓存使用本次更新。真实厂商模型和云沙箱未联调。
