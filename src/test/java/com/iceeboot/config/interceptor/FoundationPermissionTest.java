@@ -31,7 +31,7 @@ class FoundationPermissionTest {
         var cache = mock(IAuthCacheService.class);
         var ai = mock(IAgentConfigurationService.class);
         var configs = mock(IPayConfigService.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new AgentConsoleController(ai, mock(IAgentExecutionService.class), mock(IAgentPersistenceService.class), mock(ISysUserService.class), new com.iceeboot.framework.service.agent.convert.AgentApiConverter(new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules())),
+        var mvc = MockMvcBuilders.standaloneSetup(new AgentConsoleController(ai, mock(IAgentExecutionService.class), mock(IAgentPersistenceService.class), mock(ISysUserService.class), new com.iceeboot.framework.service.agent.convert.AgentApiConverter(new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)),
                         new PayController(mock(IPayRecordService.class), configs))
                 .addInterceptors(new PermissionInterceptor(cache))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();

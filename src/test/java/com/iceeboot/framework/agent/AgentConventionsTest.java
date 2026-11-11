@@ -37,7 +37,7 @@ class AgentConventionsTest {
                                 .startsWith("com.iceeboot.framework.dto.");
                     }
             }
-        assertThat(endpoints).isEqualTo(47);
+        assertThat(endpoints).isEqualTo(53);
     }
 
     @Test

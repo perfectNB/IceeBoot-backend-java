@@ -27,7 +27,7 @@ class AgentResourceApiTest {
         var users = mock(ISysUserService.class);
         when(users.getUserRoles(1L)).thenReturn(List.of("superAdmin"));
         var mvc =
-                MockMvcBuilders.standaloneSetup(new AgentSkillController(f.skillsService(), users))
+                MockMvcBuilders.standaloneSetup(new AgentSkillController(f.skillsService(), users, org.mockito.Mockito.mock(com.iceeboot.framework.service.agent.IAgentSkillImportService.class)))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
         try (var tokens = mockStatic(TokenUtils.class)) {
@@ -168,7 +168,7 @@ class AgentResourceApiTest {
                                                         .IAgentExecutionService.class),
                                         f.store,
                                         users,
-                                        new AgentApiConverter(f.json)))
+                                        new AgentApiConverter(f.json), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
         try (var tokens = mockStatic(TokenUtils.class)) {

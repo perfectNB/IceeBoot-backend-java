@@ -34,7 +34,7 @@ class HarnessExecutionTest {
         models = mock(AgentModelFactory.class);
         users = mock(ISysUserService.class);
         when(models.options(any(), any())).thenReturn(GenerateOptions.builder().build());
-        var factory = new HarnessRuntimeFactory(models, f.properties, f.secrets, f.store, users);
+        var factory = new HarnessRuntimeFactory(models, f.properties, f.secrets, f.store, users, f.conversations());
         service =
                 new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
                         f.store,
@@ -43,7 +43,7 @@ class HarnessExecutionTest {
                         f.properties,
                         f.json,
                         f.quota(),
-                        new AgentRunControl(f.store, f.properties));
+                        new AgentRunControl(f.store, f.properties), f.conversations());
     }
 
     static Model model(BiFunction<List<Msg>, List<ToolSchema>, ChatResponse> handler) {
@@ -140,6 +140,11 @@ class HarnessExecutionTest {
             assertThat(requests).hasValue(1);
             var detail = f.store.runDetail(result.runId());
             assertThat(detail.modelCalls()).hasSize(2);
+            when(models.create(any(), any())).thenReturn(model((messages, tools) -> {
+                assertThat(f.store.json(messages)).contains("42", "lookup");
+                return text("仍然是42", 20, 5);
+            }));
+            service.invoke("analyst",new InvokeRequest("刚才工具返回了什么",result.sessionId()),new Caller("1","token"));
             assertThat(detail.agents().getFirst().status()).isEqualTo("SUCCEEDED");
         } finally {
             server.stop(0);
@@ -400,5 +405,66 @@ class HarnessExecutionTest {
             response.tryEmitValue(text("完成", 5, 1));
         }
         assertThat(first.get(5, java.util.concurrent.TimeUnit.SECONDS).output()).isEqualTo("完成");
+    }
+
+    @Test
+    void databaseContextSurvivesNewRuntimeAndWorkspaceAndPinsPublishedVersion() throws Exception {
+        var m=f.model();
+        var agent=f.save("chat",m.id(),List.of(),List.of(),List.of(),List.of(),false,null);
+        f.publish(agent);
+        AtomicInteger calls=new AtomicInteger();
+        when(models.create(any(),any())).thenReturn(model((messages,tools)-> {
+            String prompt=f.store.json(messages);
+            if(calls.getAndIncrement()==1) assertThat(prompt).contains("remember_orange","answer_one");
+            return text(calls.get()==1?"answer_one":"answer_two",3,2);
+        }));
+        var first=service.invoke("chat",new InvokeRequest("remember_orange","same"),new Caller("1","token"));
+        assertThat(first.sessionId()).isEqualTo("same");
+        int version=f.conversations().require(agent.draft().id(),"1","same").getVersion();
+        f.publish(agent);
+        f.properties.setWorkspace(java.nio.file.Files.createTempDirectory("empty-workspace").toString());
+        var secondRuntime=new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
+            f.store,new HarnessRuntimeFactory(models,f.properties,f.secrets,f.store,users,f.conversations()),
+            models,f.properties,f.json,f.quota(),new AgentRunControl(f.store,f.properties),f.conversations());
+        secondRuntime.invoke("chat",new InvokeRequest("what did I say","same"),new Caller("1","token"));
+        assertThat(f.conversations().require(agent.draft().id(),"1","same").getVersion()).isEqualTo(version);
+        assertThat(f.conversations().messages(agent.draft().id(),"1","same",Long.MAX_VALUE)).hasSize(4);
+        assertThat(f.jdbc.queryForObject("SELECT COUNT(*) FROM t_agent_session_state",Integer.class)).isPositive();
+        when(models.create(any(),any())).thenReturn(model((messages,tools)-> {
+            assertThat(f.store.json(messages)).doesNotContain("remember_orange","answer_one");
+            return text("isolated",1,1);
+        }));
+        service.invoke("chat",new InvokeRequest("different user","same"),new Caller("2","token"));
+        service.invoke("chat",new InvokeRequest("different session","other"),new Caller("1","token"));
+        var other=f.save("other_chat",m.id(),List.of(),List.of(),List.of(),List.of(),false,null);
+        f.publish(other);
+        service.invoke("other_chat",new InvokeRequest("different agent","same"),new Caller("1","token"));
+    }
+
+    @Test
+    void databaseLeasePreventsConcurrentNodesAndHistoryIsScopedAndPaged() throws Exception {
+        var m=f.model(); var agent=f.save("history",m.id(),List.of(),List.of(),List.of(),List.of(),false,null);
+        f.publish(agent);
+        var session=f.conversations().open(agent.draft().id(),"1","shared",f.store.release(f.store.agent(agent.draft().id()).activeReleaseId()),"history");
+        var node1=f.conversations(); var node2=f.conversations();
+        node1.begin(session,"lease1","hello");
+        assertThatThrownBy(()->node2.begin(session,"lease2","concurrent")).hasMessageContaining("正在执行");
+        assertThatThrownBy(()->node2.messages(agent.draft().id(),"2","shared",Long.MAX_VALUE)).hasMessageContaining("会话不存在");
+        node1.finish(session,"lease1","done","SUCCEEDED");node1.release(session,"lease1");
+        for(int i=0;i<51;i++) {
+            String run="history_"+i;
+            node2.begin(session,run,"q");node2.finish(session,run,"a","SUCCEEDED");node2.release(session,run);
+        }
+        var latest=node2.messages(agent.draft().id(),"1","shared",Long.MAX_VALUE);
+        assertThat(latest).hasSize(100);
+        assertThat(node2.messages(agent.draft().id(),"1","shared",latest.getFirst().getId())).hasSize(4);
+        var context=io.agentscope.core.agent.RuntimeContext.builder().userId("1").sessionId("cas").build();
+        var key=new io.agentscope.core.session.SessionKey("1",agent.draft().id().toString(),"cas");
+        var log1=node1.logStore().open(key,context);
+        var log2=node2.logStore().open(key,context);
+        var writer=log1.acquire("node1",java.time.Duration.ofMinutes(1));
+        assertThatThrownBy(()->log2.acquire("node2",java.time.Duration.ofMinutes(1))).isInstanceOf(RuntimeException.class);
+        log1.release(writer);
+        log2.release(log2.acquire("node2",java.time.Duration.ofMinutes(1)));
     }
 }

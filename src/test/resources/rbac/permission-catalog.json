@@ -1531,5 +1531,47 @@
     "name": "修改权限状态",
     "code": "system:permission:status:api",
     "parentCode": "system:permission"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/sessions",
+    "name": "查询智能体会话",
+    "code": "ai:session:list:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/sessions",
+    "name": "创建智能体会话",
+    "code": "ai:session:create:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/messages",
+    "name": "查询会话消息",
+    "code": "ai:session:messages:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/skills/import/archive",
+    "name": "预览技能压缩包",
+    "code": "ai:skill:import:archive:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/skills/import/github",
+    "name": "预览GitHub技能",
+    "code": "ai:skill:import:github:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/skills/import",
+    "name": "确认导入技能",
+    "code": "ai:skill:import:commit:api",
+    "parentCode": "ai:capability"
   }
 ]

@@ -201,7 +201,7 @@ class CapabilityRuntimeTest {
                                 }));
         var factory =
                 new HarnessRuntimeFactory(
-                        models, f.properties, f.secrets, f.store, mock(ISysUserService.class));
+                        models, f.properties, f.secrets, f.store, mock(ISysUserService.class), f.conversations());
         var service =
                 new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
                         f.store,
@@ -210,7 +210,7 @@ class CapabilityRuntimeTest {
                         f.properties,
                         f.json,
                         f.quota(),
-                        new AgentRunControl(f.store, f.properties));
+                        new AgentRunControl(f.store, f.properties), f.conversations());
         assertThat(
                         service.invoke(
                                         "agent",

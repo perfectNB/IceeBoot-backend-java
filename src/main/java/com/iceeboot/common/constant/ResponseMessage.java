@@ -330,6 +330,17 @@ public class ResponseMessage {
         public static final String EXECUTION_MAX_ROUNDS_EXCEEDED = "智能体达到最大执行轮次";
         public static final String EXECUTION_MODEL_BUDGET_EXCEEDED = "本次父子智能体调用已超过模型请求总预算";
         public static final String EXECUTION_WORKSPACE_CREATE_FAILED = "无法创建运行工作区";
+        public static final String SKILL_IMPORT_LIMIT = "压缩包最大20MiB，解压后最大50MiB，最多2000个文件、50个技能；请拆分后导入";
+        public static final String SKILL_IMPORT_PATH = "压缩包或子目录含非法、重复的资源路径";
+        public static final String SKILL_IMPORT_ARCHIVE = "技能压缩包损坏、元数据无效或包含链接及不支持的文件类型";
+        public static final String SKILL_IMPORT_FORMAT = "仅支持ZIP、tar.gz和tgz压缩包";
+        public static final String SKILL_IMPORT_NOT_FOUND = "指定目录中未找到SKILL.md，请检查压缩包或GitHub子目录";
+        public static final String SKILL_IMPORT_METADATA = "SKILL.md元数据无效，请检查name、description及YAML格式";
+        public static final String SKILL_IMPORT_BINARY = "当前技能资源仅支持UTF-8文本，请移除二进制附件或转换后导入";
+        public static final String SKILL_IMPORT_GITHUB_URL = "请填写公开GitHub仓库或tree目录的HTTPS地址；子目录不能含相对跳转";
+        public static final String SKILL_IMPORT_DOWNLOAD = "GitHub归档下载失败，请检查仓库可访问性、分支、限流和网络连接后重试";
+        public static final String SKILL_IMPORT_DUPLICATE = "导入列表存在重复编码，请修改编码后重试";
+        public static final String SESSION_NOT_FOUND = "会话不存在或无权访问";
         public static final String RUN_NOT_FOUND = "执行记录不存在";
         public static final String RUN_CREATE_FAILED = "创建执行记录失败";
         public static final String MODEL_CALL_RECORD_FAILED = "写入模型调用记录失败";

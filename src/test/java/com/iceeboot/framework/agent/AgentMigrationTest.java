@@ -29,7 +29,7 @@ class AgentMigrationTest {
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_agent_schema_history", Integer.class))
-                .isEqualTo(3);
+                .isEqualTo(4);
         jdbc.update("INSERT INTO t_agent_usage_quota(user_id,usage_day) VALUES('1',CURRENT_DATE)");
         jdbc.update("UPDATE t_agent_schema_history SET checksum='tampered' WHERE version=1");
         assertThatThrownBy(migrations::migrateSchema)
@@ -51,7 +51,7 @@ class AgentMigrationTest {
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_agent_schema_history", Integer.class))
-                .isEqualTo(3);
+                .isEqualTo(4);
         jdbc.execute("SELECT cancel_requested,heartbeat_at,error_code,trace_id FROM t_agent_run");
     }
 

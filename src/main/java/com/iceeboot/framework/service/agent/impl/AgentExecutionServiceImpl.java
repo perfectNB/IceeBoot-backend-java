@@ -31,6 +31,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
     private final IAgentQuotaService quota;
     private final Set<String> activeSessions = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final ObjectMapper json;
+    private final IAgentConversationService conversations;
 
     public AgentExecutionServiceImpl(
             IAgentPersistenceService store,
@@ -39,7 +40,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             AgentProperties properties,
             ObjectMapper json,
             IAgentQuotaService quota,
-            AgentRunControl control) {
+            AgentRunControl control, IAgentConversationService conversations) {
         this.store = store;
         this.harness = harness;
         this.models = models;
@@ -47,6 +48,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
         this.quota = quota;
         this.control = control;
         this.json = json;
+        this.conversations = conversations;
     }
 
     @Override
@@ -56,10 +58,17 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
         RunRecorder recorder = null;
         String sessionKey = null;
         boolean sessionAcquired = false;
+        com.iceeboot.framework.entity.agent.AgentSessionDO conversation = null;
+        String turnId = null;
+        boolean turnStarted = false;
         AgentRunControl.Registration registration = null;
         try {
             AgentView view = store.agentByCode(code);
-            PublishedAgent p = store.release(view.activeReleaseId());
+            String session = request.sessionId() == null || request.sessionId().isBlank()
+                    ? UUID.randomUUID().toString() : request.sessionId();
+            conversation = conversations.open(view.draft().id(),caller.userId(),session,
+                    store.release(view.activeReleaseId()),request.input());
+            PublishedAgent p = store.release(conversation.getReleaseId());
             if (!p.agent().enabled())
                 throw new IceeBootException(ResponseMessage.Agent.AGENT_RELEASE_DISABLED);
             AtomicInteger budget = new AtomicInteger(properties.getMaxModelRequestsPerRun());
@@ -72,18 +81,16 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                             store,
                             budget,
                             () -> quota.acquire(caller.userId()));
-            String session =
-                    request.sessionId() == null || request.sessionId().isBlank()
-                            ? recorder.id
-                            : request.sessionId();
-            if (!session.matches("[a-zA-Z0-9_-]{1,100}"))
-                throw new IceeBootException(ResponseMessage.Agent.EXECUTION_SESSION_ID_INVALID);
-            sessionKey = p.releaseId() + ":" + caller.userId() + ":" + session;
+
+            sessionKey = p.agent().id() + ":" + caller.userId() + ":" + session;
             sessionAcquired = activeSessions.add(sessionKey);
             if (!sessionAcquired)
                 throw new IceeBootException(
                         ResultCodeEnum.ERROR.getCode(),
                         ResponseMessage.Agent.EXECUTION_SESSION_BUSY);
+            turnId = recorder.id;
+            conversations.begin(conversation,turnId,request.input());
+            turnStarted = true;
             List<Msg> input = List.of(new UserMessage(request.input()));
             recorder.start(input);
             registration = control.register(recorder.id);
@@ -118,13 +125,21 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                             .block(Duration.ofSeconds(properties.getExecutionTimeoutSeconds()));
             registration.check();
             RunDetail detail = store.runDetail(recorder.rootId);
+            conversations.finish(conversation,turnId,RunRecorder.text(response),"SUCCEEDED");
             return new InvokeResult(
-                    recorder.rootId,
+                    recorder.rootId, session,
                     RunRecorder.text(response),
                     detail.totalInputTokens(),
                     detail.totalOutputTokens(),
                     detail.usageKnown());
         } catch (RuntimeException e) {
+            try {
+                if (turnStarted) conversations.finish(conversation, turnId, "",
+                        isTimeout(e) ? "TIMED_OUT"
+                                : registration != null && registration.cancelled() ? "CANCELLED" : "FAILED");
+            } catch (RuntimeException recordingFailure) {
+                if (recordingFailure != e) e.addSuppressed(recordingFailure);
+            }
             recordTermination(recorder, registration, e);
             if (registration != null && registration.cancelled())
                 throw new IceeBootException(409, ResponseMessage.Agent.EXECUTION_CANCELLED, e);
@@ -142,8 +157,15 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                 } catch (Exception ignored) {
                     /* 终态清理继续释放其他资源，不输出凭据。 */
                 }
-            if (sessionAcquired) activeSessions.remove(sessionKey);
-            control.release();
+            try {
+                if (turnStarted) conversations.release(conversation,turnId);
+            } catch (RuntimeException releaseFailure) {
+                com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
+                        turnId, "SESSION_RELEASE", com.iceeboot.framework.service.agent.support.AgentDiagnostics.traceId(), releaseFailure);
+            } finally {
+                if (sessionAcquired) activeSessions.remove(sessionKey);
+                control.release();
+            }
         }
     }
 

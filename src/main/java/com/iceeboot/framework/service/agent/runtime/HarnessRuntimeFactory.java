@@ -39,18 +39,20 @@ public class HarnessRuntimeFactory {
     private final AgentSecrets secrets;
     private final IAgentPersistenceService store;
     private final ISysUserService users;
+    private final com.iceeboot.framework.service.agent.IAgentConversationService conversations;
 
     public HarnessRuntimeFactory(
             AgentModelFactory models,
             AgentProperties properties,
             AgentSecrets secrets,
             IAgentPersistenceService store,
-            ISysUserService users) {
+            ISysUserService users, com.iceeboot.framework.service.agent.IAgentConversationService conversations) {
         this.models = models;
         this.properties = properties;
         this.secrets = secrets;
         this.store = store;
         this.users = users;
+        this.conversations = conversations;
     }
 
     public HarnessAgent create(
@@ -211,7 +213,7 @@ public class HarnessRuntimeFactory {
         if (p.agent().outputFormat() == OutputFormat.JSON_SCHEMA)
             prompt += "\n最终结果必须是符合以下 JSON Schema 的纯 JSON：\n" + store.json(p.agent().outputSchema());
         Path workspacePath =
-                Path.of(properties.getWorkspace(), p.releaseId(), caller.userId(), session);
+                Path.of(properties.getWorkspace(), p.agent().id().toString(), caller.userId(), session);
         try {
             Files.createDirectories(workspacePath);
         } catch (java.io.IOException e) {
@@ -223,7 +225,8 @@ public class HarnessRuntimeFactory {
         var builder =
                 HarnessAgent.builder()
                         .name(p.agent().code())
-                        .agentId(p.releaseId())
+                        .agentId(p.agent().id().toString())
+                        .sessionLogStore(conversations.logStore())
                         .sysPrompt(prompt)
                         .model(recorder.observe(models.create(p.model(), p.agent().generation())))
                         .generateOptions(models.options(p.model(), p.agent().generation()))

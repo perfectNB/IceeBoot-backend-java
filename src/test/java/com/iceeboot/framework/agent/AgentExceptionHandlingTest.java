@@ -80,7 +80,7 @@ class AgentExceptionHandlingTest {
                         new ObjectMapper(),
                         mock(com.iceeboot.framework.service.agent.IAgentQuotaService.class),
                         new com.iceeboot.framework.service.agent.runtime.AgentRunControl(
-                                store, new AgentProperties()));
+                                store, new AgentProperties()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class));
         assertThatThrownBy(
                         () ->
                                 service.invokeModel(
@@ -122,7 +122,7 @@ class AgentExceptionHandlingTest {
                                         mock(IAgentExecutionService.class),
                                         mock(IAgentPersistenceService.class),
                                         users,
-                                        new AgentApiConverter(new ObjectMapper())))
+                                        new AgentApiConverter(new ObjectMapper()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
         try (var tokens = mockStatic(TokenUtils.class)) {
@@ -153,7 +153,7 @@ class AgentExceptionHandlingTest {
                                         mock(IAgentExecutionService.class),
                                         mock(IAgentPersistenceService.class),
                                         users,
-                                        new AgentApiConverter(new ObjectMapper())))
+                                        new AgentApiConverter(new ObjectMapper()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
         try (var tokens = mockStatic(TokenUtils.class)) {

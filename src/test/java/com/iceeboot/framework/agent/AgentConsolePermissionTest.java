@@ -32,7 +32,7 @@ class AgentConsolePermissionTest {
                                                 || m.isAnnotationPresent(PostMapping.class)
                                                 || m.isAnnotationPresent(DeleteMapping.class))
                         .toList();
-        assertThat(endpoints).hasSize(16);
+        assertThat(endpoints).hasSize(19);
         for (var method : endpoints) {
             RequirePermission permission = method.getAnnotation(RequirePermission.class);
             assertThat(permission).as(method.getName()).isNotNull();
@@ -54,7 +54,7 @@ class AgentConsolePermissionTest {
                         users,
                         new com.iceeboot.framework.service.agent.convert.AgentApiConverter(
                                 new com.fasterxml.jackson.databind.ObjectMapper()
-                                        .findAndRegisterModules()));
+                                        .findAndRegisterModules()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class));
         var mvc =
                 MockMvcBuilders.standaloneSetup(controller)
                         .addInterceptors(new PermissionInterceptor(cache))
@@ -86,7 +86,7 @@ class AgentConsolePermissionTest {
                                         new com.iceeboot.framework.service.agent.convert
                                                 .AgentApiConverter(
                                                 new com.fasterxml.jackson.databind.ObjectMapper()
-                                                        .findAndRegisterModules())))
+                                                        .findAndRegisterModules()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .addInterceptors(new PermissionInterceptor(cache))
                         .setControllerAdvice(
                                 new AgentConsoleExceptionHandler(), new GlobalExceptionHandler())
@@ -118,7 +118,7 @@ class AgentConsolePermissionTest {
                                         new com.iceeboot.framework.service.agent.convert
                                                 .AgentApiConverter(
                                                 new com.fasterxml.jackson.databind.ObjectMapper()
-                                                        .findAndRegisterModules())))
+                                                        .findAndRegisterModules()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .addInterceptors(new PermissionInterceptor(cache))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
@@ -142,7 +142,7 @@ class AgentConsolePermissionTest {
                                         new com.iceeboot.framework.service.agent.convert
                                                 .AgentApiConverter(
                                                 new com.fasterxml.jackson.databind.ObjectMapper()
-                                                        .findAndRegisterModules())))
+                                                        .findAndRegisterModules()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();
         mvc.perform(
@@ -185,7 +185,7 @@ class AgentConsolePermissionTest {
                                         users,
                                         new com.iceeboot.framework.service.agent.convert
                                                 .AgentApiConverter(
-                                                new com.fasterxml.jackson.databind.ObjectMapper())))
+                                                new com.fasterxml.jackson.databind.ObjectMapper()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class)))
                         .addInterceptors(new PermissionInterceptor(cache))
                         .setControllerAdvice(new AgentConsoleExceptionHandler())
                         .build();

@@ -15,6 +15,8 @@ public class AgentInvokeVO {
     @Schema(description = "执行记录 ID")
     private String runId;
 
+    private String sessionId;
+
     @Schema(description = "调用输出")
     private String output;
 

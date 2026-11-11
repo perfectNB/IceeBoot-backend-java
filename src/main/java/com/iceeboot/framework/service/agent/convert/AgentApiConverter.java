@@ -29,6 +29,18 @@ public class AgentApiConverter {
         }
     }
 
+    public AgentSessionVO sessionVO(com.iceeboot.framework.entity.agent.AgentSessionDO row) {
+        AgentSessionVO result = new AgentSessionVO();
+        result.setAgentId(row.getAgentId());
+        result.setSessionId(row.getSessionId());
+        result.setReleaseId(row.getReleaseId());
+        result.setVersion(row.getVersion());
+        result.setTitle(row.getTitle());
+        result.setCreateTime(row.getCreateTime());
+        result.setUpdateTime(row.getUpdateTime());
+        return result;
+    }
+
     public Capability capability(AgentSkillDTO request, Long id) {
         return new Capability(
                 id,

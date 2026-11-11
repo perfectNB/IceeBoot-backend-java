@@ -54,6 +54,7 @@ class AgentFixture {
         var sessionFactory = factory.getObject();
         for (Class<?> mapper :
                 java.util.List.of(
+                        com.iceeboot.framework.mapper.agent.AgentConversationMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentSecretMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentUsageQuotaMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentModelMapper.class,
@@ -168,6 +169,12 @@ class AgentFixture {
         return (T) proxy.getProxy();
     }
 
+    com.iceeboot.framework.service.agent.IAgentConversationService conversations() {
+        return transactional(new com.iceeboot.framework.service.agent.impl.AgentConversationServiceImpl(
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
+    }
+
     com.iceeboot.framework.service.agent.IAgentQuotaService quota() {
         return transactional(
                 new com.iceeboot.framework.service.agent.impl.AgentQuotaServiceImpl(
@@ -193,6 +200,13 @@ class AgentFixture {
     private static <T> T entityService(T service, Object mapper) {
         org.springframework.test.util.ReflectionTestUtils.setField(service, "baseMapper", mapper);
         return service;
+    }
+
+    com.iceeboot.framework.service.agent.IAgentSkillImportService skillImports() {
+        return transactional(new com.iceeboot.framework.service.agent.impl.AgentSkillImportServiceImpl(
+                new com.iceeboot.framework.service.agent.support.SkillArchiveParser(),
+                new com.iceeboot.framework.service.agent.support.GithubSkillSource(),skillsService()),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
     }
 
     com.iceeboot.framework.service.agent.IAgentSkillService skillsService() {

@@ -39,6 +39,7 @@ public class AgentConsoleController {
     private final ISysUserService users;
 
     private final AgentApiConverter converter;
+    private final IAgentConversationService conversations;
 
     private Caller admin() {
         Long id = TokenUtils.getCurrentUserId();
@@ -243,5 +244,33 @@ public class AgentConsoleController {
                 converter.convert(
                         configs.saveCapability(converter.convert(request, Capability.class)),
                         AgentCapabilityVO.class));
+    }
+
+    @Operation(summary = "查询智能体会话")
+    @GetMapping("/agents/{id}/sessions")
+    @RequirePermission(dynamic = true)
+    public R<List<AgentSessionVO>> sessions(@PathVariable long id, @RequestParam(defaultValue="0") int offset) {
+        Caller caller=admin();
+        return R.ok(conversations.sessions(id,caller.userId(),offset).stream()
+                .map(converter::sessionVO).toList());
+    }
+    @Operation(summary = "创建智能体会话")
+    @PostMapping("/agents/{id}/sessions")
+    @RequirePermission(dynamic = true)
+    public R<AgentSessionVO> createSession(@PathVariable long id,@Valid @RequestBody AgentSessionDTO request) {
+        Caller caller=admin();
+        AgentView agent=store.agent(id);
+        PublishedAgent release=store.release(agent.activeReleaseId());
+        return R.ok(converter.sessionVO(conversations.open(id,caller.userId(),java.util.UUID.randomUUID().toString(),
+                release,request.getTitle())));
+    }
+    @Operation(summary = "查询会话消息")
+    @GetMapping("/agents/{id}/sessions/{sessionId}/messages")
+    @RequirePermission(dynamic = true)
+    public R<List<AgentMessageVO>> messages(@PathVariable long id,@PathVariable String sessionId,
+            @RequestParam(defaultValue="9223372036854775807") long beforeId) {
+        Caller caller=admin();
+        return R.ok(conversations.messages(id,caller.userId(),sessionId,beforeId).stream()
+                .map(row->converter.convert(row,AgentMessageVO.class)).toList());
     }
 }

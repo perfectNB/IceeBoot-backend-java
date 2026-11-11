@@ -6,7 +6,9 @@ import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.enums.ResultCodeEnum;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.utils.TokenUtils;
-import com.iceeboot.framework.dto.create.agent.AgentSkillDTO;
+import com.iceeboot.framework.dto.create.agent.*;
+import com.iceeboot.framework.vo.agent.AgentSkillImportPreviewVO;
+import com.iceeboot.framework.service.agent.IAgentSkillImportService;
 import com.iceeboot.framework.dto.update.agent.AgentSkillUpdateDTO;
 import com.iceeboot.framework.service.agent.IAgentSkillService;
 import com.iceeboot.framework.service.system.ISysUserService;
@@ -31,6 +33,7 @@ import java.util.List;
 public class AgentSkillController {
     private final IAgentSkillService service;
     private final ISysUserService users;
+    private final IAgentSkillImportService imports;
 
     private void admin() {
         Long id = TokenUtils.getCurrentUserId();
@@ -78,5 +81,29 @@ public class AgentSkillController {
         admin();
         service.deleteResource(id);
         return R.ok();
+    }
+
+    @Operation(summary = "预览技能压缩包")
+    @PostMapping(value = "/import/archive", consumes = "multipart/form-data")
+    @RequirePermission(dynamic = true)
+    public R<AgentSkillImportPreviewVO> previewArchive(@Valid @ModelAttribute AgentSkillArchiveDTO request) {
+        admin();
+        return R.ok(imports.previewArchive(request));
+    }
+
+    @Operation(summary = "预览GitHub技能")
+    @PostMapping("/import/github")
+    @RequirePermission(dynamic = true)
+    public R<AgentSkillImportPreviewVO> previewGithub(@Valid @RequestBody AgentSkillGithubDTO request) {
+        admin();
+        return R.ok(imports.previewGithub(request));
+    }
+
+    @Operation(summary = "确认导入技能")
+    @PostMapping("/import")
+    @RequirePermission(dynamic = true)
+    public R<List<AgentSkillVO>> importSkills(@Valid @RequestBody AgentSkillImportDTO request) {
+        admin();
+        return R.ok(imports.commit(request));
     }
 }

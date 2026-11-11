@@ -178,12 +178,12 @@ class AgentOperationsTest {
                                     f.properties,
                                     f.secrets,
                                     f.store,
-                                    mock(ISysUserService.class)),
+                                    mock(ISysUserService.class), f.conversations()),
                             models,
                             f.properties,
                             f.json,
                             f.quota(),
-                            first);
+                            first, f.conversations());
             var result =
                     pool.submit(
                             () ->
@@ -235,7 +235,7 @@ class AgentOperationsTest {
                             f.properties,
                             f.json,
                             f.quota(),
-                            control);
+                            control, f.conversations());
             assertThat(
                             service.invokeModel(
                                     new ModelInvokeRequest(m.id(), "hello", null),
@@ -318,7 +318,7 @@ class AgentOperationsTest {
                             f.properties,
                             f.json,
                             f.quota(),
-                            control);
+                            control, f.conversations());
             assertThatThrownBy(
                             () ->
                                     service.invokeModel(
