@@ -43,8 +43,9 @@ public class SysRoleController {
     @Operation(summary = "根据ID获取角色", description = "根据角色ID获取角色详细信息")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
-    public R<SysRoleVO> getRoleById(@PathVariable("id") Long id) {
-        SysRoleVO roleVO = roleService.getRoleById(id);
+    public R<SysRoleVO> getRoleById(@PathVariable("id") Long id,
+            @RequestParam(value = "include", defaultValue = "both") String include) {
+        SysRoleVO roleVO = roleService.getRoleById(id, include);
         return R.ok(roleVO);
     }
 

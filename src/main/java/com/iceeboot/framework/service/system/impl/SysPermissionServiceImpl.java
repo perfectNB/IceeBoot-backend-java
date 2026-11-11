@@ -278,7 +278,8 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     @Override
     public List<SysPermissionVO> getPermissionTreeByRoleId(Long roleId) {
         // 获取所有权限
-        List<PermissionDO> allPermissions = this.list();
+        List<PermissionDO> allPermissions = this.list(new LambdaQueryWrapper<PermissionDO>()
+                .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED));
         
         // 获取角色拥有的权限ID列表
         List<Long> rolePermissionIds = rolePermissionService.getPermissionIdsByRoleId(roleId);

@@ -22,6 +22,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.iceeboot.common.exception.IceeBootException;
+import com.iceeboot.common.constant.SystemConstants;
+import com.iceeboot.common.utils.TokenUtils;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,7 +93,8 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, RoleM
     @Override
     public List<Long> getMenuIdsByRoleId(Long roleId) {
         LambdaQueryWrapper<RoleMenuDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(RoleMenuDO::getRoleId, roleId);
+        wrapper.eq(RoleMenuDO::getRoleId, roleId)
+                .eq(RoleMenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED);
         List<RoleMenuDO> roleMenus = this.list(wrapper);
         return roleMenus.stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
     }
@@ -102,20 +110,34 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, RoleM
     @Override
     @Transactional
     public boolean assignMenusToRole(Long roleId, List<Long> menuIds) {
-        // 先删除角色的所有菜单
-        removeAllMenusByRoleId(roleId);
-        
-        // 再添加新的菜单
-        if (menuIds != null && !menuIds.isEmpty()) {
-            List<RoleMenuDO> roleMenus = menuIds.stream()
-                    .map(menuId -> {
-                        RoleMenuDO roleMenu = new RoleMenuDO();
-                        roleMenu.setRoleId(roleId);
-                        roleMenu.setMenuId(menuId);
-                        return roleMenu;
-                    })
-                    .collect(Collectors.toList());
-            return this.saveBatch(roleMenus);
+        replaceMenusToRole(roleId, menuIds);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean replaceMenusToRole(Long roleId, List<Long> menuIds) {
+        if (roleId == null || sysRoleMenuMapper.lockRole(roleId) == null) {
+            throw new IceeBootException("角色不存在或已删除");
+        }
+        var desired = new LinkedHashSet<>(menuIds == null ? List.<Long>of() : menuIds);
+        if (desired.stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IceeBootException("菜单ID必须为正整数");
+        }
+        var existing = new HashSet<>(sysRoleMenuMapper.selectActiveMenuIds(roleId));
+        var added = desired.stream().filter(id -> !existing.contains(id)).toList();
+        var removed = existing.stream().filter(id -> !desired.contains(id)).toList();
+        if (added.isEmpty() && removed.isEmpty()) return false;
+
+        // 写入前批量校验新增资源，历史逻辑删除关联不计入当前授权。
+        if (!added.isEmpty() && sysRoleMenuMapper.selectExistingMenuIds(added).size() != added.size()) {
+            throw new IceeBootException("菜单不存在或已删除");
+        }
+        if (!removed.isEmpty()) sysRoleMenuMapper.deleteMenuLinks(roleId, removed);
+        if (!added.isEmpty()) {
+            String actor = Objects.toString(TokenUtils.getCurrentUserIdAsString(), "system");
+            int inserted = sysRoleMenuMapper.insertMenuLinks(roleId, added, actor, LocalDateTime.now());
+            if (inserted != added.size()) throw new IceeBootException("角色菜单保存失败");
         }
         return true;
     }

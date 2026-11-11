@@ -22,6 +22,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.iceeboot.common.exception.IceeBootException;
+import com.iceeboot.common.constant.SystemConstants;
+import com.iceeboot.common.utils.TokenUtils;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,7 +93,8 @@ public class SysRolePermissionServiceImpl extends ServiceImpl<SysRolePermissionM
     @Override
     public List<Long> getPermissionIdsByRoleId(Long roleId) {
         LambdaQueryWrapper<RolePermissionDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(RolePermissionDO::getRoleId, roleId);
+        wrapper.eq(RolePermissionDO::getRoleId, roleId)
+                .eq(RolePermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED);
         List<RolePermissionDO> rolePermissions = this.list(wrapper);
         return rolePermissions.stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
     }
@@ -102,20 +110,34 @@ public class SysRolePermissionServiceImpl extends ServiceImpl<SysRolePermissionM
     @Override
     @Transactional
     public boolean assignPermissionsToRole(Long roleId, List<Long> permissionIds) {
-        // 先删除角色的所有权限
-        removeAllPermissionsByRoleId(roleId);
-        
-        // 再添加新的权限
-        if (permissionIds != null && !permissionIds.isEmpty()) {
-            List<RolePermissionDO> rolePermissions = permissionIds.stream()
-                    .map(permissionId -> {
-                        RolePermissionDO rolePermission = new RolePermissionDO();
-                        rolePermission.setRoleId(roleId);
-                        rolePermission.setPermissionId(permissionId);
-                        return rolePermission;
-                    })
-                    .collect(Collectors.toList());
-            return this.saveBatch(rolePermissions);
+        replacePermissionsToRole(roleId, permissionIds);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean replacePermissionsToRole(Long roleId, List<Long> permissionIds) {
+        if (roleId == null || sysRolePermissionMapper.lockRole(roleId) == null) {
+            throw new IceeBootException("角色不存在或已删除");
+        }
+        var desired = new LinkedHashSet<>(permissionIds == null ? List.<Long>of() : permissionIds);
+        if (desired.stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IceeBootException("权限ID必须为正整数");
+        }
+        var existing = new HashSet<>(sysRolePermissionMapper.selectActivePermissionIds(roleId));
+        var added = desired.stream().filter(id -> !existing.contains(id)).toList();
+        var removed = existing.stream().filter(id -> !desired.contains(id)).toList();
+        if (added.isEmpty() && removed.isEmpty()) return false;
+
+        // 写入前批量校验新增资源，历史逻辑删除关联不计入当前授权。
+        if (!added.isEmpty() && sysRolePermissionMapper.selectExistingPermissionIds(added).size() != added.size()) {
+            throw new IceeBootException("权限不存在或已删除");
+        }
+        if (!removed.isEmpty()) sysRolePermissionMapper.deletePermissionLinks(roleId, removed);
+        if (!added.isEmpty()) {
+            String actor = Objects.toString(TokenUtils.getCurrentUserIdAsString(), "system");
+            int inserted = sysRolePermissionMapper.insertPermissionLinks(roleId, added, actor, LocalDateTime.now());
+            if (inserted != added.size()) throw new IceeBootException("角色权限保存失败");
         }
         return true;
     }

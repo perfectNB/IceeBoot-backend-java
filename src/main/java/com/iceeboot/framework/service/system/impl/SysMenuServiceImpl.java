@@ -302,6 +302,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, MenuDO> imple
         List<MenuDO> allMenus = this.list(
             new LambdaQueryWrapper<MenuDO>()
                 .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
+                .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 .orderByAsc(MenuDO::getSort)
         );
         

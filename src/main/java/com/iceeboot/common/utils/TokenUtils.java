@@ -5,6 +5,9 @@ import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.stp.StpUtil;
 import com.iceeboot.common.exception.IceeBootException;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Token工具类
@@ -14,6 +17,26 @@ import org.springframework.util.StringUtils;
  * @date 2025-08-13
  */
 public class TokenUtils {
+
+    private static final String REQUEST_IDENTITY = TokenUtils.class.getName() + ".identity";
+
+    /** 仅在当前请求内复用已验证的身份，不能跨请求缓存登录状态。 */
+    private record RequestIdentity(String token, Long userId) { }
+
+    private static HttpServletRequest currentRequest() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            return attributes.getRequest();
+        }
+        return null;
+    }
+
+    private static void clearRequestIdentity(String token) {
+        HttpServletRequest request = currentRequest();
+        if (request != null && request.getAttribute(REQUEST_IDENTITY) instanceof RequestIdentity identity
+                && (token == null || identity.token().equals(token))) {
+            request.removeAttribute(REQUEST_IDENTITY);
+        }
+    }
 
     /**
      * 从当前请求中获取token
@@ -85,11 +108,16 @@ public class TokenUtils {
                 return null;
             }
             
-            Object loginId = StpUtil.getLoginIdByToken(token);
-            if (loginId != null) {
-                return Long.valueOf(loginId.toString());
+            HttpServletRequest request = currentRequest();
+            if (request != null && request.getAttribute(REQUEST_IDENTITY) instanceof RequestIdentity identity
+                    && identity.token().equals(token)) {
+                return identity.userId();
             }
-            return null;
+            Object loginId = StpUtil.getLoginIdByToken(token);
+            if (loginId == null) return null;
+            Long userId = Long.valueOf(loginId.toString());
+            if (request != null) request.setAttribute(REQUEST_IDENTITY, new RequestIdentity(token, userId));
+            return userId;
         } catch (Exception e) {
             return null;
         }
@@ -202,6 +230,8 @@ public class TokenUtils {
             }
         } catch (Exception e) {
             // 忽略异常
+        } finally {
+            clearRequestIdentity(token);
         }
     }
     
@@ -218,6 +248,8 @@ public class TokenUtils {
             }
         } catch (Exception e) {
             // 忽略异常
+        } finally {
+            clearRequestIdentity(null);
         }
     }
 }

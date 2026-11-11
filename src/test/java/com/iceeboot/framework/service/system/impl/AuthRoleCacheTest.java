@@ -1,31 +1,69 @@
 package com.iceeboot.framework.service.system.impl;
 
-import com.iceeboot.common.constant.CacheConstants;
-import com.iceeboot.framework.entity.system.*;
+import com.iceeboot.common.exception.AuthServiceUnavailableException;
+import com.iceeboot.framework.entity.system.MenuDO;
+import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.mapper.system.*;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.*;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.data.redis.core.RedisTemplate;
+
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/** 授权读取只调用当前资源查询，旧角色缓存不再是权限来源。 */
 class AuthRoleCacheTest {
-    @Test void cachesRoleIdInsteadOfTheUserRoleRelationId() {
-        RedisTemplate<String,Object> redis = mock(RedisTemplate.class);
-        ValueOperations<String,Object> values = mock(ValueOperations.class);
-        when(redis.opsForValue()).thenReturn(values);
-        var relations = mock(SysUserRoleMapper.class); var rolePermissions = mock(SysRolePermissionMapper.class);
-        var row = new UserRoleDO(); row.setId(999L); row.setUserId(7L); row.setRoleId(42L);
-        when(relations.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of(row));
-        when(rolePermissions.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of());
-        var roles = mock(SysRoleMapper.class);
-        var role = new RoleDO(); role.setId(42L); role.setCode("ordinary");
-        role.setStatus("active"); role.setDelFlag(0);
-        when(roles.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of(role));
-        var service = new AuthCacheServiceImpl(redis, mock(SysMenuMapper.class), mock(SysPermissionMapper.class),
-                roles, relations, mock(SysRoleMenuMapper.class), rolePermissions);
-        service.getUserPermissions(7L);
-        verify(values).set(CacheConstants.Auth.USER_ROLE + 7L, List.of(42L));
-        verify(values).get(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + 42L);
-        verify(values, never()).get(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + 999L);
+    private final RedisTemplate<String, Object> redis = mock(RedisTemplate.class);
+    private final SysMenuMapper menus = mock(SysMenuMapper.class);
+    private final SysPermissionMapper permissions = mock(SysPermissionMapper.class);
+    private final SysRoleMapper roles = mock(SysRoleMapper.class);
+    private final SysUserRoleMapper userRoles = mock(SysUserRoleMapper.class);
+    private final SysRoleMenuMapper roleMenus = mock(SysRoleMenuMapper.class);
+    private final SysRolePermissionMapper rolePermissions = mock(SysRolePermissionMapper.class);
+    private final AuthCacheServiceImpl service = new AuthCacheServiceImpl(redis, menus, permissions,
+            roles, userRoles, roleMenus, rolePermissions);
+
+    @Test
+    void readsCurrentPermissionsWithOneMapperCallAndNoRoleCacheRoundTrips() {
+        var permission = new PermissionDO();
+        permission.setId(20L); permission.setCode("example:read");
+        when(permissions.selectAuthorizedByUserId(7L, "superAdmin")).thenReturn(List.of(permission));
+        assertThat(service.getUserPermissions(7L)).extracting(value -> value.get("code"))
+                .containsExactly("example:read");
+        verify(permissions).selectAuthorizedByUserId(7L, "superAdmin");
+        verifyNoMoreInteractions(permissions);
+        verifyNoInteractions(redis, menus, roles, userRoles, roleMenus, rolePermissions);
+    }
+
+    @Test
+    void readsCurrentMenusWithOneMapperCallAndNoRoleCacheRoundTrips() {
+        var menu = new MenuDO();
+        menu.setId(10L); menu.setTitle("根菜单"); menu.setParentId(0L);
+        when(menus.selectAuthorizedByUserId(7L, "superAdmin")).thenReturn(List.of(menu));
+        assertThat(service.getUserMenus(7L)).extracting(value -> value.get("id")).containsExactly(10L);
+        verify(menus).selectAuthorizedByUserId(7L, "superAdmin");
+        verifyNoMoreInteractions(menus);
+        verifyNoInteractions(redis, permissions, roles, userRoles, roleMenus, rolePermissions);
+    }
+
+    @Test
+    void missingUserDoesNotQueryOrReadOldCaches() {
+        assertThat(service.getUserMenus(null)).isEmpty();
+        assertThat(service.getUserPermissions(null)).isEmpty();
+        verifyNoInteractions(redis, menus, permissions, roles, userRoles, roleMenus, rolePermissions);
+    }
+
+    @Test
+    void databaseFailuresRejectWithoutFallingBackToCachedResources() {
+        var failure = new QueryTimeoutException("fixture");
+        when(menus.selectAuthorizedByUserId(7L, "superAdmin")).thenThrow(failure);
+        when(permissions.selectAuthorizedByUserId(7L, "superAdmin")).thenThrow(failure);
+        assertThatThrownBy(() -> service.getUserMenus(7L))
+                .isInstanceOf(AuthServiceUnavailableException.class).hasCause(failure);
+        assertThatThrownBy(() -> service.getUserPermissions(7L))
+                .isInstanceOf(AuthServiceUnavailableException.class).hasCause(failure);
+        verifyNoInteractions(redis, roles, userRoles, roleMenus, rolePermissions);
     }
 }

@@ -88,6 +88,9 @@ public interface ISysRoleMenuService extends IService<RoleMenuDO> {
      */
     boolean assignMenusToRole(Long roleId, List<Long> menuIds);
 
+    /** 事务内替换有效菜单集合，返回持久化关联是否发生变化。 */
+    boolean replaceMenusToRole(Long roleId, List<Long> menuIds);
+
     /**
      * 移除角色的所有菜单
      *

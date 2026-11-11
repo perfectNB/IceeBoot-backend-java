@@ -47,6 +47,9 @@ public interface ISysRoleService extends IService<RoleDO> {
      */
     SysRoleVO getRoleById(Long id);
 
+    /** 仅加载指定的权限树或菜单树，both保留原有完整响应。 */
+    SysRoleVO getRoleById(Long id, String include);
+
     /**
      * 新增角色
      *

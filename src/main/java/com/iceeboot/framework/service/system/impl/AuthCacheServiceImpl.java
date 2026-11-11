@@ -51,145 +51,22 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
 
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserMenus(Long userId) {
-
-//        String key = CacheConstants.Auth.USER_MENUS_KEY + userId;
-//        List<Map<String, Object>> menus = (List<Map<String, Object>>) redisTemplate.opsForValue().get(key);
-//
-//        if (menus == null) {
-//            menus = loadUserMenusFromDB(userId);
-//            redisTemplate.opsForValue().set(key, menus, CacheConstants.Auth.CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
-//        }
-
-        //    return menus;
-
-        List<RoleDO> roles = loadActiveUserRoles(userId);
-        if (roles.stream().anyMatch(role -> SUPER_ADMIN_ROLE_CODE.equals(role.getCode()))) {
-            List<MenuDO> menus = menuMapper.selectList(new LambdaQueryWrapper<MenuDO>()
-                    .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                    .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                    .orderByAsc(MenuDO::getSort));
-            return buildMenuTree(menus);
+        if (userId == null) return List.of();
+        try {
+            return buildMenuTree(menuMapper.selectAuthorizedByUserId(userId, SUPER_ADMIN_ROLE_CODE));
+        } catch (Exception exception) {
+            throw new AuthServiceUnavailableException(exception);
         }
-        List<Long> roleIds = roles.stream().map(RoleDO::getId).toList();
-
-        // 遍历角色列表，获取每个角色的菜单
-        Set<MenuDO> menuSet = new HashSet<>();
-        for (Long roleId : roleIds) {
-            String roleMenuKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
-            List<MenuDO> roleMenus;
-            roleMenus = (List<MenuDO>) redisTemplate.opsForValue().get(roleMenuKey);
-
-            if (roleMenus != null) {
-                menuSet.addAll(roleMenus);
-            } else {
-                List<Long> menuIds = roleMenuMapper.selectList(
-                        new LambdaQueryWrapper<RoleMenuDO>()
-                                .eq(RoleMenuDO::getRoleId, roleId)
-                                .eq(RoleMenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                ).stream().map(RoleMenuDO::getMenuId).collect(Collectors.toList());
-                if (menuIds.size() != 0) {
-                    roleMenus = menuMapper.selectList(
-                            new LambdaQueryWrapper<MenuDO>()
-                                    .in(MenuDO::getId, menuIds)
-                                    .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                                    .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                                    .orderByAsc(MenuDO::getSort));
-                    menuSet.addAll(roleMenus);
-                    redisTemplate.opsForValue().set(
-                            roleMenuKey,
-                            roleMenus
-                    );
-                }
-            }
-        }
-        // 将Set转换为List并按sort排序
-        List<MenuDO> menuList = new ArrayList<>(menuSet);
-        menuList.sort((m1, m2) -> {
-            Integer sort1 = m1.getSort();
-            Integer sort2 = m2.getSort();
-            if (sort1 == null) sort1 = 0;
-            if (sort2 == null) sort2 = 0;
-            return sort1.compareTo(sort2);
-        });
-        // 构建树形结构
-        return buildMenuTree(menuList);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserPermissions(Long userId) {
-        List<RoleDO> roles = loadActiveUserRoles(userId);
-        if (roles.stream().anyMatch(role -> SUPER_ADMIN_ROLE_CODE.equals(role.getCode()))) {
-            return permissionMapper.selectList(new LambdaQueryWrapper<PermissionDO>()
-                            .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                            .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                            .orderByAsc(PermissionDO::getSort))
-                    .stream().map(this::convertPermissionToMap).toList();
-        }
-        List<Long> roleIds = roles.stream().map(RoleDO::getId).toList();
-
-        // 2. 遍历角色列表，获取每个角色的权限
-        Set<Map<String, Object>> permissionSet = new HashSet<>();
-        for (Long roleId : roleIds) {
-            String rolePermissionKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
-            List<PermissionDO> rolePermissions;
-            List<Map<String, Object>> permissionMaps;
-            rolePermissions = (List<PermissionDO>) redisTemplate.opsForValue().get(rolePermissionKey);
-            if (rolePermissions != null) {
-                // 将PermissionDO转换为Map<String, Object>
-                permissionMaps = rolePermissions.stream()
-                        .map(this::convertPermissionToMap)
-                        .collect(Collectors.toList());
-                permissionSet.addAll(permissionMaps);
-            } else {
-                List<Long> permissionIds = rolePermissionMapper.selectList(
-                        new LambdaQueryWrapper<RolePermissionDO>()
-                                .eq(RolePermissionDO::getRoleId, roleId)
-                                .eq(RolePermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                ).stream().map(RolePermissionDO::getPermissionId).collect(Collectors.toList());
-                if (permissionIds.size() != 0) {
-                    rolePermissions = permissionMapper.selectList(
-                            new LambdaQueryWrapper<PermissionDO>()
-                                    .in(PermissionDO::getId, permissionIds)
-                                    .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                                    .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                                    .orderByAsc(PermissionDO::getSort));
-                    permissionMaps = rolePermissions.stream()
-                            .map(this::convertPermissionToMap)
-                            .collect(Collectors.toList());
-                    permissionSet.addAll(permissionMaps);
-                    redisTemplate.opsForValue().set(rolePermissionKey, rolePermissions);
-                }
-            }
-        }
-
-        // 3. 返回去重后的权限列表
-        return new ArrayList<>(permissionSet);
-    }
-
-    /**
-     * 授权前验证当前有效角色，避免撤销或禁用角色后仍从旧缓存恢复权限。
-     * 超级管理员依据角色编码获得当前启用资源，不依赖逐项关联或通配权限。
-     */
-    private List<RoleDO> loadActiveUserRoles(Long userId) {
         if (userId == null) return List.of();
         try {
-            List<Long> assignedIds = userRoleMapper.selectList(new LambdaQueryWrapper<UserRoleDO>()
-                            .eq(UserRoleDO::getUserId, userId)
-                            .eq(UserRoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED))
-                    .stream().map(UserRoleDO::getRoleId).filter(Objects::nonNull).distinct().toList();
-            List<RoleDO> roles = assignedIds.isEmpty() ? List.of()
-                    : roleMapper.selectList(new LambdaQueryWrapper<RoleDO>()
-                            .in(RoleDO::getId, assignedIds)
-                            .eq(RoleDO::getStatus, SystemConstants.Status.ACTIVE)
-                            .eq(RoleDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                            .orderByAsc(RoleDO::getSort));
-            // 兼容旧角色ID缓存的读取方，只回写已验证的有效角色，关系ID不能作为角色ID。
-            redisTemplate.opsForValue().set(CacheConstants.Auth.USER_ROLE + userId,
-                    roles.stream().map(RoleDO::getId).toList());
-            return roles;
+            // 角色、资源状态和关联在同一条 SQL 中读取，不从旧角色缓存恢复已撤销的权限。
+            return permissionMapper.selectAuthorizedByUserId(userId, SUPER_ADMIN_ROLE_CODE)
+                    .stream().map(this::convertPermissionToMap).toList();
         } catch (Exception exception) {
             throw new AuthServiceUnavailableException(exception);
         }

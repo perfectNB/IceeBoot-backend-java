@@ -12,6 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.plugin.Intercepts;
+import org.apache.ibatis.plugin.Invocation;
+import org.apache.ibatis.plugin.Signature;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -24,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,6 +43,7 @@ class AuthSuperAdminAccessTest {
     private AuthCacheServiceImpl service;
     private RedisTemplate<String, Object> redis;
     private final Map<String, Object> cache = new HashMap<>();
+    private final QueryCounter queryCounter = new QueryCounter();
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -49,6 +59,7 @@ class AuthSuperAdminAccessTest {
             jdbc.execute(Objects.requireNonNull(ddl).replaceAll("(?s) ENGINE=.*$", ""));
         }
         var configuration = new MybatisConfiguration();
+        configuration.addInterceptor(queryCounter);
         for (var mapper : List.of(SysRoleMapper.class, SysUserRoleMapper.class, SysMenuMapper.class,
                 SysPermissionMapper.class, SysRoleMenuMapper.class, SysRolePermissionMapper.class)) {
             configuration.addMapper(mapper);
@@ -131,16 +142,107 @@ class AuthSuperAdminAccessTest {
         assertThat(service.getUserPermissions(7L)).isEmpty();
     }
 
+    @Test
+    void eachResourceReadUsesOneCurrentDatabaseQueryWithoutRoleCacheAccess() {
+        assignRole("superAdmin");
+        queryCounter.calls.set(0);
+        clearInvocations(redis);
+        assertThat(service.getUserMenus(7L)).hasSize(1);
+        assertThat(queryCounter.calls.get()).isEqualTo(1);
+        assertThat(service.getUserPermissions(7L)).hasSize(3);
+        assertThat(queryCounter.calls.get()).isEqualTo(2);
+        verifyNoInteractions(redis);
+    }
+
+    @Test
+    void revokedOrdinaryGrantsCannotBeRestoredByOldRoleCaches() {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role_menu(id,role_id,menu_id,del_flag) VALUES(100,42,10,0)");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        assertThat(service.getUserMenus(7L)).hasSize(1);
+        assertThat(service.getUserPermissions(7L)).hasSize(1);
+        jdbc.update("UPDATE t_role_menu SET del_flag=1 WHERE role_id=42");
+        jdbc.update("UPDATE t_role_permission SET del_flag=1 WHERE role_id=42");
+        assertThat(service.getUserMenus(7L)).isEmpty();
+        assertThat(service.getUserPermissions(7L)).isEmpty();
+        jdbc.update("UPDATE t_role_menu SET del_flag=0 WHERE role_id=42");
+        jdbc.update("UPDATE t_role_permission SET del_flag=0 WHERE role_id=42");
+        assertThat(service.getUserMenus(7L)).hasSize(1);
+        assertThat(service.getUserPermissions(7L)).hasSize(1);
+    }
+
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void infrastructureFailureCannotFallBackToCachedSuperAdminGrants(boolean redisFailure) {
+    @ValueSource(strings = {"disabled", "deleted"})
+    void changedResourceStateIsEffectiveOnTheNextReadForOrdinaryRoles(String mode) {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role_menu(id,role_id,menu_id,del_flag) VALUES(100,42,10,0)");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        service.getUserMenus(7L);
+        service.getUserPermissions(7L);
+        String change = mode.equals("disabled") ? "status='inactive'" : "del_flag=1";
+        jdbc.update("UPDATE t_menu SET " + change + " WHERE id=10");
+        jdbc.update("UPDATE t_permission SET " + change + " WHERE id=20");
+        assertThat(service.getUserMenus(7L)).isEmpty();
+        assertThat(service.getUserPermissions(7L)).isEmpty();
+    }
+
+    @Test
+    void forgedCachedResourcesCannotAddUnassignedPermissionsOrMenus() {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role_menu(id,role_id,menu_id,del_flag) VALUES(100,42,10,0)");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        var menu = new MenuDO();
+        menu.setId(11L); menu.setTitle("伪造菜单"); menu.setParentId(0L); menu.setSort(1);
+        var permission = new PermissionDO();
+        permission.setId(21L); permission.setCode("example:create");
+        cache.put(CacheConstants.Auth.ROLE_MENUS_KEY + 42L, List.of(menu));
+        cache.put(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + 42L, List.of(permission));
+        assertThat(service.getUserMenus(7L)).extracting(value -> value.get("id")).containsExactly(10L);
+        assertThat(service.getUserPermissions(7L)).extracting(value -> value.get("code"))
+                .containsExactly("example:read");
+    }
+
+    @Test
+    void duplicateGrantsFromMultipleActiveRolesReturnEachResourceOnce() {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role(id,name,code,status,sort,del_flag) VALUES(43,'其他角色','other','active',2,0)");
+        jdbc.update("INSERT INTO t_user_role(id,user_id,role_id,del_flag) VALUES(91,7,43,0),(92,7,43,0)");
+        jdbc.update("INSERT INTO t_role_menu(id,role_id,menu_id,del_flag) VALUES(100,42,10,0),(101,43,10,0)");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(102,42,20,0),(103,43,20,0)");
+        assertThat(service.getUserMenus(7L)).hasSize(1);
+        assertThat(service.getUserPermissions(7L)).extracting(value -> value.get("code"))
+                .containsExactly("example:read");
+    }
+
+    @Test
+    void databaseFailureCannotFallBackToCachedSuperAdminGrants() {
         assignRole("superAdmin");
         service.getUserMenus(7L);
         service.getUserPermissions(7L);
-        if (redisFailure) when(redis.opsForValue()).thenThrow(new RedisConnectionFailureException("fixture"));
-        else jdbc.execute("DROP TABLE t_role");
+        jdbc.execute("DROP TABLE t_role");
         assertThatThrownBy(() -> service.getUserMenus(7L)).isInstanceOf(AuthServiceUnavailableException.class);
         assertThatThrownBy(() -> service.getUserPermissions(7L)).isInstanceOf(AuthServiceUnavailableException.class);
+    }
+
+    @Test
+    void resourceReadsDoNotDependOnRedisAfterAuthentication() {
+        assignRole("superAdmin");
+        when(redis.opsForValue()).thenThrow(new RedisConnectionFailureException("fixture"));
+        assertThat(service.getUserMenus(7L)).hasSize(1);
+        assertThat(service.getUserPermissions(7L)).hasSize(3);
+    }
+
+    @Intercepts(@Signature(type = Executor.class, method = "query", args = {
+            MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class
+    }))
+    static class QueryCounter implements Interceptor {
+        private final AtomicInteger calls = new AtomicInteger();
+
+        @Override
+        public Object intercept(Invocation invocation) throws Throwable {
+            calls.incrementAndGet();
+            return invocation.proceed();
+        }
     }
 
     private void assignRole(String code) {

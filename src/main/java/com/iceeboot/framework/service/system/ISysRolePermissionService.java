@@ -88,6 +88,9 @@ public interface ISysRolePermissionService extends IService<RolePermissionDO> {
      */
     boolean assignPermissionsToRole(Long roleId, List<Long> permissionIds);
 
+    /** 事务内替换有效权限集合，返回持久化关联是否发生变化。 */
+    boolean replacePermissionsToRole(Long roleId, List<Long> permissionIds);
+
     /**
      * 移除角色的所有权限
      *

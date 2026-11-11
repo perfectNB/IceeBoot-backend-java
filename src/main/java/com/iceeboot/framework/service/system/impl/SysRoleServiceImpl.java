@@ -17,17 +17,14 @@ import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.framework.dto.create.system.RoleDTO;
 import com.iceeboot.framework.dto.update.system.RoleUpdateDTO;
-import com.iceeboot.framework.entity.system.MenuDO;
-import com.iceeboot.framework.entity.system.PermissionDO;
 import com.iceeboot.framework.entity.system.RoleDO;
 import com.iceeboot.framework.entity.system.UserRoleDO;
 import com.iceeboot.framework.mapper.system.SysRoleMapper;
 import com.iceeboot.framework.query.system.SysRoleQuery;
 import com.iceeboot.framework.service.system.*;
-import com.iceeboot.framework.vo.system.SysMenuVO;
-import com.iceeboot.framework.vo.system.SysPermissionVO;
 import com.iceeboot.framework.vo.system.SysRoleVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -35,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +41,7 @@ import java.util.stream.Collectors;
  * @author CodeIcee
  * @date 2025-08-11
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> implements ISysRoleService {
@@ -106,6 +103,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
     @Override
     public SysRoleVO getRoleById(Long id) {
+        return getRoleById(id, "both");
+    }
+
+    @Override
+    public SysRoleVO getRoleById(Long id, String include) {
+        if (include == null || !List.of("both", "permissions", "menus").contains(include)) {
+            throw new IceeBootException("include只支持both、permissions或menus");
+        }
         RoleDO role = this.getById(id);
         if (role == null) {
             return null;
@@ -114,13 +119,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
         SysRoleVO vo = new SysRoleVO();
         BeanUtils.copyProperties(role, vo);
 
-        // 获取权限树（包含权限拥有状态）
-        List<SysPermissionVO> permissionTree = permissionService.getPermissionTreeByRoleId(id);
-        vo.setPermissionTree(permissionTree);
-
-        // 获取菜单树（包含菜单拥有状态）
-        List<SysMenuVO> menuTree = menuService.getMenuTreeByRoleId(id);
-        vo.setMenuTree(menuTree);
+        if (!"menus".equals(include)) {
+            vo.setPermissionTree(permissionService.getPermissionTreeByRoleId(id));
+        }
+        if (!"permissions".equals(include)) {
+            vo.setMenuTree(menuService.getMenuTreeByRoleId(id));
+        }
 
         return vo;
     }
@@ -252,62 +256,38 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, RoleDO> imple
 
     @Override
     public boolean saveRolePermissions(Long roleId, List<Long> permissionIds) {
-        // 1. 事务内只做DB操作
         transactionTemplate.executeWithoutResult(status -> {
-            rolePermissionService.removeAllPermissionsByRoleId(roleId);
-            if (permissionIds != null && !permissionIds.isEmpty()) {
-                rolePermissionService.assignPermissionsToRole(roleId, permissionIds);
+            if (rolePermissionService.replacePermissionsToRole(roleId, permissionIds)) {
+                invalidateRoleCacheAfterCommit(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId);
             }
         });
-
-        // 2. 事务提交后再刷新缓存（避免Redis慢导致DB锁持有过长）
-        List<PermissionDO> permissions;
-        if (permissionIds == null || permissionIds.isEmpty()) {
-            permissions = Collections.emptyList();
-        } else {
-            permissions = permissionService.list(
-                    new LambdaQueryWrapper<PermissionDO>()
-                            .in(PermissionDO::getId, permissionIds)
-                            .eq(PermissionDO::getStatus, SystemConstants.Status.ACTIVE)
-                            .eq(PermissionDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                            .orderByAsc(PermissionDO::getSort)
-            );
-        }
-
-        String cacheKey = CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId;
-        redisTemplate.opsForValue().set(cacheKey, permissions);
-        redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
-
         return true;
     }
 
     @Override
     public boolean saveRoleMenus(Long roleId, List<Long> menuIds) {
-        // 1. 事务内只做DB操作
         transactionTemplate.executeWithoutResult(status -> {
-            roleMenuService.removeAllMenusByRoleId(roleId);
-            if (menuIds != null && !menuIds.isEmpty()) {
-                roleMenuService.assignMenusToRole(roleId, menuIds);
+            if (roleMenuService.replaceMenusToRole(roleId, menuIds)) {
+                invalidateRoleCacheAfterCommit(CacheConstants.Auth.ROLE_MENUS_KEY + roleId);
             }
         });
-
-        // 2. 事务提交后再刷新缓存
-        List<MenuDO> menus;
-        if (menuIds == null || menuIds.isEmpty()) {
-            menus = Collections.emptyList();
-        } else {
-            menus = menuService.list(
-                    new LambdaQueryWrapper<MenuDO>()
-                            .in(MenuDO::getId, menuIds)
-                            .eq(MenuDO::getStatus, SystemConstants.Status.ACTIVE)
-                            .eq(MenuDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
-                            .orderByAsc(MenuDO::getSort)
-            );
-        }
-        String cacheKey = CacheConstants.Auth.ROLE_MENUS_KEY + roleId;
-        redisTemplate.opsForValue().set(cacheKey, menus);
-
         return true;
+    }
+
+    // 提交成功才失效旧角色快照；当前授权读取以数据库为准，不重建快照或清理URL映射。
+    private void invalidateRoleCacheAfterCommit(String cacheKey) {
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            redisTemplate.delete(cacheKey);
+                        } catch (RuntimeException ignored) {
+                            // 实时鉴权不读取旧快照，清理故障不能把已提交的数据库变更报成失败。
+                            log.warn("角色授权已保存，旧角色缓存清理失败；实时授权查询继续生效");
+                        }
+                    }
+                });
     }
 
     @Override
