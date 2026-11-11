@@ -1573,5 +1573,19 @@
     "name": "确认导入技能",
     "code": "ai:skill:import:commit:api",
     "parentCode": "ai:capability"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/by-code/{code}/stream",
+    "name": "流式调用智能体",
+    "code": "ai:agent:stream:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/events",
+    "name": "查询会话执行过程",
+    "code": "ai:session:events:api",
+    "parentCode": "ai:agent"
   }
 ]

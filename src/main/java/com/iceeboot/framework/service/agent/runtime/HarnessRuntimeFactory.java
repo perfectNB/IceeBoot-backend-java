@@ -200,9 +200,9 @@ public class HarnessRuntimeFactory {
                             "read_file",
                             "write_file",
                             "edit_file",
-                            "list_directory",
-                            "glob",
-                            "grep"));
+                            "list_files",
+                            "glob_files",
+                            "grep_files"));
         if (p.agent().planMode())
             allowed.addAll(List.of("plan_enter", "plan_write", "plan_exit", "todo_write"));
         for (String name : allowed)
@@ -213,7 +213,7 @@ public class HarnessRuntimeFactory {
         if (p.agent().outputFormat() == OutputFormat.JSON_SCHEMA)
             prompt += "\n最终结果必须是符合以下 JSON Schema 的纯 JSON：\n" + store.json(p.agent().outputSchema());
         Path workspacePath =
-                Path.of(properties.getWorkspace(), p.agent().id().toString(), caller.userId(), session);
+                Path.of(properties.getWorkspace(), p.agent().id().toString(), caller.userId(), session).toAbsolutePath().normalize();
         try {
             Files.createDirectories(workspacePath);
         } catch (java.io.IOException e) {
@@ -227,6 +227,7 @@ public class HarnessRuntimeFactory {
                         .name(p.agent().code())
                         .agentId(p.agent().id().toString())
                         .sessionLogStore(conversations.logStore())
+                        .stateStore(conversations.stateStore(p.agent().id(), caller.userId(), session))
                         .sysPrompt(prompt)
                         .model(recorder.observe(models.create(p.model(), p.agent().generation())))
                         .generateOptions(models.options(p.model(), p.agent().generation()))
@@ -285,7 +286,7 @@ public class HarnessRuntimeFactory {
                 p.agent().environment().forEach((k, v) -> env.put(k, secrets.decrypt(v)));
             workspace.setEnvironment(env);
             E2bFilesystemSpec spec =
-                    new E2bFilesystemSpec()
+                    new ReleasedE2bFilesystemSpec()
                             .apiKey(e2b.getApiKey())
                             .apiBaseUrl(e2b.getApiBaseUrl())
                             .domain(e2b.getDomain())
@@ -300,6 +301,14 @@ public class HarnessRuntimeFactory {
             spec.isolationScope(IsolationScope.SESSION);
             builder.filesystem(spec);
         } else builder.disableFilesystemTools().disableShellTool();
-        return builder.build();
+        var agent = builder.build();
+        try {
+            // 使用 SDK 原子会话更新接口，在执行和权限引擎创建前替换历史白名单。
+            agent.getDelegate().replacePermissionContext(caller.userId(), session, permissions.build());
+            return agent;
+        } catch (RuntimeException failure) {
+            try { agent.close(); } catch (RuntimeException cleanup) { failure.addSuppressed(cleanup); }
+            throw failure;
+        }
     }
 }

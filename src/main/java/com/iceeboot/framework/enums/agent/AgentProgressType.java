@@ -1,0 +1,7 @@
+package com.iceeboot.framework.enums.agent;
+
+/** 面向对话界面的稳定事件类型，不暴露 SDK 事件。 */
+public enum AgentProgressType {
+    RUN_STARTED, PHASE, MODEL_STARTED, REASONING_DELTA, REASONING_FINISHED, TEXT_DELTA, TOOL_STARTED, TOOL_FINISHED,
+    AGENT_FINISHED, RUN_FINISHED, ERROR, HEARTBEAT
+}

@@ -53,6 +53,66 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
 
     @Override
     public InvokeResult invoke(String code, InvokeRequest request, Caller caller) {
+        return invoke(code, request, caller, event -> {});
+    }
+
+    @Override
+    public reactor.core.publisher.Flux<AgentProgress> stream(String code, InvokeRequest request, Caller caller) {
+        return reactor.core.publisher.Flux.defer(() -> {
+            var root = new java.util.concurrent.atomic.AtomicReference<String>();
+            var finished = new java.util.concurrent.atomic.AtomicBoolean();
+            var sequence = new java.util.concurrent.atomic.AtomicLong();
+            var cancellationSent = new java.util.concurrent.atomic.AtomicBoolean();
+            Runnable disconnect = () -> {
+                if (!finished.get() && root.get() != null && cancellationSent.compareAndSet(false,true)) {
+                    try { control.cancel(root.get()); }
+                    catch (IceeBootException race) {
+                        if (!ResponseMessage.Agent.CANCEL_NOT_RUNNING.equals(race.getMessage()))
+                            com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(root.get(),"CANCEL","",race);
+                    }
+                }
+            };
+            reactor.core.publisher.Flux<AgentProgress> work = reactor.core.publisher.Flux.<AgentProgress>create(sink -> {
+                sink.onCancel(disconnect::run);
+                try {
+                    InvokeResult result = invoke(code, request, caller, event -> {
+                        root.compareAndSet(null, event.rootRunId());
+                        sequence.set(event.sequence());
+                        sink.next(event);
+                        if (sink.isCancelled()) disconnect.run();
+                    });
+                    finished.set(true);
+                    AgentProgress done = new AgentProgress(sequence.incrementAndGet(), AgentProgressType.RUN_FINISHED,
+                            result.runId(), result.runId(), "", code, "回答已完成", result.output(), "", "", "SUCCEEDED", System.currentTimeMillis());
+                    conversations.recordProgress(done);
+                    sink.next(done);
+                    sink.complete();
+                } catch (RuntimeException error) {
+                    finished.set(true);
+                    String message = error instanceof IceeBootException ? error.getMessage() : ResponseMessage.Agent.EXECUTION_FAILED;
+                    String status = message.equals(ResponseMessage.Agent.EXECUTION_CANCELLED) ? "CANCELLED"
+                            : message.equals(ResponseMessage.Agent.EXECUTION_TIMED_OUT) ? "TIMED_OUT" : "FAILED";
+                    AgentProgress failure = new AgentProgress(sequence.incrementAndGet(), AgentProgressType.ERROR,
+                            root.get(), root.get(), "", code, status.equals("CANCELLED") ? "执行已停止" : "本轮未完成", message, "", "", status, System.currentTimeMillis());
+                    if (root.get() != null) {
+                        try { conversations.recordProgress(failure); }
+                        catch (RuntimeException recordingFailure) {
+                            com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(root.get(), "PROGRESS", "", recordingFailure);
+                        }
+                    }
+                    sink.next(failure);
+                    sink.complete();
+                }
+            }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
+            return reactor.core.publisher.Flux.merge(work,
+                    reactor.core.publisher.Flux.interval(Duration.ofSeconds(10)).map(tick ->
+                            new AgentProgress(0, AgentProgressType.HEARTBEAT, root.get(), root.get(), "", code,
+                                    "执行中", "", "", "", "RUNNING", System.currentTimeMillis())))
+                    .takeUntil(event -> event.type() == AgentProgressType.RUN_FINISHED || event.type() == AgentProgressType.ERROR);
+        });
+    }
+
+    private InvokeResult invoke(String code, InvokeRequest request, Caller caller, java.util.function.Consumer<AgentProgress> listener) {
         control.acquire();
         List<AutoCloseable> resources = new CopyOnWriteArrayList<>();
         RunRecorder recorder = null;
@@ -82,6 +142,10 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                             budget,
                             () -> quota.acquire(caller.userId()));
 
+            recorder.observeProgress(event -> {
+                if (event.type() != AgentProgressType.TEXT_DELTA && event.type() != AgentProgressType.REASONING_DELTA) conversations.recordProgress(event);
+                listener.accept(event);
+            });
             sessionKey = p.agent().id() + ":" + caller.userId() + ":" + session;
             sessionAcquired = activeSessions.add(sessionKey);
             if (!sessionAcquired)
@@ -95,6 +159,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             recorder.start(input);
             registration = control.register(recorder.id);
             registration.check();
+            recorder.progress(AgentProgressType.PHASE, "正在装配技能、工具和运行环境", "", "", "", "RUNNING");
             var agent = harness.create(p, caller, recorder, budget, resources, session);
             resources.add(agent);
             registration.check();
@@ -134,7 +199,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                     detail.usageKnown());
         } catch (RuntimeException e) {
             try {
-                if (turnStarted) conversations.finish(conversation, turnId, "",
+                if (turnStarted) conversations.finish(conversation, turnId, recorder == null ? "" : recorder.partialOutput(),
                         isTimeout(e) ? "TIMED_OUT"
                                 : registration != null && registration.cancelled() ? "CANCELLED" : "FAILED");
             } catch (RuntimeException recordingFailure) {

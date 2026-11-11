@@ -242,3 +242,11 @@ CREATE TABLE IF NOT EXISTS t_agent_session_state (
  storage_path VARCHAR(255) NOT NULL, revision BIGINT NOT NULL, payload LONGBLOB NOT NULL,
  PRIMARY KEY(agent_id,user_id,session_id,storage_path)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- 展示过程独立于正文增量，按根执行和序号排序，读取时校验会话归属。
+CREATE TABLE IF NOT EXISTS t_agent_progress (
+    root_run_id VARCHAR(64) NOT NULL,
+    sequence_no BIGINT NOT NULL,
+    payload LONGTEXT NOT NULL,
+    PRIMARY KEY (root_run_id, sequence_no)
+);

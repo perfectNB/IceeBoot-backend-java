@@ -25,7 +25,8 @@ public final class AgentDiagnostics {
         String code =
                 error instanceof IceeBootException e && Integer.valueOf(429).equals(e.getCode())
                         ? "QUOTA_EXCEEDED"
-                        : stage + "_FAILED";
+                        : error instanceof IceeBootException && com.iceeboot.common.constant.ResponseMessage.Agent.EXECUTION_MAX_ROUNDS_EXCEEDED.equals(error.getMessage())
+                            ? "MAX_ROUNDS_EXCEEDED" : stage + "_FAILED";
         var chain = new ArrayList<String>();
         Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Throwable t = error; t != null && seen.add(t) && chain.size() < 8; t = t.getCause()) {

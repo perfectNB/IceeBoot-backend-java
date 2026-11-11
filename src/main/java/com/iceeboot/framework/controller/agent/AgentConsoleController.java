@@ -193,6 +193,40 @@ public class AgentConsoleController {
                         AgentInvokeVO.class));
     }
 
+    @Operation(summary = "流式调用智能体")
+    @PostMapping(value = "/agents/by-code/{code}/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RequirePermission(dynamic = true)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter stream(
+            @PathVariable String code, @Valid @RequestBody AgentInvokeDTO request,
+            jakarta.servlet.http.HttpServletResponse response) {
+        Caller caller = admin();
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        // 超时由执行服务统一控制，避免 Servlet 默认的短异步超时截断长工具调用。
+        var emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(0L);
+        var subscription = new java.util.concurrent.atomic.AtomicReference<reactor.core.Disposable>();
+        Runnable dispose = () -> { var value = subscription.get(); if (value != null) value.dispose(); };
+        emitter.onCompletion(dispose);
+        emitter.onTimeout(dispose);
+        emitter.onError(error -> dispose.run());
+        subscription.set(execution.stream(code, converter.convert(request, InvokeRequest.class), caller).subscribe(event -> {
+            try {
+                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().name("progress")
+                        .id(Long.toString(event.sequence())).data(converter.convert(event, AgentProgressVO.class)));
+            } catch (java.io.IOException error) { dispose.run(); }
+        }, emitter::completeWithError, emitter::complete));
+        return emitter;
+    }
+
+    @Operation(summary = "查询会话执行过程")
+    @GetMapping("/agents/{id}/sessions/{sessionId}/events")
+    @RequirePermission(dynamic = true)
+    public R<List<AgentProgressVO>> progress(@PathVariable long id, @PathVariable String sessionId, @RequestParam String runId) {
+        Caller caller = admin();
+        return R.ok(conversations.progress(id, caller.userId(), sessionId, runId).stream()
+                .map(event -> converter.convert(event, AgentProgressVO.class)).toList());
+    }
+
     @Operation(summary = "查询执行记录列表")
     @GetMapping("/runs")
     @RequirePermission(dynamic = true)

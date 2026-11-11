@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -91,6 +92,9 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
                                             "edit_file",
                                             "glob",
                                             "grep",
+                                            "list_files",
+                                            "glob_files",
+                                            "grep_files",
                                             "load_skill_through_path",
                                             "reset_tools",
                                             "generate_response",
@@ -119,19 +123,19 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
                         ResponseMessage.Agent.SKILL_CONTENT_TOO_LONG);
                 if (skill.resources() != null) {
                     require(
-                            skill.resources().size() <= 100,
+                            skill.resources().size() <= SkillConfig.MAX_RESOURCES,
                             ResponseMessage.Agent.SKILL_RESOURCES_TOO_MANY);
                     require(
                             skill.resources().values().stream()
                                             .filter(Objects::nonNull)
-                                            .mapToLong(String::length)
+                                            .mapToLong(value -> value.getBytes(StandardCharsets.UTF_8).length)
                                             .sum()
-                                    <= 5000000,
+                                    <= SkillConfig.MAX_TOTAL_RESOURCE_BYTES,
                             ResponseMessage.Agent.SKILL_RESOURCES_TOO_LARGE);
                     for (var e : skill.resources().entrySet()) {
                         resourcePath(e.getKey());
                         require(
-                                e.getValue() != null && e.getValue().length() <= 1000000,
+                                e.getValue() != null && e.getValue().length() <= SkillConfig.MAX_RESOURCE_CHARACTERS,
                                 ResponseMessage.Agent.SKILL_RESOURCE_CONTENT_TOO_LONG);
                     }
                 }

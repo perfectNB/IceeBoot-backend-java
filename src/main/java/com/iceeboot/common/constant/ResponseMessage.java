@@ -279,8 +279,8 @@ public class ResponseMessage {
         public static final String RESOURCE_DETAIL_SAVE_FAILED = "资源明细不存在或保存失败";
         public static final String SKILL_CONTENT_REQUIRED = "请填写 Skill 内容";
         public static final String SKILL_CONTENT_TOO_LONG = "Skill 内容过长";
-        public static final String SKILL_RESOURCES_TOO_MANY = "每个 Skill 最多 100 个资源";
-        public static final String SKILL_RESOURCES_TOO_LARGE = "单个 Skill 的资源总量不能超过 5MB";
+        public static final String SKILL_RESOURCES_TOO_MANY = "每个 Skill 最多 500 个资源";
+        public static final String SKILL_RESOURCES_TOO_LARGE = "单个 Skill 的资源内容总量不能超过 20MB";
         public static final String SKILL_RESOURCE_CONTENT_TOO_LONG = "资源内容过长";
         public static final String SKILL_TOOL_BINDING_INVALID = "Skill 只能关联 Tool";
         public static final String SKILL_RESOURCE_PATH_INVALID = "资源路径必须是安全的相对文件路径";

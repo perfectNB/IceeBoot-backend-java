@@ -20,6 +20,29 @@ import java.util.*;
 public class AgentConversationServiceImpl implements IAgentConversationService {
     private final AgentConversationMapper mapper;
     private final AgentProperties properties;
+    private final com.fasterxml.jackson.databind.ObjectMapper json;
+    private final com.iceeboot.framework.service.agent.security.AgentSecrets secrets;
+
+    @Override
+    public void recordProgress(AgentProgress event) {
+        try {
+            mapper.insertProgress(event.rootRunId(), event.sequence(), json.writeValueAsString(event));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED, e);
+        }
+    }
+
+    @Override
+    public List<AgentProgress> progress(long agent, String user, String session, String run) {
+        require(agent, user, session);
+        return mapper.progress(agent, user, session, run).stream().map(value -> {
+            try { return json.readValue(value, AgentProgress.class); }
+            catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED, e);
+            }
+        }).toList();
+    }
+
 
     private static void validate(String session) {
         if (session == null || !session.matches("[a-zA-Z0-9_-]{1,100}"))
@@ -88,6 +111,94 @@ public class AgentConversationServiceImpl implements IAgentConversationService {
     public void release(AgentSessionDO session,String run) {
         mapper.release(session.getAgentId(),session.getUserId(),session.getSessionId(),run);
     }
+    @Override
+    public io.agentscope.core.state.AgentStateStore stateStore(long agent, String user, String session) {
+        validate(session);
+        return new io.agentscope.core.state.AgentStateStore() {
+            private String slot(String sdkUser, String sdkSession, String key) {
+                try {
+                    byte[] source = json.writeValueAsBytes(Arrays.asList(sdkUser, sdkSession, key));
+                    return "runtime/" + HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(source));
+                } catch (java.security.NoSuchAlgorithmException | com.fasterxml.jackson.core.JsonProcessingException e) {
+                    throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED, e);
+                }
+            }
+            private RuntimeStateEnvelope decode(AgentSessionStateDO row) {
+                if (row == null) return null;
+                try {
+                    String encrypted = new String(row.getPayload(), java.nio.charset.StandardCharsets.UTF_8);
+                    return json.readValue(secrets.decrypt(encrypted), RuntimeStateEnvelope.class);
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED, e);
+                }
+            }
+            private boolean write(RuntimeStateEnvelope value, long expected) {
+                String path = slot(value.user(), value.session(), value.key());
+                try {
+                    byte[] payload = secrets.encrypt(json.writeValueAsString(value)).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    if (expected == 0) {
+                        try { return mapper.insertState(agent, user, session, path, payload) == 1; }
+                        catch (DuplicateKeyException race) { return false; }
+                    }
+                    return mapper.updateState(agent, user, session, path, expected, payload) == 1;
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED, e);
+                }
+            }
+            private void saveEnvelope(RuntimeStateEnvelope value) {
+                for (int attempt = 0; attempt < 8; attempt++) {
+                    var row = mapper.state(agent, user, session, slot(value.user(), value.session(), value.key()));
+                    if (write(value, row == null ? 0 : row.getRevision())) return;
+                }
+                throw new IceeBootException(409, ResponseMessage.Agent.EXECUTION_SESSION_BUSY);
+            }
+            private List<RuntimeStateEnvelope> slots() {
+                return mapper.paths(agent,user,session).stream().filter(path -> path.startsWith("runtime/"))
+                        .map(path -> decode(mapper.state(agent,user,session,path))).filter(Objects::nonNull).toList();
+            }
+            public boolean supportsVersioning() { return true; }
+            public <T extends io.agentscope.core.state.State> io.agentscope.core.state.VersionedState<T> getVersioned(String u, String s, String key, Class<T> type) {
+                var row = mapper.state(agent,user,session,slot(u,s,key));
+                var value = decode(row);
+                T result = value == null || value.deleted() || value.list() ? null : io.agentscope.core.util.JsonUtils.getJsonCodec().fromJson(value.payload(),type);
+                return new io.agentscope.core.state.VersionedState<>(result,row == null ? 0 : row.getRevision());
+            }
+            public long saveIfVersion(String u,String s,String key,io.agentscope.core.state.State value,long expected) {
+                var envelope = new RuntimeStateEnvelope(u,s,key,false,false,io.agentscope.core.util.JsonUtils.getJsonCodec().toJson(value));
+                if (!write(envelope,expected)) throw new IceeBootException(409,ResponseMessage.Agent.EXECUTION_SESSION_BUSY);
+                return expected + 1;
+            }
+            public void save(String u,String s,String key,io.agentscope.core.state.State value) {
+                saveEnvelope(new RuntimeStateEnvelope(u,s,key,false,false,io.agentscope.core.util.JsonUtils.getJsonCodec().toJson(value)));
+            }
+            public void save(String u,String s,String key,List<? extends io.agentscope.core.state.State> value) {
+                saveEnvelope(new RuntimeStateEnvelope(u,s,key,true,false,io.agentscope.core.util.JsonUtils.getJsonCodec().toJson(value)));
+            }
+            public <T extends io.agentscope.core.state.State> Optional<T> get(String u,String s,String key,Class<T> type) {
+                return Optional.ofNullable(getVersioned(u,s,key,type).value());
+            }
+            public <T extends io.agentscope.core.state.State> List<T> getList(String u,String s,String key,Class<T> type) {
+                var value = decode(mapper.state(agent,user,session,slot(u,s,key)));
+                if (value == null || value.deleted() || !value.list()) return List.of();
+                List<?> items = io.agentscope.core.util.JsonUtils.getJsonCodec().fromJson(value.payload(),List.class);
+                return items.stream().map(item -> io.agentscope.core.util.JsonUtils.getJsonCodec().convertValue(item,type)).toList();
+            }
+            public boolean exists(String u,String s) {
+                return slots().stream().anyMatch(value -> !value.deleted() && Objects.equals(value.user(),u) && Objects.equals(value.session(),s));
+            }
+            public void delete(String u,String s,String key) { saveEnvelope(new RuntimeStateEnvelope(u,s,key,false,true,"")); }
+            public void delete(String u,String s) {
+                slots().stream().filter(value -> !value.deleted() && Objects.equals(value.user(),u) && Objects.equals(value.session(),s))
+                        .forEach(value -> delete(u,s,value.key()));
+            }
+            public Set<String> listSessionIds(String u) {
+                Set<String> result = new HashSet<>();
+                slots().stream().filter(value -> !value.deleted() && Objects.equals(value.user(),u)).forEach(value -> result.add(value.session()));
+                return result;
+            }
+        };
+    }
+
     @Override
     public SessionLogStore logStore() {
         return (key,context) -> {

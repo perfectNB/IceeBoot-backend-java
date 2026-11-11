@@ -95,7 +95,7 @@ class AgentPermissionCatalogTest {
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_agent_schema_history", Integer.class))
-                .isEqualTo(8);
+                .isEqualTo(10);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_menu WHERE path LIKE"
@@ -107,7 +107,7 @@ class AgentPermissionCatalogTest {
                                 "SELECT COUNT(*) FROM t_permission WHERE path LIKE"
                                         + " '/v1/agent-console/%' AND del_flag=0",
                                 Integer.class))
-                .isEqualTo(53);
+                .isEqualTo(55);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_role_permission WHERE role_id=1 AND"
@@ -166,6 +166,6 @@ class AgentPermissionCatalogTest {
                 }
             }
         }
-        assertThat(keys).hasSize(53);
+        assertThat(keys).hasSize(55);
     }
 }

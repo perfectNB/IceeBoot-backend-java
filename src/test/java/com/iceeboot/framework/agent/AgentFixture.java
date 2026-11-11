@@ -171,7 +171,7 @@ class AgentFixture {
 
     com.iceeboot.framework.service.agent.IAgentConversationService conversations() {
         return transactional(new com.iceeboot.framework.service.agent.impl.AgentConversationServiceImpl(
-                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties),
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties,json,secrets),
                 new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
     }
 

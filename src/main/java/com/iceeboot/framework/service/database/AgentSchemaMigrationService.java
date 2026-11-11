@@ -31,7 +31,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             List.of(
                     "V001__agent_baseline.sql",
                     "V002__agent_operations.sql",
-                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql");
+                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql", "V009__agent_progress.sql");
 
     @Override
     public void run(ApplicationArguments args) {
@@ -43,7 +43,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
     }
 
     public void migratePermissions() {
-        migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql"));
+        migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql", "V010__agent_stream_permissions.sql"));
     }
 
     private synchronized void migrate(List<String> migrations) {
@@ -112,7 +112,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             }
         }
         if (version == 1) verifyLegacyData(c);
-        boolean transactional = version >= 4 && version != 6;
+        boolean transactional = version >= 4 && version != 6 && version != 9;
         if (transactional) c.setAutoCommit(false);
         try {
             for (String statement : sql.replaceAll("(?m)^--[^\n]*", "").split(";")) {

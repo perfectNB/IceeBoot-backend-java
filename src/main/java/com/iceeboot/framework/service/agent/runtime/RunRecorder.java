@@ -35,6 +35,83 @@ public final class RunRecorder implements MiddlewareBase {
     private AgentSessionLease sessionLease;
     private final String traceId;
     private volatile String output = "";
+    private static final int MAX_REASONING_CHARACTERS = 100_000;
+    private final AtomicInteger modelRound = new AtomicInteger();
+    private final Map<String,StringBuffer> reasoning = new java.util.concurrent.ConcurrentHashMap<>();
+    private final StringBuffer partial = new StringBuffer();
+    public String partialOutput() { return partial.toString(); }
+    private java.util.function.Consumer<AgentProgress> progress = event -> {};
+    private AtomicLong sequence = new AtomicLong();
+    private final Map<String, StringBuilder> toolOutputs = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void observeProgress(java.util.function.Consumer<AgentProgress> listener) { progress = listener; }
+
+    public void progress(AgentProgressType type, String title, String text, String callId, String tool, String status) {
+        synchronized (sequence) {
+            progress.accept(new AgentProgress(sequence.incrementAndGet(), type, rootId, id, parentId,
+                    snapshot.agent().code(), title, text, callId, tool, status, System.currentTimeMillis()));
+        }
+    }
+
+    @Override
+    public Flux<AgentEvent> onActing(Agent agent, RuntimeContext context, ActingInput input,
+            Function<ActingInput, Flux<AgentEvent>> next) {
+        return Flux.defer(() -> {
+            for (ToolUseBlock call : input.toolCalls()) {
+                String title = call.getName().equals("load_skill_through_path") ? "加载技能" : call.getName().startsWith("agent_") ? "委派子智能体" : "调用工具";
+                progress(AgentProgressType.TOOL_STARTED, title + " · " + call.getName(),
+                        com.iceeboot.framework.service.agent.support.AgentProgressPreview.input(call.getInput()), call.getId(), call.getName(), "RUNNING");
+            }
+            return next.apply(input);
+        });
+    }
+
+    private void publish(AgentEvent event) {
+        if (event instanceof ModelCallStartEvent model) {
+            if (!partial.isEmpty()) progress(AgentProgressType.PHASE, "阶段输出",
+                    com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(partialOutput()), "", "", "SUCCEEDED");
+            partial.setLength(0);
+            progress(AgentProgressType.MODEL_STARTED, "模型调用 · 第 " + modelRound.incrementAndGet() + " 轮", "", model.getReplyId(), "", "RUNNING");
+        }
+        else if (event instanceof ThinkingBlockStartEvent start) {
+            reasoning.put(start.getReplyId() + ":" + start.getBlockId(),new StringBuffer());
+            progress(AgentProgressType.PHASE,"正在接收模型分析 · 第 " + modelRound.get() + " 轮","内容由接入模型返回", "", "", "RUNNING");
+        } else if (event instanceof ThinkingBlockDeltaEvent delta) {
+            String key=delta.getReplyId() + ":" + delta.getBlockId();
+            var content=reasoning.computeIfAbsent(key,ignored -> new StringBuffer());
+            if (content.length()<MAX_REASONING_CHARACTERS) {
+                String accepted=delta.getDelta().substring(0,Math.min(delta.getDelta().length(),MAX_REASONING_CHARACTERS-content.length()));
+                content.append(accepted);
+                progress(AgentProgressType.REASONING_DELTA,"模型分析 · 第 " + modelRound.get() + " 轮",accepted,key,"","RUNNING");
+            }
+        } else if (event instanceof ThinkingBlockEndEvent end) {
+            completeReasoning(end.getReplyId() + ":" + end.getBlockId(),"SUCCEEDED");
+        }
+        else if (event instanceof TextBlockDeltaEvent text) {
+            partial.append(text.getDelta());
+            progress(AgentProgressType.TEXT_DELTA, "正在回复", text.getDelta(), text.getReplyId(), "", "RUNNING");
+        }
+        else if (event instanceof ToolResultTextDeltaEvent text) {
+            var result = toolOutputs.computeIfAbsent(text.getToolCallId(), key -> new StringBuilder());
+            synchronized (result) {
+                if (result.length() < com.iceeboot.framework.service.agent.support.AgentProgressPreview.MAX_CHARACTERS * 2)
+                    result.append(text.getDelta(), 0, Math.min(text.getDelta().length(), com.iceeboot.framework.service.agent.support.AgentProgressPreview.MAX_CHARACTERS * 2 - result.length()));
+            }
+        } else if (event instanceof ToolResultEndEvent result) {
+            var output = toolOutputs.remove(result.getToolCallId());
+            progress(AgentProgressType.TOOL_FINISHED, (result.getState().name().equals("DENIED") ? "工具被拒绝 · " : result.getState().name().equals("ERROR") ? "工具执行失败 · " : "工具返回 · ") + result.getToolCallName(),
+                    com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(output == null ? "" : output.toString()),
+                    result.getToolCallId(), result.getToolCallName(), result.getState().name());
+        }
+    }
+
+    private void completeReasoning(String key,String status) {
+        var content=reasoning.remove(key);
+        if(content==null || content.isEmpty()) return;
+        String result=com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(content.toString(),MAX_REASONING_CHARACTERS);
+        if(content.length()>=MAX_REASONING_CHARACTERS) result+="\n…（模型分析达到展示上限，已截断）";
+        progress(AgentProgressType.REASONING_FINISHED,"模型分析 · 第 " + modelRound.get() + " 轮",result,key,"",status);
+    }
 
     public RunRecorder(
             String rootId,
@@ -88,6 +165,7 @@ public final class RunRecorder implements MiddlewareBase {
         if (started.compareAndSet(false, true)) {
             store.startRun(id, rootId, parentId, snapshot, caller.userId(), store.json(messages));
             store.diagnose(id, "", traceId);
+            progress(AgentProgressType.RUN_STARTED, parentId.isEmpty() ? "已收到请求，准备运行环境" : "子智能体开始处理 · " + snapshot.agent().name(), "", "", "", "RUNNING");
         }
     }
 
@@ -100,8 +178,10 @@ public final class RunRecorder implements MiddlewareBase {
     }
 
     public RunRecorder child(PublishedAgent child, Caller childCaller) {
-        return new RunRecorder(
-                rootId, id, child, childCaller, store, modelBudget, acquireQuota, traceId);
+        RunRecorder result = new RunRecorder(rootId, id, child, childCaller, store, modelBudget, acquireQuota, traceId);
+        result.progress = progress;
+        result.sequence = sequence;
+        return result;
     }
 
     public void toolFailure(Throwable error) {
@@ -119,7 +199,7 @@ public final class RunRecorder implements MiddlewareBase {
                     com.iceeboot.framework.service.agent.support.AgentDiagnostics.failure(
                             id, "EXECUTION", traceId, error);
             store.diagnose(id, code, traceId);
-            fail();
+            finish("FAILED",error instanceof IceeBootException ? error.getMessage() : ResponseMessage.Agent.EXECUTION_FAILED);
         }
     }
 
@@ -142,8 +222,13 @@ public final class RunRecorder implements MiddlewareBase {
     }
 
     public void finish(String status, String error) {
-        if (started.get() && ended.compareAndSet(false, true))
+        if (started.get() && ended.compareAndSet(false, true)) {
+            for(String key:List.copyOf(reasoning.keySet())) completeReasoning(key,status);
+            if (!status.equals("SUCCEEDED") && output.isEmpty()) output = partialOutput();
             store.finishRun(id, status, output, error);
+            progress(AgentProgressType.AGENT_FINISHED, snapshot.agent().name() + (status.equals("SUCCEEDED") ? " · 处理完成" : " · " + error),
+                    parentId.isEmpty() ? "" : com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(output), "", "", status);
+        }
     }
 
     public Model observe(Model delegate) {
@@ -238,6 +323,7 @@ public final class RunRecorder implements MiddlewareBase {
                     return next.apply(input)
                             .doOnNext(
                                     event -> {
+                                        publish(event);
                                         if (event instanceof ExceedMaxItersEvent)
                                             throw new IceeBootException(
                                                     ResultCodeEnum.ERROR.getCode(),

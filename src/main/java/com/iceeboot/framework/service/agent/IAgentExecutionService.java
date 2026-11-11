@@ -6,6 +6,8 @@ import com.iceeboot.framework.model.agent.*;
 public interface IAgentExecutionService {
     InvokeResult invoke(String code, InvokeRequest request, Caller caller);
 
+    reactor.core.publisher.Flux<AgentProgress> stream(String code, InvokeRequest request, Caller caller);
+
     String invokeModel(ModelInvokeRequest request, Caller caller);
 
     void cancel(String id);

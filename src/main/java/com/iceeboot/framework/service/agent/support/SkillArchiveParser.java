@@ -3,6 +3,7 @@ package com.iceeboot.framework.service.agent.support;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.framework.vo.agent.*;
+import com.iceeboot.framework.model.agent.SkillConfig;
 import org.apache.commons.compress.archivers.tar.*;
 import org.apache.commons.compress.archivers.zip.*;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -152,10 +153,13 @@ public class SkillArchiveParser {
                     if (roots.stream().anyMatch(child -> !child.equals(root) && child.startsWith(root) && path.startsWith(child))) continue;
                     String relative = path.substring(root.length());
                     String value = text(entry.getValue());
-                    if (relative.equals("SKILL.md") || value.length()>1000000) throw new IceeBootException(ResponseMessage.Agent.SKILL_RESOURCE_CONTENT_TOO_LONG);
+                    if (relative.equals("SKILL.md") || value.length()>SkillConfig.MAX_RESOURCE_CHARACTERS) throw new IceeBootException(ResponseMessage.Agent.SKILL_RESOURCE_CONTENT_TOO_LONG);
                     resources.put(relative,value);
-                    resourceSize += value.length();
-                    if (resources.size()>100 || resourceSize>5000000) throw new IceeBootException(ResponseMessage.Agent.SKILL_RESOURCES_TOO_LARGE);
+                    resourceSize += value.getBytes(StandardCharsets.UTF_8).length;
+                    if (resources.size()>SkillConfig.MAX_RESOURCES)
+                        throw new IceeBootException(ResponseMessage.Agent.SKILL_RESOURCES_TOO_MANY);
+                    if (resourceSize>SkillConfig.MAX_TOTAL_RESOURCE_BYTES)
+                        throw new IceeBootException(ResponseMessage.Agent.SKILL_RESOURCES_TOO_LARGE);
                 }
                 AgentSkillImportItemVO item = new AgentSkillImportItemVO();
                 item.setSourcePath(root.isEmpty()?".":root.substring(0,root.length()-1));

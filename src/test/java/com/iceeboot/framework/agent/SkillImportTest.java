@@ -67,6 +67,74 @@ class SkillImportTest {
         assertThat(f.configs.capabilities()).hasSize(2);
     }
     @Test
+    void importsAndEditsSkillsWithHundredsOfResourcesWithoutDroppingFiles() throws Exception {
+        for (int count : List.of(131, 500)) {
+            Map<String, byte[]> files = new LinkedHashMap<>();
+            files.put("repo-sha/SKILL.md", text("# Research skill"));
+            for (int i = 0; i < count; i++)
+                files.put("repo-sha/tests/case-" + i + ".md", text("案例 " + i));
+            var item = parser.parse(zip(files), "repo.zip", null, true).getSkills().getFirst();
+            assertThat(item.getResources()).hasSize(count).containsEntry("tests/case-130.md", "案例 130");
+            var f = new AgentFixture();
+            f.skillImports().commit(batch(dto(item)));
+            var saved = f.configs.capabilities().getFirst();
+            assertThat(saved.skill().resources()).isEqualTo(item.getResources());
+            f.configs.saveCapability(saved);
+            assertThat(f.configs.capabilities().getFirst().skill().resources()).hasSize(count);
+        }
+    }
+
+    @Test
+    void reportsResourceCountSeparatelyFromContentSizeForPreviewAndCommit() throws Exception {
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        files.put("SKILL.md", text("# Skill"));
+        Map<String, String> resources = new LinkedHashMap<>();
+        for (int i = 0; i < 501; i++) {
+            String path = "tests/case-" + i + ".md";
+            files.put(path, text("small"));
+            resources.put(path, "small");
+        }
+        byte[] archive = zip(files);
+        assertThatThrownBy(() -> parser.parse(archive, "skill.zip", null, false))
+                .isInstanceOf(IceeBootException.class).hasMessage("每个 Skill 最多 500 个资源");
+        var small = parser.parse(zip(Map.of("SKILL.md", text("# Skill"))), "skill.zip", null, false).getSkills().getFirst();
+        var request = dto(small);
+        request.setResources(resources);
+        var f = new AgentFixture();
+        assertThatThrownBy(() -> f.skillImports().commit(batch(request)))
+                .isInstanceOf(IceeBootException.class).hasMessage("每个 Skill 最多 500 个资源");
+        assertThat(f.configs.capabilities()).isEmpty();
+    }
+
+    @Test
+    void stillEnforcesTotalAndIndividualResourceContentLimits() throws Exception {
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        files.put("SKILL.md", text("# Skill"));
+        String part = "文".repeat(1_000_000);
+        for (int i = 0; i < 6; i++) files.put("references/part-" + i + ".md", text(part));
+        int remainingBytes = 20 * 1024 * 1024 - 6 * text(part).length;
+        files.put("references/tail.md", text("文".repeat(remainingBytes / 3) + "x".repeat(remainingBytes % 3)));
+        var item = parser.parse(zip(files), "skill.zip", null, false).getSkills().getFirst();
+        var f = new AgentFixture();
+        f.skillImports().commit(batch(dto(item)));
+        assertThat(f.configs.capabilities().getFirst().skill().resources()).hasSize(7);
+        files.put("extra.md", text("x"));
+        byte[] tooMuch = zip(files);
+        assertThatThrownBy(() -> parser.parse(tooMuch, "skill.zip", null, false))
+                .isInstanceOf(IceeBootException.class).hasMessage("单个 Skill 的资源内容总量不能超过 20MB");
+        var request = dto(item);
+        request.setCode("too_large");
+        request.setResources(new LinkedHashMap<>(item.getResources()));
+        request.getResources().put("extra.md", "x");
+        assertThatThrownBy(() -> f.skillImports().commit(batch(request)))
+                .isInstanceOf(IceeBootException.class).hasMessage("单个 Skill 的资源内容总量不能超过 20MB");
+        byte[] single = zip(Map.of("SKILL.md", text("# Skill"), "large.md", text("x".repeat(1_000_001))));
+        assertThatThrownBy(() -> parser.parse(single, "skill.zip", null, false))
+                .isInstanceOf(IceeBootException.class).hasMessageContaining("资源内容过长");
+        assertThat(f.configs.capabilities()).hasSize(1);
+    }
+
+    @Test
     void nestedSkillsAreNotIncludedAsParentResourcesAndGithubDirectoryIsApplied() throws Exception {
         var bytes=zip(Map.of("repo-sha/skills/parent/SKILL.md",text("# Parent"),
                 "repo-sha/skills/parent/child/SKILL.md",text("# Child"),

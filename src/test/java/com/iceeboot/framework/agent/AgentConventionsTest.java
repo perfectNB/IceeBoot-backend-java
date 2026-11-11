@@ -24,7 +24,9 @@ class AgentConventionsTest {
                         && !method.isAnnotationPresent(PutMapping.class)
                         && !method.isAnnotationPresent(DeleteMapping.class)) continue;
                 endpoints++;
-                assertThat(method.getReturnType()).isEqualTo(R.class);
+                if (method.getName().equals("stream"))
+                    assertThat(method.getReturnType()).isEqualTo(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.class);
+                else assertThat(method.getReturnType()).isEqualTo(R.class);
                 assertThat(method.getAnnotation(RequirePermission.class).dynamic()).isTrue();
                 assertThat(method.getAnnotation(RequirePermission.class).code()).isEmpty();
                 String signature = method.getGenericReturnType().getTypeName();
@@ -37,7 +39,7 @@ class AgentConventionsTest {
                                 .startsWith("com.iceeboot.framework.dto.");
                     }
             }
-        assertThat(endpoints).isEqualTo(53);
+        assertThat(endpoints).isEqualTo(55);
     }
 
     @Test
