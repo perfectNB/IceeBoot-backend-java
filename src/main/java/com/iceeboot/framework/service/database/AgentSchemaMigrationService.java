@@ -43,7 +43,8 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
     }
 
     public void migratePermissions() {
-        migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql", "V010__agent_stream_permissions.sql"));
+        migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql", "V010__agent_stream_permissions.sql",
+                "V011__authorization_indexes.sql"));
     }
 
     private synchronized void migrate(List<String> migrations) {
@@ -112,7 +113,8 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             }
         }
         if (version == 1) verifyLegacyData(c);
-        boolean transactional = version >= 4 && version != 6 && version != 9;
+        // V011 依赖基础 RBAC 表，必须在 DatabaseInitService 完成后执行，DDL 不包在事务里。
+        boolean transactional = !SCHEMA.contains(name) && version != 11;
         if (transactional) c.setAutoCommit(false);
         try {
             for (String statement : sql.replaceAll("(?m)^--[^\n]*", "").split(";")) {
@@ -171,7 +173,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
                 Pattern.compile("(?is)^ALTER TABLE (\\w+) ADD COLUMN (\\w+) .*").matcher(sql);
         if (column.matches()) return hasColumn(c, column.group(1), column.group(2));
         Matcher add =
-                Pattern.compile("(?is)^ALTER TABLE (\\w+) ADD UNIQUE INDEX (\\w+).*").matcher(sql);
+                Pattern.compile("(?is)^ALTER TABLE (\\w+) ADD (?:UNIQUE )?INDEX (\\w+).*").matcher(sql);
         if (add.matches()) return hasIndex(c, add.group(1), add.group(2));
         Matcher drop = Pattern.compile("(?is)^ALTER TABLE (\\w+) DROP INDEX (\\w+).*").matcher(sql);
         return drop.matches() && !hasIndex(c, drop.group(1), drop.group(2));

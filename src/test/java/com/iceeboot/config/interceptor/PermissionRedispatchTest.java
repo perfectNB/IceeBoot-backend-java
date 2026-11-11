@@ -9,7 +9,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 import java.util.List;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -26,7 +25,7 @@ class PermissionRedispatchTest {
         request.addHeader("Accept", "text/event-stream");
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
-            when(cache.getUserPermissions(7L)).thenReturn(List.of(Map.of("code", "sample:read")));
+            when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(true);
             assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), handler)).isTrue();
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(null);
             request.setDispatcherType(DispatcherType.ASYNC);
@@ -41,7 +40,7 @@ class PermissionRedispatchTest {
     @Test void authorizedDynamicStreamMayResumeAfterTokenRotation() throws Exception {
         var cache = mock(IAuthCacheService.class);
         when(cache.getUrlPermissions(eq("/sample"), anyString())).thenReturn(List.of("sample:read"));
-        when(cache.getUserPermissions(7L)).thenReturn(List.of(Map.of("code", "sample:read")));
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(true);
         var interceptor = new PermissionInterceptor(cache);
         var handler = new HandlerMethod(new Endpoint(), Endpoint.class.getMethod("dynamicRead"));
         var request = new MockHttpServletRequest("GET", "/sample");

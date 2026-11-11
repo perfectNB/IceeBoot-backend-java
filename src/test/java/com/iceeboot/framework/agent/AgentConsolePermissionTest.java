@@ -61,7 +61,7 @@ class AgentConsolePermissionTest {
                         .setControllerAdvice(
                                 new AgentConsoleExceptionHandler(), new GlobalExceptionHandler())
                         .build();
-        when(cache.getUserPermissions(7L)).thenReturn(List.of());
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(false);
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
             mvc.perform(get("/v1/agent-console/models")).andExpect(status().isForbidden());
@@ -74,7 +74,7 @@ class AgentConsolePermissionTest {
         var cache = mock(IAuthCacheService.class);
         var configs = mock(IAgentConfigurationService.class);
         var users = mock(ISysUserService.class);
-        when(cache.getUserPermissions(7L)).thenReturn(List.of(Map.of("code", "ai:model:read")));
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(true);
         when(users.getUserRoles(7L)).thenReturn(List.of("admin"));
         var mvc =
                 MockMvcBuilders.standaloneSetup(
@@ -103,7 +103,7 @@ class AgentConsolePermissionTest {
         var cache = mock(IAuthCacheService.class);
         var configs = mock(IAgentConfigurationService.class);
         var users = mock(ISysUserService.class);
-        when(cache.getUserPermissions(1L)).thenReturn(List.of(Map.of("code", "ai:model:read")));
+        when(cache.hasUserPermissions(eq(1L), anyList(), anyBoolean())).thenReturn(true);
         when(users.getUserRoles(1L)).thenReturn(List.of("superAdmin"));
         when(configs.models()).thenReturn(List.of());
         when(cache.getUrlPermissions(eq("/v1/agent-console/models"), eq("GET")))
@@ -171,7 +171,8 @@ class AgentConsolePermissionTest {
                 spy(
                         new com.iceeboot.framework.service.system.impl.AuthCacheServiceImpl(
                                 redis, null, null, null, null, null, null));
-        doReturn(List.of(Map.of("code", "ai:agent:read"))).when(cache).getUserPermissions(7L);
+        doReturn(false).when(cache).hasUserPermissions(anyLong(), anyList(), anyBoolean());
+        doReturn(true).when(cache).hasUserPermissions(7L, List.of("ai:agent:read"), false);
         var configs = mock(IAgentConfigurationService.class);
         var store = mock(IAgentPersistenceService.class);
         var users = mock(ISysUserService.class);

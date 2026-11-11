@@ -18,7 +18,7 @@ import java.util.Map;
 public interface IAuthCacheService {
 
     /**
-     * 获取用户菜单列表（从缓存或数据库）
+     * 读取用户当前有效菜单，不使用可能滞后的角色资源缓存。
      *
      * @param userId 用户ID
      * @return 菜单列表
@@ -26,12 +26,15 @@ public interface IAuthCacheService {
     List<Map<String, Object>> getUserMenus(Long userId);
 
     /**
-     * 获取用户权限列表（从缓存或数据库）
+     * 读取当前有效权限详情，供登录、个人资料等需要完整授权清单的场景使用。
      *
      * @param userId 用户ID
      * @return 权限列表
      */
     List<Map<String, Object>> getUserPermissions(Long userId);
+
+    /** 单次读取当前有效授权，仅校验指定权限；角色或关联撤销后立即生效。 */
+    boolean hasUserPermissions(Long userId, List<String> codes, boolean requireAll);
 
     /**
      * 获取用户角色列表（从缓存或数据库）

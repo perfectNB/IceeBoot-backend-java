@@ -13,6 +13,7 @@ import com.iceeboot.framework.dto.update.system.UserUpdateDTO;
 import com.iceeboot.framework.entity.system.UserDO;
 import com.iceeboot.framework.query.system.SysUserQuery;
 import com.iceeboot.framework.vo.system.SysUserVO;
+import com.iceeboot.framework.vo.system.SysUserListVO;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public interface ISysUserService extends IService<UserDO> {
      * @param query 查询条件
      * @return 用户分页列表
      */
-    PageResult<SysUserVO> getUserPage(SysUserQuery query);
+    PageResult<SysUserListVO> getUserPage(SysUserQuery query);
 
     /**
      * 根据ID获取用户详情

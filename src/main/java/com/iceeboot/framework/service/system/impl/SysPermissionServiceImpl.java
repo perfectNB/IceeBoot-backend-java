@@ -23,6 +23,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,6 +98,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
     }
 
     @Override
+    @Transactional
     public boolean addPermission(PermissionDTO permissionDTO) {
         // 检查权限编码是否重复
         if (existsCode(permissionDTO.getCode(), null)) {
@@ -103,10 +107,13 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
         PermissionDO permission = new PermissionDO();
         BeanUtils.copyProperties(permissionDTO, permission);
-        return this.save(permission);
+        boolean saved = this.save(permission);
+        if (saved) invalidatePermissionCachesAfterCommit(List.of());
+        return saved;
     }
 
     @Override
+    @Transactional
     public boolean updatePermission(PermissionUpdateDTO dto) {
         // 检查权限编码是否重复
         if (existsCode(dto.getCode(), dto.getId())) {
@@ -116,14 +123,13 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
         PermissionDO permission = new PermissionDO();
         BeanUtils.copyProperties(dto, permission);
         List<Long> roleIds = rolePermissionService.getRoleIdsByPermissionId(dto.getId());
-        roleIds.forEach(roleId -> {
-            redisTemplate.delete(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId);
-        });
-        redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
-        return this.updateById(permission);
+        boolean updated = this.updateById(permission);
+        if (updated) invalidatePermissionCachesAfterCommit(roleIds);
+        return updated;
     }
 
     @Override
+    @Transactional
     public boolean deletePermissions(List<Long> ids) {
         // 检查是否有子权限或角色关联
         for (Long id : ids) {
@@ -153,15 +159,41 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
             }
         }
         
-        return this.removeByIds(ids);
+        boolean deleted = this.removeByIds(ids);
+        if (deleted) invalidatePermissionCachesAfterCommit(List.of());
+        return deleted;
     }
 
     @Override
+    @Transactional
     public boolean updateStatus(Long id, String status) {
         PermissionDO permission = new PermissionDO();
         permission.setId(id);
         permission.setStatus(status);
-        return this.updateById(permission);
+        List<Long> roleIds = rolePermissionService.getRoleIdsByPermissionId(id);
+        boolean updated = this.updateById(permission);
+        if (updated) invalidatePermissionCachesAfterCommit(roleIds);
+        return updated;
+    }
+
+    private void invalidatePermissionCachesAfterCommit(List<Long> roleIds) {
+        List<Long> affectedRoles = List.copyOf(roleIds);
+        Runnable invalidate = () -> {
+            redisTemplate.delete(CacheConstants.Auth.URL_PERMISSION_MAPPING_KEY);
+            affectedRoles.forEach(roleId ->
+                    redisTemplate.delete(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + roleId));
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    invalidate.run();
+                }
+            });
+        } else {
+            invalidate.run();
+        }
     }
 
     @Override
@@ -184,14 +216,14 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, P
 
     @Override
     public List<PermissionDO> getPermissionsByUserId(Long userId) {
-        // 简化实现，实际应该通过用户角色权限关联查询
-        return this.list();
+        if (userId == null) return List.of();
+        return baseMapper.selectAuthorizedByUserId(userId, "superAdmin");
     }
 
     @Override
     public List<PermissionDO> getPermissionsByRoleId(Long roleId) {
-        // 简化实现，实际应该通过角色权限关联查询
-        return this.list();
+        if (roleId == null) return List.of();
+        return baseMapper.selectAuthorizedByRoleId(roleId, "superAdmin");
     }
 
     @Override

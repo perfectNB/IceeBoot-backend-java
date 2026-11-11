@@ -60,6 +60,7 @@ class PermissionFailClosedTest {
                 mvc.perform(get("/dynamic")).andExpect(status().isForbidden());
                 assertThat(endpoint.calls).isZero();
                 verify(cache, never()).getUserPermissions(anyLong());
+                verify(cache, never()).hasUserPermissions(any(), anyList(), anyBoolean());
             }
         }
     }
@@ -70,7 +71,7 @@ class PermissionFailClosedTest {
         var cache = mock(IAuthCacheService.class);
         when(cache.getUrlPermissions(eq("/dynamic"), anyString()))
                 .thenReturn(List.of("", "sample:read", "sample:read"));
-        when(cache.getUserPermissions(7L)).thenReturn(List.of(Map.of("code", "sample:read")));
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(true);
         var mvc =
                 MockMvcBuilders.standaloneSetup(endpoint)
                         .addInterceptors(new PermissionInterceptor(cache))
@@ -79,9 +80,11 @@ class PermissionFailClosedTest {
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
             mvc.perform(get("/dynamic")).andExpect(status().isOk());
-            when(cache.getUserPermissions(7L)).thenReturn(List.of());
+            when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(false);
             mvc.perform(get("/dynamic")).andExpect(status().isForbidden());
             assertThat(endpoint.calls).isEqualTo(1);
+            verify(cache, times(2)).hasUserPermissions(7L, List.of("sample:read"), false);
+            verify(cache, never()).getUserPermissions(anyLong());
         }
     }
 

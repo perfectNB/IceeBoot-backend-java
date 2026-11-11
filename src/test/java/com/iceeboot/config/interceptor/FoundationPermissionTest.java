@@ -36,7 +36,7 @@ class FoundationPermissionTest {
                 .addInterceptors(new PermissionInterceptor(cache))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
         when(cache.getUrlPermissions(anyString(), anyString())).thenReturn(List.of("fixture:manage"));
-        when(cache.getUserPermissions(7L)).thenReturn(List.of());
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(false);
         try (var tokens = mockStatic(TokenUtils.class)) {
             tokens.when(TokenUtils::getCurrentUserId).thenReturn(7L);
             mvc.perform(delete("/v1/agent-console/agents/1"))

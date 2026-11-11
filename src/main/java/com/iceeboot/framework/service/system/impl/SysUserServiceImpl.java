@@ -22,6 +22,8 @@ import com.iceeboot.framework.service.system.IAuthCacheService;
 import com.iceeboot.framework.service.system.ISysRoleService;
 import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.system.SysUserVO;
+import com.iceeboot.framework.vo.system.SysUserListVO;
+import com.iceeboot.framework.vo.system.UserRoleSummaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -53,7 +55,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
 
     @Override
-    public PageResult<SysUserVO> getUserPage(SysUserQuery query) {
+    public PageResult<SysUserListVO> getUserPage(SysUserQuery query) {
         LambdaQueryWrapper<UserDO> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(query.getUsername())) {
@@ -71,12 +73,25 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
         if (StringUtils.hasText(query.getStatus())) {
             wrapper.eq(UserDO::getStatus, query.getStatus());
         }
+        wrapper.select(UserDO::getId, UserDO::getUsername, UserDO::getNickname,
+                UserDO::getAvatar, UserDO::getEmail, UserDO::getPhone, UserDO::getStatus,
+                UserDO::getLastLoginTime, UserDO::getLastLoginIp,
+                UserDO::getCreateTime, UserDO::getUpdateTime);
         wrapper.orderByDesc(UserDO::getCreateTime);
 
         Page<UserDO> page = new Page<>(query.getPageNum(), query.getPageSize());
         IPage<UserDO> pageResult = this.page(page, wrapper);
 
-        List<SysUserVO> voList = pageResult.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
+        List<Long> userIds = pageResult.getRecords().stream().map(UserDO::getId).toList();
+        Map<Long, List<UserRoleSummaryVO>> roles = userIds.isEmpty() ? Map.of()
+                : sysUserMapper.selectRoleSummariesByUserIds(userIds).stream()
+                        .collect(Collectors.groupingBy(UserRoleSummaryVO::getUserId));
+        List<SysUserListVO> voList = pageResult.getRecords().stream().map(user -> {
+            SysUserListVO vo = new SysUserListVO();
+            BeanUtils.copyProperties(user, vo);
+            vo.setRoleList(roles.getOrDefault(user.getId(), List.of()));
+            return vo;
+        }).toList();
 
         return new PageResult<>(voList, pageResult.getTotal(), (long) query.getPageNum(), (long) query.getPageSize());
     }

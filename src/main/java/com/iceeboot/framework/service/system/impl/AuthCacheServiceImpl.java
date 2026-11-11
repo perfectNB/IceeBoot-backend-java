@@ -73,6 +73,21 @@ public class AuthCacheServiceImpl implements IAuthCacheService {
     }
 
     @Override
+    public boolean hasUserPermissions(Long userId, List<String> codes, boolean requireAll) {
+        if (userId == null || codes == null) return false;
+        List<String> required = codes.stream().filter(StringUtils::hasText).distinct().toList();
+        if (required.isEmpty()) return false;
+        try {
+            // MySQL 常用排序规则忽略大小写和末尾空格；Java 精确比较保持权限码语义一致。
+            Set<String> granted = new HashSet<>(
+                    permissionMapper.selectAuthorizedCodes(userId, required, SUPER_ADMIN_ROLE_CODE));
+            return requireAll ? granted.containsAll(required) : required.stream().anyMatch(granted::contains);
+        } catch (Exception exception) {
+            throw new AuthServiceUnavailableException(exception);
+        }
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getUserRoles(Long userId) {
         String key = CacheConstants.Auth.USER_ROLES_KEY + userId;

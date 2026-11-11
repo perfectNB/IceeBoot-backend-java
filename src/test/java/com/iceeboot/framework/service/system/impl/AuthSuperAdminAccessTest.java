@@ -42,6 +42,7 @@ class AuthSuperAdminAccessTest {
     private JdbcTemplate jdbc;
     private AuthCacheServiceImpl service;
     private RedisTemplate<String, Object> redis;
+    private SysPermissionMapper permissionMapper;
     private final Map<String, Object> cache = new HashMap<>();
     private final QueryCounter queryCounter = new QueryCounter();
 
@@ -51,13 +52,14 @@ class AuthSuperAdminAccessTest {
         var dataSource = new DriverManagerDataSource("jdbc:h2:mem:super_admin_" + UUID.randomUUID()
                 + ";MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
         jdbc = new JdbcTemplate(dataSource);
-        for (var type : List.of(RoleDO.class, UserRoleDO.class, MenuDO.class, PermissionDO.class,
+        for (var type : List.of(UserDO.class, RoleDO.class, UserRoleDO.class, MenuDO.class, PermissionDO.class,
                 RoleMenuDO.class, RolePermissionDO.class)) {
             String table = type.getAnnotation(com.baomidou.mybatisplus.annotation.TableName.class).value();
             String ddl = ReflectionTestUtils.invokeMethod(new DatabaseInitService(null),
                     "generateCreateTableSql", type, table);
             jdbc.execute(Objects.requireNonNull(ddl).replaceAll("(?s) ENGINE=.*$", ""));
         }
+        jdbc.update("INSERT INTO t_user(id,username,status,del_flag) VALUES(7,'fixture','active',0)");
         var configuration = new MybatisConfiguration();
         configuration.addInterceptor(queryCounter);
         for (var mapper : List.of(SysRoleMapper.class, SysUserRoleMapper.class, SysMenuMapper.class,
@@ -68,6 +70,7 @@ class AuthSuperAdminAccessTest {
         factory.setDataSource(dataSource);
         factory.setConfiguration(configuration);
         var sql = new SqlSessionTemplate(Objects.requireNonNull(factory.getObject()));
+        permissionMapper = sql.getMapper(SysPermissionMapper.class);
         redis = mock(RedisTemplate.class);
         ValueOperations<String, Object> values = mock(ValueOperations.class);
         when(redis.opsForValue()).thenReturn(values);
@@ -91,6 +94,89 @@ class AuthSuperAdminAccessTest {
                 + " (22,'菜单入口','example:menu','menu','active',3,0),"
                 + " (23,'停用权限','example:disabled','api','inactive',4,0),"
                 + " (24,'已删除权限','example:deleted','api','active',5,1)");
+    }
+
+    @Test
+    void disabledOrDeletedAccountsLoseProtectedResourceAccessOnTheNextQuery() {
+        assignRole("superAdmin");
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isTrue();
+        jdbc.update("UPDATE t_user SET status='inactive' WHERE id=7");
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isFalse();
+        assertThat(service.getUserPermissions(7L)).isEmpty();
+        assertThat(service.getUserMenus(7L)).isEmpty();
+        jdbc.update("UPDATE t_user SET status='active',del_flag=1 WHERE id=7");
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isFalse();
+        assertThat(service.getUserPermissions(7L)).isEmpty();
+        assertThat(service.getUserMenus(7L)).isEmpty();
+    }
+
+    @Test
+    void caseInsensitiveDatabaseMatchingDoesNotBroadenPermissionCodes() {
+        assignRole("admin");
+        jdbc.execute("ALTER TABLE t_permission ALTER COLUMN code VARCHAR_IGNORECASE(255)");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isTrue();
+        assertThat(service.hasUserPermissions(7L, List.of("EXAMPLE:READ"), false)).isFalse();
+        assertThat(service.hasUserPermissions(7L, List.of("example:read", "EXAMPLE:READ"), true)).isFalse();
+    }
+
+    @Test
+    void permissionServiceQueriesRespectUserAndRoleAssignments() {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        var permissions = new SysPermissionServiceImpl(
+                mock(com.iceeboot.framework.service.system.ISysRolePermissionService.class), redis);
+        ReflectionTestUtils.setField(permissions, "baseMapper", permissionMapper);
+        assertThat(permissions.getPermissionsByUserId(7L)).extracting(PermissionDO::getCode)
+                .containsExactly("example:read");
+        assertThat(permissions.getPermissionsByRoleId(42L)).extracting(PermissionDO::getCode)
+                .containsExactly("example:read");
+        assertThat(permissions.getPermissionsByUserId(8L)).isEmpty();
+        assertThat(permissions.getPermissionsByRoleId(99L)).isEmpty();
+        jdbc.update("UPDATE t_role SET code='superAdmin' WHERE id=42");
+        assertThat(permissions.getPermissionsByRoleId(42L)).hasSize(3);
+        jdbc.update("UPDATE t_role SET status='inactive' WHERE id=42");
+        assertThat(permissions.getPermissionsByRoleId(42L)).isEmpty();
+        assertThat(permissions.getPermissionsByUserId(7L)).isEmpty();
+    }
+
+    @Test
+    void scopedChecksPreserveAnyAllSemanticsAndDoNotLoadThePermissionCatalog() {
+        assignRole("superAdmin");
+        queryCounter.calls.set(0);
+        assertThat(service.hasUserPermissions(7L, List.of("example:read", "example:create"), true)).isTrue();
+        assertThat(queryCounter.calls.get()).isEqualTo(1);
+        assertThat(service.hasUserPermissions(7L, List.of("example:read", "missing"), false)).isTrue();
+        assertThat(service.hasUserPermissions(7L, List.of("example:read", "missing"), true)).isFalse();
+        assertThat(service.hasUserPermissions(7L, List.of("example:read", "example:read"), true)).isTrue();
+        assertThat(service.hasUserPermissions(7L, List.of("example:disabled", "example:deleted"), false)).isFalse();
+        assertThat(service.hasUserPermissions(7L, List.of(" ", ""), false)).isFalse();
+        assertThat(service.hasUserPermissions(null, List.of("example:read"), false)).isFalse();
+        verifyNoInteractions(redis);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"disabled", "deleted", "revoked", "permission", "assignment"})
+    void scopedChecksRejectRevocationImmediatelyDespitePreviouslyGrantedAccess(String mode) {
+        assignRole("admin");
+        jdbc.update("INSERT INTO t_role_permission(id,role_id,permission_id,del_flag) VALUES(101,42,20,0)");
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isTrue();
+        switch (mode) {
+            case "disabled" -> jdbc.update("UPDATE t_role SET status='inactive' WHERE id=42");
+            case "deleted" -> jdbc.update("UPDATE t_role SET del_flag=1 WHERE id=42");
+            case "revoked" -> jdbc.update("UPDATE t_user_role SET del_flag=1 WHERE user_id=7");
+            case "permission" -> jdbc.update("UPDATE t_permission SET status='inactive' WHERE id=20");
+            case "assignment" -> jdbc.update("UPDATE t_role_permission SET del_flag=1 WHERE id=101");
+        }
+        assertThat(service.hasUserPermissions(7L, List.of("example:read"), false)).isFalse();
+    }
+
+    @Test
+    void scopedCheckDatabaseFailureFailsClosed() {
+        assignRole("superAdmin");
+        jdbc.execute("DROP TABLE t_role");
+        assertThatThrownBy(() -> service.hasUserPermissions(7L, List.of("example:read"), false))
+                .isInstanceOf(AuthServiceUnavailableException.class);
     }
 
     @Test

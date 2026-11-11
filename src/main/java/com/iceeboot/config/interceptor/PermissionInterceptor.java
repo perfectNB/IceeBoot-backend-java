@@ -23,7 +23,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 权限拦截器
@@ -104,20 +103,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
             throw new NotPermissionException(ResponseMessage.Permission.PERMISSION_CONFIG_MISSING);
         }
         
-        // 获取用户权限
-        List<Map<String, Object>> userPermissions = authCacheService.getUserPermissions(userId);
-        if (userPermissions == null || userPermissions.isEmpty()) {
-            throw new NotPermissionException("用户没有任何权限");
-        }
-        
-        // 提取用户权限编码
-        List<String> userPermissionCodes = userPermissions.stream()
-                .map(permission -> (String) permission.get("code"))
-                .filter(code -> code != null && !code.isEmpty())
-                .toList();
-        
-        // 验证权限
-        boolean hasPermission = checkPermission(userPermissionCodes, requiredPermissions, annotation.requireAll());
+        // 仅查询本次所需权限码，避免每次请求传输用户的全部权限详情。
+        boolean hasPermission = authCacheService.hasUserPermissions(
+                userId, Arrays.asList(requiredPermissions), annotation.requireAll());
         
         if (!hasPermission) {
             String permissionDesc = annotation.description();
@@ -167,34 +155,6 @@ public class PermissionInterceptor implements HandlerInterceptor {
         return requestURI;
     }
     
-    /**
-     * 检查权限
-     * 
-     * @param userPermissions 用户权限编码列表
-     * @param requiredPermissions 需要的权限编码数组
-     * @param requireAll 是否需要所有权限
-     * @return 是否有权限
-     */
-    private boolean checkPermission(List<String> userPermissions, String[] requiredPermissions, boolean requireAll) {
-        if (userPermissions == null || userPermissions.isEmpty()) {
-            return false;
-        }
-        
-        if (requiredPermissions == null || requiredPermissions.length == 0) {
-            return false;
-        }
-        
-        if (requireAll) {
-            // 需要所有权限都满足（AND）
-            return Arrays.stream(requiredPermissions)
-                    .allMatch(userPermissions::contains);
-        } else {
-            // 满足任意一个权限即可（OR）
-            return Arrays.stream(requiredPermissions)
-                    .anyMatch(userPermissions::contains);
-        }
-    }
-
     private boolean shouldSkipAsyncSsePermissionCheck(HttpServletRequest request) {
         if (request == null) {
             return false;

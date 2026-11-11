@@ -26,6 +26,38 @@ class FrameworkPermissionMigrationTest {
     private static final String LEGACY_AGENT_LIST = "/v1/agents";
 
     @Test
+    void resumesPartiallyInstalledAuthorizationIndexesWithoutChangingRbac() throws Exception {
+        var source = source();
+        var jdbc = new JdbcTemplate(source);
+        seedHistoricalState(source, jdbc);
+        var migrations = new AgentSchemaMigrationService(source);
+        migrations.migrateSchema();
+        migrations.migratePermissions();
+        var before = rbacSnapshot(jdbc);
+        jdbc.update("DELETE FROM t_agent_schema_history WHERE version=11");
+        jdbc.execute("DROP INDEX idx_auth_role_permissions");
+        jdbc.execute("DROP INDEX idx_auth_role_menus");
+        migrations.migratePermissions();
+        migrations.migratePermissions();
+        assertSameSnapshot(before, rbacSnapshot(jdbc));
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history WHERE version=11")).isEqualTo(1);
+        try (var connection = source.getConnection()) {
+            for (var item : Map.of("t_user_role", "idx_auth_user_roles",
+                    "t_role_permission", "idx_auth_role_permissions",
+                    "t_role_menu", "idx_auth_role_menus",
+                    "t_permission", "idx_auth_permission_codes").entrySet()) {
+                boolean found = false;
+                try (var indexes = connection.getMetaData().getIndexInfo(null, null, item.getKey().toUpperCase(Locale.ROOT), false, false)) {
+                    while (indexes.next()) {
+                        if (item.getValue().equalsIgnoreCase(indexes.getString("INDEX_NAME"))) found = true;
+                    }
+                }
+                assertThat(found).as(item.getValue()).isTrue();
+            }
+        }
+    }
+
+    @Test
     void upgradesHistoricalPermissionsIdempotentlyAndSeedsEveryDeclaredEndpoint() throws Exception {
         var source = source();
         var jdbc = new JdbcTemplate(source);
@@ -36,7 +68,7 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(10);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(11);
 
         List<Endpoint> expected = catalog();
         assertThat(expected).hasSize(227);

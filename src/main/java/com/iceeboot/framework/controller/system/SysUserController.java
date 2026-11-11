@@ -10,6 +10,7 @@ import com.iceeboot.framework.dto.update.system.UserUpdateDTO;
 import com.iceeboot.framework.query.system.SysUserQuery;
 import com.iceeboot.framework.service.system.ISysUserService;
 import com.iceeboot.framework.vo.system.SysUserVO;
+import com.iceeboot.framework.vo.system.SysUserListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,8 @@ public class SysUserController {
     @Operation(summary = "分页查询用户列表", description = "根据条件分页查询用户列表")
     @GetMapping()
     @RequirePermission(dynamic = true)
-    public R<PageResult<SysUserVO>> getUserPage(SysUserQuery query) {
-        PageResult<SysUserVO> pageResult = userService.getUserPage(query);
+    public R<PageResult<SysUserListVO>> getUserPage(SysUserQuery query) {
+        PageResult<SysUserListVO> pageResult = userService.getUserPage(query);
         return R.ok(pageResult);
     }
 

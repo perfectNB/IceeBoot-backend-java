@@ -140,7 +140,7 @@ class AgentResourceApiTest {
         var service = mock(com.iceeboot.framework.service.agent.IAgentSandboxTemplateService.class);
         var users = mock(ISysUserService.class);
         var cache = mock(IAuthCacheService.class);
-        when(cache.getUserPermissions(7L)).thenReturn(List.of());
+        when(cache.hasUserPermissions(eq(7L), anyList(), anyBoolean())).thenReturn(false);
         var mvc =
                 MockMvcBuilders.standaloneSetup(new AgentSandboxTemplateController(service, users))
                         .addInterceptors(new PermissionInterceptor(cache))

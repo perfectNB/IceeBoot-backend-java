@@ -34,7 +34,9 @@ public interface SysMenuMapper extends BaseMapper<MenuDO> {
                 SELECT 1
                 FROM t_user_role ur
                 INNER JOIN t_role r ON r.id = ur.role_id
+                INNER JOIN t_user u ON u.id = ur.user_id
                 WHERE ur.user_id = #{userId}
+                  AND u.status = 'active' AND u.del_flag = 0
                   AND ur.del_flag = 0 AND r.status = 'active' AND r.del_flag = 0
                   AND (r.code = #{superAdminCode} OR EXISTS (
                     SELECT 1
