@@ -201,9 +201,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, UserDO> imple
 
     @Override
     public List<String> getUserPermissions(Long userId) {
-        return sysUserMapper.selectPermissionsByUserId(userId)
+        // 业务工具和 HTTP 权限拦截器共享有效授权来源，包含超级管理员与角色失效规则。
+        return authCacheService.getUserPermissions(userId)
                 .stream()
-                .map(permission -> permission.getCode())
+                .map(permission -> (String) permission.get("code"))
+                .filter(StringUtils::hasText)
+                .distinct()
                 .collect(Collectors.toList());
     }
 

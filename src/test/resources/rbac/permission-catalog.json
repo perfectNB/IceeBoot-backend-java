@@ -1,0 +1,1535 @@
+[
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/models",
+    "name": "查询模型连接列表",
+    "code": "ai:model:list:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/models",
+    "name": "新增模型连接",
+    "code": "ai:model:create:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/models/{id}",
+    "name": "删除模型连接",
+    "code": "ai:model:delete:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/models/invoke",
+    "name": "直接调用模型",
+    "code": "ai:model:invoke:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/capabilities",
+    "name": "查询能力列表",
+    "code": "ai:capability:list:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/capabilities",
+    "name": "新增能力",
+    "code": "ai:capability:create:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/capabilities/{id}",
+    "name": "删除能力",
+    "code": "ai:capability:delete:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents",
+    "name": "查询智能体列表",
+    "code": "ai:agent:list:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}",
+    "name": "查询智能体详情",
+    "code": "ai:agent:detail:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents",
+    "name": "新增智能体",
+    "code": "ai:agent:create:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/agents/{id}",
+    "name": "删除智能体",
+    "code": "ai:agent:delete:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/releases",
+    "name": "查询智能体发布版本",
+    "code": "ai:agent:releases:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/publish",
+    "name": "发布智能体",
+    "code": "ai:agent:publish:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/by-code/{code}/invoke",
+    "name": "调用智能体",
+    "code": "ai:agent:invoke:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/runs",
+    "name": "查询执行记录列表",
+    "code": "ai:run:list:api",
+    "parentCode": "ai:run"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/runs/{id}",
+    "name": "查询执行记录详情",
+    "code": "ai:run:detail:api",
+    "parentCode": "ai:run"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/models",
+    "name": "更新模型连接",
+    "code": "ai:model:update:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/agents",
+    "name": "更新智能体",
+    "code": "ai:agent:update:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/capabilities",
+    "name": "更新能力",
+    "code": "ai:capability:update:api",
+    "parentCode": "ai:capability"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/knowledge",
+    "name": "查询知识库连接列表",
+    "code": "ai:knowledge:list:api",
+    "parentCode": "ai:knowledge"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/knowledge/{id}",
+    "name": "查看知识库连接详情",
+    "code": "ai:knowledge:detail:api",
+    "parentCode": "ai:knowledge"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/knowledge",
+    "name": "新增知识库连接",
+    "code": "ai:knowledge:create:api",
+    "parentCode": "ai:knowledge"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/knowledge",
+    "name": "更新知识库连接",
+    "code": "ai:knowledge:update:api",
+    "parentCode": "ai:knowledge"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/knowledge/{id}",
+    "name": "删除知识库连接",
+    "code": "ai:knowledge:delete:api",
+    "parentCode": "ai:knowledge"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/mcps",
+    "name": "查询MCP服务列表",
+    "code": "ai:mcp:list:api",
+    "parentCode": "ai:mcp"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/mcps/{id}",
+    "name": "查看MCP服务详情",
+    "code": "ai:mcp:detail:api",
+    "parentCode": "ai:mcp"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/mcps",
+    "name": "新增MCP服务",
+    "code": "ai:mcp:create:api",
+    "parentCode": "ai:mcp"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/mcps",
+    "name": "更新MCP服务",
+    "code": "ai:mcp:update:api",
+    "parentCode": "ai:mcp"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/mcps/{id}",
+    "name": "删除MCP服务",
+    "code": "ai:mcp:delete:api",
+    "parentCode": "ai:mcp"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/quota",
+    "name": "查询每日模型调用额度",
+    "code": "ai:quota:read:api",
+    "parentCode": "ai:run"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/runs/{id}/cancel",
+    "name": "取消智能体执行",
+    "code": "ai:run:cancel:api",
+    "parentCode": "ai:run"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/secrets/rotate",
+    "name": "轮换存储密文",
+    "code": "ai:secret:rotate:api",
+    "parentCode": "ai:model"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/sandbox-templates",
+    "name": "查询沙箱模板列表",
+    "code": "ai:sandbox:list:api",
+    "parentCode": "ai:sandbox"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/sandbox-templates/{id}",
+    "name": "查看沙箱模板详情",
+    "code": "ai:sandbox:detail:api",
+    "parentCode": "ai:sandbox"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/sandbox-templates",
+    "name": "新增沙箱模板",
+    "code": "ai:sandbox:create:api",
+    "parentCode": "ai:sandbox"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/sandbox-templates",
+    "name": "更新沙箱模板",
+    "code": "ai:sandbox:update:api",
+    "parentCode": "ai:sandbox"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/sandbox-templates/{id}",
+    "name": "删除沙箱模板",
+    "code": "ai:sandbox:delete:api",
+    "parentCode": "ai:sandbox"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/skills",
+    "name": "查询技能列表",
+    "code": "ai:skill:list:api",
+    "parentCode": "ai:skill"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/skills/{id}",
+    "name": "查看技能详情",
+    "code": "ai:skill:detail:api",
+    "parentCode": "ai:skill"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/skills",
+    "name": "新增技能",
+    "code": "ai:skill:create:api",
+    "parentCode": "ai:skill"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/skills",
+    "name": "更新技能",
+    "code": "ai:skill:update:api",
+    "parentCode": "ai:skill"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/skills/{id}",
+    "name": "删除技能",
+    "code": "ai:skill:delete:api",
+    "parentCode": "ai:skill"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/tools",
+    "name": "查询工具列表",
+    "code": "ai:tool:list:api",
+    "parentCode": "ai:tool"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/tools/{id}",
+    "name": "查看工具详情",
+    "code": "ai:tool:detail:api",
+    "parentCode": "ai:tool"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/tools",
+    "name": "新增工具",
+    "code": "ai:tool:create:api",
+    "parentCode": "ai:tool"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/tools",
+    "name": "更新工具",
+    "code": "ai:tool:update:api",
+    "parentCode": "ai:tool"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/tools/{id}",
+    "name": "删除工具",
+    "code": "ai:tool:delete:api",
+    "parentCode": "ai:tool"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dashboard/stats",
+    "name": "获取工作台统计数据",
+    "code": "dashboard:stats:api",
+    "parentCode": "dashboard:view"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dashboard/visit-trend",
+    "name": "获取访问趋势",
+    "code": "dashboard:visit-trend:api",
+    "parentCode": "dashboard:view"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dashboard/user-distribution",
+    "name": "获取用户分布",
+    "code": "dashboard:user-distribution:api",
+    "parentCode": "dashboard:view"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/emails/send",
+    "name": "发送邮件",
+    "code": "third:email:send:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/emails/status",
+    "name": "查询邮件状态",
+    "code": "third:email:send:status:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys",
+    "name": "获取所有厂商的密钥列表",
+    "code": "third:email:list:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/page",
+    "name": "分页查询Email密钥列表",
+    "code": "third:email:page:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/{id}",
+    "name": "根据ID获取Email密钥详情",
+    "code": "third:email:detail:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/email-keys",
+    "name": "新增Email密钥",
+    "code": "third:email:create:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/email-keys",
+    "name": "更新Email密钥",
+    "code": "third:email:update:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/email-keys",
+    "name": "删除Email密钥",
+    "code": "third:email:delete:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/email-keys/{id}/status",
+    "name": "更新Email密钥状态",
+    "code": "third:email:status:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/provider/{provider}",
+    "name": "根据厂商获取激活的密钥列表",
+    "code": "third:email:provider:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/providers",
+    "name": "获取所有支持的Email厂商列表",
+    "code": "third:email:providers:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/provider/{provider}/available",
+    "name": "根据厂商获取可用的密钥",
+    "code": "third:email:available:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/email-keys/{id}/validate",
+    "name": "验证密钥是否有效",
+    "code": "third:email:validate:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/email-keys/batch-import",
+    "name": "批量导入密钥",
+    "code": "third:email:batch:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/stats",
+    "name": "获取密钥使用统计",
+    "code": "third:email:stats:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/email-keys/provider/{provider}/config",
+    "name": "获取厂商配置信息",
+    "code": "third:email:config:api",
+    "parentCode": "third:email"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/logs",
+    "name": "获取日志列表",
+    "code": "monitor:log:list:api",
+    "parentCode": "monitor:log"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/logs",
+    "name": "删除日志",
+    "code": "monitor:log:delete:api",
+    "parentCode": "monitor:log"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/messages",
+    "name": "分页查询当前用户消息列表",
+    "code": "system:message:list:api",
+    "parentCode": "system:message"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/messages",
+    "name": "新增消息",
+    "code": "system:message:create:api",
+    "parentCode": "system:message"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/messages",
+    "name": "更新消息",
+    "code": "system:message:read:api",
+    "parentCode": "system:message"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/messages/allRead",
+    "name": "全部已读",
+    "code": "system:message:all-read:api",
+    "parentCode": "system:message"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/messages",
+    "name": "删除消息",
+    "code": "system:message:delete:api",
+    "parentCode": "system:message"
+  },
+  {
+    "method": "GET",
+    "path": "/admin/notifications/applications",
+    "name": "获取通知应用列表",
+    "code": "system:notification:applications:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "GET",
+    "path": "/admin/notifications",
+    "name": "分页查询通知列表",
+    "code": "system:notification:list:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "POST",
+    "path": "/admin/notifications",
+    "name": "保存通知草稿",
+    "code": "system:notification:create:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "PUT",
+    "path": "/admin/notifications/{id}/publish",
+    "name": "发布通知",
+    "code": "system:notification:publish:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "PUT",
+    "path": "/admin/notifications/{id}/withdraw",
+    "name": "撤回通知",
+    "code": "system:notification:withdraw:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "DELETE",
+    "path": "/admin/notifications",
+    "name": "删除通知",
+    "code": "system:notification:delete:api",
+    "parentCode": "system:notification"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-files",
+    "name": "分页查询文件列表",
+    "code": "system:file:list:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/oss-files",
+    "name": "删除文件",
+    "code": "system:file:delete:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oss-files/upload",
+    "name": "上传文件",
+    "code": "system:file:upload:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-files/download/{id}",
+    "name": "获取文件下载链接",
+    "code": "system:file:download:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-files/download/direct/{id}",
+    "name": "直接下载文件（兼容旧版本）",
+    "code": "system:file:download:direct:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-files/buckets",
+    "name": "分页查询存储桶列表",
+    "code": "system:bucket:list:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oss-files/buckets",
+    "name": "新增存储桶",
+    "code": "system:bucket:create:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/oss-files/buckets",
+    "name": "更新存储桶",
+    "code": "system:bucket:update:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/oss-files/buckets",
+    "name": "删除存储桶",
+    "code": "system:bucket:delete:api",
+    "parentCode": "system:file"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys",
+    "name": "获取所有厂商的密钥列表",
+    "code": "third:oss:list:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/page",
+    "name": "分页查询OSS密钥列表",
+    "code": "third:oss:page:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/{id}",
+    "name": "根据ID获取OSS密钥详情",
+    "code": "third:oss:detail:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oss-keys",
+    "name": "新增OSS密钥",
+    "code": "third:oss:create:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/oss-keys",
+    "name": "更新OSS密钥",
+    "code": "third:oss:update:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/oss-keys",
+    "name": "删除OSS密钥",
+    "code": "third:oss:delete:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/oss-keys/{id}/status",
+    "name": "更新OSS密钥状态",
+    "code": "third:oss:status:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/provider/{provider}",
+    "name": "根据厂商获取激活的密钥列表",
+    "code": "third:oss:provider:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/providers",
+    "name": "获取所有支持的OSS厂商列表",
+    "code": "third:oss:providers:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/provider/{provider}/available",
+    "name": "根据厂商获取可用的密钥",
+    "code": "third:oss:available:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oss-keys/{id}/validate",
+    "name": "验证密钥是否有效",
+    "code": "third:oss:validate:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oss-keys/batch-import",
+    "name": "批量导入密钥",
+    "code": "third:oss:batch:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/stats",
+    "name": "获取密钥使用统计",
+    "code": "third:oss:stats:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oss-keys/provider/{provider}/config",
+    "name": "获取厂商配置信息",
+    "code": "third:oss:config:api",
+    "parentCode": "third:oss"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pay/configs",
+    "name": "分页查询支付配置",
+    "code": "pay:config:list:api",
+    "parentCode": "pay:config"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pay/configs",
+    "name": "新增支付配置",
+    "code": "pay:config:create:api",
+    "parentCode": "pay:config"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/pay/configs",
+    "name": "修改支付配置",
+    "code": "pay:config:update:api",
+    "parentCode": "pay:config"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/pay/configs",
+    "name": "删除支付配置",
+    "code": "pay:config:delete:api",
+    "parentCode": "pay:config"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pay/records",
+    "name": "查询支付记录",
+    "code": "pay:record:list:api",
+    "parentCode": "pay:record"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/pay/records/{id}/retry-business",
+    "name": "重试支付业务",
+    "code": "pay:record:retry-business:api",
+    "parentCode": "pay:record"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/redis/keys",
+    "name": "获取Redis键列表",
+    "code": "monitor:redis:query:api",
+    "parentCode": "monitor:redis"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/redis/keys/{key}",
+    "name": "获取Redis键详情",
+    "code": "monitor:redis:detail:api",
+    "parentCode": "monitor:redis"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/redis/keys",
+    "name": "创建Redis键",
+    "code": "monitor:redis:create:api",
+    "parentCode": "monitor:redis"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/redis/keys",
+    "name": "批量删除Redis键",
+    "code": "monitor:redis:batch-delete:api",
+    "parentCode": "monitor:redis"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms/send",
+    "name": "发送短信",
+    "code": "third:sms:send:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms/status",
+    "name": "查询短信状态",
+    "code": "third:sms:send:status:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms/balance",
+    "name": "查询短信余额",
+    "code": "third:sms:balance:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys",
+    "name": "获取所有厂商的密钥列表",
+    "code": "third:sms:list:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/page",
+    "name": "分页查询SMS密钥列表",
+    "code": "third:sms:page:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/{id}",
+    "name": "根据ID获取SMS密钥详情",
+    "code": "third:sms:detail:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms-keys",
+    "name": "新增SMS密钥",
+    "code": "third:sms:create:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/sms-keys",
+    "name": "更新SMS密钥",
+    "code": "third:sms:update:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/sms-keys",
+    "name": "删除SMS密钥",
+    "code": "third:sms:delete:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/sms-keys/{id}/status",
+    "name": "更新SMS密钥状态",
+    "code": "third:sms:status:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/provider/{provider}",
+    "name": "根据厂商获取激活的密钥列表",
+    "code": "third:sms:provider:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/providers",
+    "name": "获取所有支持的SMS厂商列表",
+    "code": "third:sms:providers:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/provider/{provider}/available",
+    "name": "根据厂商获取可用的密钥",
+    "code": "third:sms:available:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms-keys/{id}/validate",
+    "name": "验证密钥是否有效",
+    "code": "third:sms:validate:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sms-keys/batch-import",
+    "name": "批量导入密钥",
+    "code": "third:sms:batch:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/stats",
+    "name": "获取密钥使用统计",
+    "code": "third:sms:stats:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/sms-keys/provider/{provider}/config",
+    "name": "获取厂商配置信息",
+    "code": "third:sms:config:api",
+    "parentCode": "third:sms"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/menus/tree",
+    "name": "获取菜单树",
+    "code": "system:menu:tree:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/menus",
+    "name": "新增菜单",
+    "code": "system:menu:create:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/menus",
+    "name": "更新菜单",
+    "code": "system:menu:update:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/menus",
+    "name": "删除菜单",
+    "code": "system:menu:delete:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/menus/{id}/status",
+    "name": "修改菜单状态",
+    "code": "system:menu:status:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/menus/check/name",
+    "name": "检查菜单名称",
+    "code": "system:menu:check:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/menus/children/{parentId}",
+    "name": "获取子菜单",
+    "code": "system:menu:children:api",
+    "parentCode": "system:menu"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/permissions/page",
+    "name": "分页查询权限列表",
+    "code": "system:permission:page:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/permissions/tree",
+    "name": "获取权限树",
+    "code": "system:permission:tree:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/permissions/{id}",
+    "name": "获取权限详情",
+    "code": "system:permission:detail:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/permissions",
+    "name": "新增权限",
+    "code": "system:permission:create:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/permissions",
+    "name": "更新权限",
+    "code": "system:permission:update:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/permissions",
+    "name": "删除权限",
+    "code": "system:permission:delete:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/permissions/children/{parentId}",
+    "name": "获取子权限",
+    "code": "system:permission:children:api",
+    "parentCode": "system:permission"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/roles",
+    "name": "获取角色列表",
+    "code": "system:role:list:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/roles/{id}",
+    "name": "根据ID获取角色",
+    "code": "system:role:detail:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/roles",
+    "name": "创建角色",
+    "code": "system:role:create:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/roles/{id}",
+    "name": "更新角色",
+    "code": "system:role:update:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/roles",
+    "name": "删除角色",
+    "code": "system:role:delete:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/roles/{id}/status",
+    "name": "修改角色状态",
+    "code": "system:role:status:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/roles/{roleId}/permissions",
+    "name": "保存角色权限",
+    "code": "system:role:permissions:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/roles/{roleId}/menus",
+    "name": "保存角色菜单",
+    "code": "system:role:menus:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/roles/getAll",
+    "name": "获取全部角色",
+    "code": "system:role:all:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-menus/page",
+    "name": "分页查询角色菜单关联列表",
+    "code": "system:role:menu:page:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-menus/{id}",
+    "name": "获取角色菜单关联详情",
+    "code": "system:role:menu:detail:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/role-menus",
+    "name": "新增角色菜单关联",
+    "code": "system:role:menu:create:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/role-menus",
+    "name": "更新角色菜单关联",
+    "code": "system:role:menu:update:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/role-menus",
+    "name": "删除角色菜单关联",
+    "code": "system:role:menu:delete:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-menus/role/{roleId}/menus",
+    "name": "获取角色的菜单列表",
+    "code": "system:role:menu:menu-ids-by-role-id:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-menus/menu/{menuId}/roles",
+    "name": "获取菜单的角色列表",
+    "code": "system:role:menu:role-ids-by-menu-id:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/role-menus/role/{roleId}/assign-menus",
+    "name": "为角色分配菜单",
+    "code": "system:role:menu:assign:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/role-menus/role/{roleId}/menus",
+    "name": "移除角色的所有菜单",
+    "code": "system:role:menu:clear:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-permissions/page",
+    "name": "分页查询角色权限关联列表",
+    "code": "system:role:permission:page:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-permissions/{id}",
+    "name": "获取角色权限关联详情",
+    "code": "system:role:permission:detail:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/role-permissions",
+    "name": "新增角色权限关联",
+    "code": "system:role:permission:create:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/role-permissions",
+    "name": "更新角色权限关联",
+    "code": "system:role:permission:update:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/role-permissions",
+    "name": "删除角色权限关联",
+    "code": "system:role:permission:delete:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-permissions/role/{roleId}/permissions",
+    "name": "获取角色的权限列表",
+    "code": "system:role:permission:permission-ids-by-role-id:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/role-permissions/permission/{permissionId}/roles",
+    "name": "获取权限的角色列表",
+    "code": "system:role:permission:role-ids-by-permission-id:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/role-permissions/role/{roleId}/assign-permissions",
+    "name": "为角色分配权限",
+    "code": "system:role:permission:assign:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/role-permissions/role/{roleId}/permissions",
+    "name": "移除角色的所有权限",
+    "code": "system:role:permission:clear:api",
+    "parentCode": "system:role"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/users",
+    "name": "分页查询用户列表",
+    "code": "system:user:list:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/users/{id}",
+    "name": "获取用户详情",
+    "code": "system:user:detail:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/users",
+    "name": "新增用户",
+    "code": "system:user:create:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/users",
+    "name": "更新用户",
+    "code": "system:user:update:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/users",
+    "name": "删除用户",
+    "code": "system:user:delete:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/users/{id}/password",
+    "name": "重置密码",
+    "code": "system:user:reset:password:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/users/{id}/status",
+    "name": "修改用户状态",
+    "code": "system:user:status:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/users/check/username",
+    "name": "检查用户名",
+    "code": "system:user:check:username:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/users/check/phone",
+    "name": "检查手机号",
+    "code": "system:user:check:phone:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/users/check/email",
+    "name": "检查邮箱",
+    "code": "system:user:check:email:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/user-roles/page",
+    "name": "分页查询用户角色关联列表",
+    "code": "system:user:role:page:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/user-roles/{id}",
+    "name": "获取用户角色关联详情",
+    "code": "system:user:role:detail:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/user-roles",
+    "name": "新增用户角色关联",
+    "code": "system:user:role:create:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/user-roles",
+    "name": "更新用户角色关联",
+    "code": "system:user:role:update:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/user-roles",
+    "name": "删除用户角色关联",
+    "code": "system:user:role:delete:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/user-roles/user/{userId}/roles",
+    "name": "获取用户的角色列表",
+    "code": "system:user:role:role-ids-by-user-id:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/user-roles/role/{roleId}/users",
+    "name": "获取角色的用户列表",
+    "code": "system:user:role:user-ids-by-role-id:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/user-roles/user/{userId}/assign-roles",
+    "name": "为用户分配角色",
+    "code": "system:user:role:assign:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/user-roles/user/{userId}/roles",
+    "name": "移除用户的所有角色",
+    "code": "system:user:role:clear:api",
+    "parentCode": "system:user"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tasks",
+    "name": "分页查询任务列表",
+    "code": "monitor:task:list:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tasks/{id}",
+    "name": "查询任务详情",
+    "code": "monitor:task:detail:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tasks",
+    "name": "创建任务",
+    "code": "monitor:task:create:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/tasks/{id}",
+    "name": "更新任务",
+    "code": "monitor:task:update:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/tasks",
+    "name": "删除任务",
+    "code": "monitor:task:delete:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tasks/{id}/start",
+    "name": "启动任务",
+    "code": "monitor:task:start:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tasks/{id}/stop",
+    "name": "停止任务",
+    "code": "monitor:task:stop:api",
+    "parentCode": "monitor:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/start",
+    "name": "启动流程实例",
+    "code": "workflow:process:start:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/task/{taskId}/complete",
+    "name": "完成任务",
+    "code": "workflow:task:complete:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/tasks/user/{assignee}",
+    "name": "获取用户任务列表",
+    "code": "workflow:task:user:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/tasks/candidate/{candidateUser}",
+    "name": "获取候选任务列表",
+    "code": "workflow:task:candidate:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/tasks/my",
+    "name": "获取我的任务列表",
+    "code": "workflow:task:my:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/task/{taskId}/claim",
+    "name": "认领任务",
+    "code": "workflow:task:claim:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/task/{taskId}/unclaim",
+    "name": "取消认领任务",
+    "code": "workflow:task:unclaim:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/definitions",
+    "name": "流程定义列表",
+    "code": "workflow:definition:list:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/deploy",
+    "name": "部署流程定义",
+    "code": "workflow:definition:deploy:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/workflow/definitions/{definitionId}/redeploy",
+    "name": "更新流程定义",
+    "code": "workflow:definition:update:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/workflow/definitions/{definitionId}",
+    "name": "删除流程定义",
+    "code": "workflow:definition:delete:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/definitions/{definitionId}/xml",
+    "name": "获取流程定义XML",
+    "code": "workflow:definition:xml:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/definitions/{definitionId}/diagram",
+    "name": "获取流程定义图",
+    "code": "workflow:definition:diagram:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/definitions/{definitionId}/nodes",
+    "name": "获取流程定义节点",
+    "code": "workflow:definition:nodes:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process",
+    "name": "流程实例列表",
+    "code": "workflow:process:list:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process/{processInstanceId}",
+    "name": "获取流程实例",
+    "code": "workflow:process:detail:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process/{processInstanceId}/nodes",
+    "name": "获取流程实例节点",
+    "code": "workflow:process:nodes:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process/{processInstanceId}/diagram",
+    "name": "获取流程实例图",
+    "code": "workflow:process:diagram:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process/{processInstanceId}/history",
+    "name": "获取流程实例历史",
+    "code": "workflow:process:history:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/workflow/process/{processInstanceId}",
+    "name": "删除流程实例",
+    "code": "workflow:process:delete:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/process/{processInstanceId}/ended",
+    "name": "判断流程是否结束",
+    "code": "workflow:process:ended:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/process/{processInstanceId}/end",
+    "name": "结束流程",
+    "code": "workflow:process:end:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/permissions/{id}/status",
+    "name": "修改权限状态",
+    "code": "system:permission:status:api",
+    "parentCode": "system:permission"
+  }
+]

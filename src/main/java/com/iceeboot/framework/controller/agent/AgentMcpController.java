@@ -39,7 +39,7 @@ public class AgentMcpController {
                     ResultCodeEnum.FORBIDDEN.getCode(), ResponseMessage.Agent.SUPER_ADMIN_REQUIRED);
     }
 
-    @Operation(summary = "查询资源列表")
+    @Operation(summary = "查询MCP服务列表")
     @GetMapping
     @RequirePermission(dynamic = true)
     public R<List<AgentMcpVO>> getResourceList() {
@@ -47,7 +47,7 @@ public class AgentMcpController {
         return R.ok(service.getResourceList());
     }
 
-    @Operation(summary = "查询资源详情")
+    @Operation(summary = "查看MCP服务详情")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentMcpVO> getResourceById(@PathVariable long id) {
@@ -55,7 +55,7 @@ public class AgentMcpController {
         return R.ok(service.getResourceById(id));
     }
 
-    @Operation(summary = "新增资源")
+    @Operation(summary = "新增MCP服务")
     @PostMapping
     @RequirePermission(dynamic = true)
     public R<AgentMcpVO> create(@Valid @RequestBody AgentMcpDTO request) {
@@ -63,7 +63,7 @@ public class AgentMcpController {
         return R.ok(service.addResource(request));
     }
 
-    @Operation(summary = "更新资源")
+    @Operation(summary = "更新MCP服务")
     @PutMapping
     @RequirePermission(dynamic = true)
     public R<AgentMcpVO> update(@Valid @RequestBody AgentMcpUpdateDTO request) {
@@ -71,7 +71,7 @@ public class AgentMcpController {
         return R.ok(service.updateResource(request));
     }
 
-    @Operation(summary = "删除资源")
+    @Operation(summary = "删除MCP服务")
     @DeleteMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> delete(@PathVariable long id) {

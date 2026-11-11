@@ -39,7 +39,7 @@ public class AgentSandboxTemplateController {
                     ResultCodeEnum.FORBIDDEN.getCode(), ResponseMessage.Agent.SUPER_ADMIN_REQUIRED);
     }
 
-    @Operation(summary = "查询资源列表")
+    @Operation(summary = "查询沙箱模板列表")
     @GetMapping
     @RequirePermission(dynamic = true)
     public R<List<AgentSandboxTemplateVO>> getResourceList() {
@@ -47,7 +47,7 @@ public class AgentSandboxTemplateController {
         return R.ok(service.getResourceList());
     }
 
-    @Operation(summary = "查询资源详情")
+    @Operation(summary = "查看沙箱模板详情")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentSandboxTemplateVO> getResourceById(@PathVariable long id) {
@@ -55,7 +55,7 @@ public class AgentSandboxTemplateController {
         return R.ok(service.getResourceById(id));
     }
 
-    @Operation(summary = "新增资源")
+    @Operation(summary = "新增沙箱模板")
     @PostMapping
     @RequirePermission(dynamic = true)
     public R<AgentSandboxTemplateVO> create(@Valid @RequestBody AgentSandboxTemplateDTO request) {
@@ -63,7 +63,7 @@ public class AgentSandboxTemplateController {
         return R.ok(service.addResource(request));
     }
 
-    @Operation(summary = "更新资源")
+    @Operation(summary = "更新沙箱模板")
     @PutMapping
     @RequirePermission(dynamic = true)
     public R<AgentSandboxTemplateVO> update(
@@ -72,7 +72,7 @@ public class AgentSandboxTemplateController {
         return R.ok(service.updateResource(request));
     }
 
-    @Operation(summary = "删除资源")
+    @Operation(summary = "删除沙箱模板")
     @DeleteMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> delete(@PathVariable long id) {

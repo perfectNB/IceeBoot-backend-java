@@ -40,9 +40,9 @@ public class SysMenuController {
     }
 
 
-    @Operation(summary = "查询用户菜单列表", description = "根据条件分页查询菜单列表")
+    // 当前账号自助接口由全局登录拦截器保护，服务层仅返回当前用户获授权的菜单。
+    @Operation(summary = "查询当前用户菜单", description = "登录后获取当前用户角色获授权的菜单，无需菜单管理权限")
     @GetMapping("/user")
-    @RequirePermission(dynamic = true)
     public R<List<SysMenuVO>> getUserMenu() {
         List<SysMenuVO> userMenu = menuService.getUserMenu();
         return R.ok(userMenu);

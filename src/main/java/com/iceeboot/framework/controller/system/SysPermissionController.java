@@ -88,6 +88,7 @@ public class SysPermissionController {
 
     @Operation(summary = "修改权限状态", description = "启用或禁用权限")
     @PutMapping("/{id}/status")
+    @RequirePermission(dynamic = true)
     public R<Void> updateStatus(@PathVariable("id") Long id, @RequestParam String status) {
         boolean success = permissionService.updateStatus(id, status);
         return success ? R.ok(ResponseMessage.Permission.PERMISSION_UPDATE_SUCCESS) : R.fail(ResponseMessage.Permission.PERMISSION_UPDATE_FAIL);

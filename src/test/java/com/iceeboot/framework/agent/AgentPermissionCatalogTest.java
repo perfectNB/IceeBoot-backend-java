@@ -49,6 +49,13 @@ class AgentPermissionCatalogTest {
                 "CREATE TABLE t_role_permission(id BIGINT AUTO_INCREMENT PRIMARY KEY,role_id"
                         + " BIGINT,permission_id BIGINT,create_time DATETIME,update_time"
                         + " DATETIME,del_flag INT DEFAULT 0)");
+        jdbc.execute(
+                "CREATE TABLE t_user(id BIGINT PRIMARY KEY,username VARCHAR(64),status"
+                        + " VARCHAR(24),del_flag INT DEFAULT 0)");
+        jdbc.execute(
+                "CREATE TABLE t_user_role(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,"
+                        + "role_id BIGINT,create_time DATETIME,update_time DATETIME,"
+                        + "del_flag INT DEFAULT 0)");
         jdbc.update(
                 "INSERT INTO t_role(id,code,status) VALUES"
                         + " (1,'superAdmin','active'),(2,'admin','active')");
@@ -88,7 +95,7 @@ class AgentPermissionCatalogTest {
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_agent_schema_history", Integer.class))
-                .isEqualTo(4);
+                .isEqualTo(5);
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_menu WHERE path LIKE"
@@ -106,7 +113,9 @@ class AgentPermissionCatalogTest {
                                 "SELECT COUNT(*) FROM t_role_permission WHERE role_id=1 AND"
                                         + " del_flag=0",
                                 Integer.class))
-                .isEqualTo(47);
+                .isEqualTo(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM t_permission WHERE status='active' AND del_flag=0",
+                        Integer.class));
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT COUNT(*) FROM t_role_menu WHERE role_id=1 AND del_flag=0",

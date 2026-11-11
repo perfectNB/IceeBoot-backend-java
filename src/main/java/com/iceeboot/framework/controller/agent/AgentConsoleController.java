@@ -48,7 +48,7 @@ public class AgentConsoleController {
         return new Caller(id.toString(), TokenUtils.getToken());
     }
 
-    @Operation(summary = "Get /models")
+    @Operation(summary = "查询模型连接列表")
     @GetMapping("/models")
     @RequirePermission(dynamic = true)
     public R<List<AgentModelVO>> models() {
@@ -59,7 +59,7 @@ public class AgentConsoleController {
                         .toList());
     }
 
-    @Operation(summary = "Post /models")
+    @Operation(summary = "新增模型连接")
     @PostMapping("/models")
     @RequirePermission(dynamic = true)
     public R<AgentModelVO> saveModel(@Valid @RequestBody AgentModelDTO request) {
@@ -70,7 +70,7 @@ public class AgentConsoleController {
                         AgentModelVO.class));
     }
 
-    @Operation(summary = "Delete /models/{id}")
+    @Operation(summary = "删除模型连接")
     @DeleteMapping("/models/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> deleteModel(@PathVariable long id) {
@@ -79,7 +79,7 @@ public class AgentConsoleController {
         return R.ok();
     }
 
-    @Operation(summary = "Post /models/invoke")
+    @Operation(summary = "直接调用模型")
     @PostMapping("/models/invoke")
     @RequirePermission(dynamic = true)
     public R<String> invokeModel(@Valid @RequestBody AgentModelInvokeDTO request) {
@@ -90,7 +90,7 @@ public class AgentConsoleController {
                         converter.convert(request, ModelInvokeRequest.class), caller));
     }
 
-    @Operation(summary = "Get /capabilities")
+    @Operation(summary = "查询能力列表")
     @GetMapping("/capabilities")
     @RequirePermission(dynamic = true)
     public R<List<AgentCapabilityVO>> capabilities() {
@@ -101,7 +101,7 @@ public class AgentConsoleController {
                         .toList());
     }
 
-    @Operation(summary = "Post /capabilities")
+    @Operation(summary = "新增能力")
     @PostMapping("/capabilities")
     @RequirePermission(dynamic = true)
     public R<AgentCapabilityVO> saveCapability(@Valid @RequestBody AgentCapabilityDTO request) {
@@ -112,7 +112,7 @@ public class AgentConsoleController {
                         AgentCapabilityVO.class));
     }
 
-    @Operation(summary = "Delete /capabilities/{id}")
+    @Operation(summary = "删除能力")
     @DeleteMapping("/capabilities/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> deleteCapability(@PathVariable long id) {
@@ -121,7 +121,7 @@ public class AgentConsoleController {
         return R.ok();
     }
 
-    @Operation(summary = "Get /agents")
+    @Operation(summary = "查询智能体列表")
     @GetMapping("/agents")
     @RequirePermission(dynamic = true)
     public R<List<AgentVO>> agents() {
@@ -132,7 +132,7 @@ public class AgentConsoleController {
                         .toList());
     }
 
-    @Operation(summary = "Get /agents/{id}")
+    @Operation(summary = "查询智能体详情")
     @GetMapping("/agents/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentVO> agent(@PathVariable long id) {
@@ -140,7 +140,7 @@ public class AgentConsoleController {
         return R.ok(converter.convert(configs.agent(id), AgentVO.class));
     }
 
-    @Operation(summary = "Post /agents")
+    @Operation(summary = "新增智能体")
     @PostMapping("/agents")
     @RequirePermission(dynamic = true)
     public R<AgentVO> saveAgent(@Valid @RequestBody AgentDefinitionDTO request) {
@@ -151,7 +151,7 @@ public class AgentConsoleController {
                         AgentVO.class));
     }
 
-    @Operation(summary = "Delete /agents/{id}")
+    @Operation(summary = "删除智能体")
     @DeleteMapping("/agents/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> deleteAgent(@PathVariable long id) {
@@ -160,7 +160,7 @@ public class AgentConsoleController {
         return R.ok();
     }
 
-    @Operation(summary = "Get /agents/{id}/releases")
+    @Operation(summary = "查询智能体发布版本")
     @GetMapping("/agents/{id}/releases")
     @RequirePermission(dynamic = true)
     public R<List<AgentReleaseVO>> releases(@PathVariable long id) {
@@ -171,7 +171,7 @@ public class AgentConsoleController {
                         .toList());
     }
 
-    @Operation(summary = "Post /agents/{id}/publish")
+    @Operation(summary = "发布智能体")
     @PostMapping("/agents/{id}/publish")
     @RequirePermission(dynamic = true)
     public R<AgentReleaseVO> publish(@PathVariable long id) {
@@ -179,7 +179,7 @@ public class AgentConsoleController {
         return R.ok(converter.convert(configs.publish(id, caller.userId()), AgentReleaseVO.class));
     }
 
-    @Operation(summary = "Post /agents/by-code/{code}/invoke")
+    @Operation(summary = "调用智能体")
     @PostMapping("/agents/by-code/{code}/invoke")
     @RequirePermission(dynamic = true)
     public R<AgentInvokeVO> invoke(
@@ -192,7 +192,7 @@ public class AgentConsoleController {
                         AgentInvokeVO.class));
     }
 
-    @Operation(summary = "Get /runs")
+    @Operation(summary = "查询执行记录列表")
     @GetMapping("/runs")
     @RequirePermission(dynamic = true)
     public R<List<AgentRunVO>> runs() {
@@ -203,7 +203,7 @@ public class AgentConsoleController {
                         .toList());
     }
 
-    @Operation(summary = "Get /runs/{id}")
+    @Operation(summary = "查询执行记录详情")
     @GetMapping("/runs/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentRunDetailVO> run(@PathVariable String id) {
@@ -211,7 +211,7 @@ public class AgentConsoleController {
         return R.ok(converter.convert(store.runDetail(id), AgentRunDetailVO.class));
     }
 
-    @Operation(summary = "更新models")
+    @Operation(summary = "更新模型连接")
     @PutMapping("/models")
     @RequirePermission(dynamic = true)
     public R<AgentModelVO> updateModelConfig(@Valid @RequestBody AgentModelUpdateDTO request) {
@@ -222,7 +222,7 @@ public class AgentConsoleController {
                         AgentModelVO.class));
     }
 
-    @Operation(summary = "更新agents")
+    @Operation(summary = "更新智能体")
     @PutMapping("/agents")
     @RequirePermission(dynamic = true)
     public R<AgentVO> updateAgentSpec(@Valid @RequestBody AgentDefinitionUpdateDTO request) {
@@ -233,7 +233,7 @@ public class AgentConsoleController {
                         AgentVO.class));
     }
 
-    @Operation(summary = "更新capabilities")
+    @Operation(summary = "更新能力")
     @PutMapping("/capabilities")
     @RequirePermission(dynamic = true)
     public R<AgentCapabilityVO> updateCapability(

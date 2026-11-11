@@ -43,7 +43,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
     }
 
     public void migratePermissions() {
-        migrate(List.of("V004__operations_permissions.sql"));
+        migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql"));
     }
 
     private synchronized void migrate(List<String> migrations) {
@@ -112,7 +112,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             }
         }
         if (version == 1) verifyLegacyData(c);
-        boolean transactional = version == 4;
+        boolean transactional = version >= 4;
         if (transactional) c.setAutoCommit(false);
         try {
             for (String statement : sql.replaceAll("(?m)^--[^\n]*", "").split(";")) {

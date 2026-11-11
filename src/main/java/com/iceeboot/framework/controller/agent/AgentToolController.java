@@ -39,7 +39,7 @@ public class AgentToolController {
                     ResultCodeEnum.FORBIDDEN.getCode(), ResponseMessage.Agent.SUPER_ADMIN_REQUIRED);
     }
 
-    @Operation(summary = "查询资源列表")
+    @Operation(summary = "查询工具列表")
     @GetMapping
     @RequirePermission(dynamic = true)
     public R<List<AgentToolVO>> getResourceList() {
@@ -47,7 +47,7 @@ public class AgentToolController {
         return R.ok(service.getResourceList());
     }
 
-    @Operation(summary = "查询资源详情")
+    @Operation(summary = "查看工具详情")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentToolVO> getResourceById(@PathVariable long id) {
@@ -55,7 +55,7 @@ public class AgentToolController {
         return R.ok(service.getResourceById(id));
     }
 
-    @Operation(summary = "新增资源")
+    @Operation(summary = "新增工具")
     @PostMapping
     @RequirePermission(dynamic = true)
     public R<AgentToolVO> create(@Valid @RequestBody AgentToolDTO request) {
@@ -63,7 +63,7 @@ public class AgentToolController {
         return R.ok(service.addResource(request));
     }
 
-    @Operation(summary = "更新资源")
+    @Operation(summary = "更新工具")
     @PutMapping
     @RequirePermission(dynamic = true)
     public R<AgentToolVO> update(@Valid @RequestBody AgentToolUpdateDTO request) {
@@ -71,7 +71,7 @@ public class AgentToolController {
         return R.ok(service.updateResource(request));
     }
 
-    @Operation(summary = "删除资源")
+    @Operation(summary = "删除工具")
     @DeleteMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> delete(@PathVariable long id) {

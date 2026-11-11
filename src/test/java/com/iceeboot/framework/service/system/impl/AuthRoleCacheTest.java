@@ -17,8 +17,12 @@ class AuthRoleCacheTest {
         var row = new UserRoleDO(); row.setId(999L); row.setUserId(7L); row.setRoleId(42L);
         when(relations.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of(row));
         when(rolePermissions.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of());
+        var roles = mock(SysRoleMapper.class);
+        var role = new RoleDO(); role.setId(42L); role.setCode("ordinary");
+        role.setStatus("active"); role.setDelFlag(0);
+        when(roles.selectList(any(com.baomidou.mybatisplus.core.conditions.Wrapper.class))).thenReturn(List.of(role));
         var service = new AuthCacheServiceImpl(redis, mock(SysMenuMapper.class), mock(SysPermissionMapper.class),
-                mock(SysRoleMapper.class), relations, mock(SysRoleMenuMapper.class), rolePermissions);
+                roles, relations, mock(SysRoleMenuMapper.class), rolePermissions);
         service.getUserPermissions(7L);
         verify(values).set(CacheConstants.Auth.USER_ROLE + 7L, List.of(42L));
         verify(values).get(CacheConstants.Auth.ROLE_PERMISSIONS_KEY + 42L);

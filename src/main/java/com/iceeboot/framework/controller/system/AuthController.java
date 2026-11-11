@@ -1,7 +1,6 @@
 package com.iceeboot.framework.controller.system;
 
 import com.iceeboot.common.annotation.RateLimit;
-import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.R;
 import com.iceeboot.common.enums.RateLimitType;
 import com.iceeboot.framework.dto.create.system.LoginDTO;
@@ -51,9 +50,9 @@ public class AuthController {
     }
 
 
-    @Operation(summary = "用户登出", description = "退出登录")
+    // 当前账号自助接口统一校验登录，不依赖后台业务权限配置。
+    @Operation(summary = "用户登出", description = "退出当前账号登录")
     @PostMapping("/logout")
-    @RequirePermission(dynamic = true)
     public R<Void> logout() {
         authService.logout();
         return R.ok();
@@ -62,7 +61,6 @@ public class AuthController {
 
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/user")
-    @RequirePermission(dynamic = true)
     public R<SysUserVO> getCurrentUser() {
         SysUserVO userVO = authService.getCurrentUser();
         return R.ok(userVO);

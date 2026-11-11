@@ -39,7 +39,7 @@ public class AgentKnowledgeController {
                     ResultCodeEnum.FORBIDDEN.getCode(), ResponseMessage.Agent.SUPER_ADMIN_REQUIRED);
     }
 
-    @Operation(summary = "查询资源列表")
+    @Operation(summary = "查询知识库连接列表")
     @GetMapping
     @RequirePermission(dynamic = true)
     public R<List<AgentKnowledgeVO>> getResourceList() {
@@ -47,7 +47,7 @@ public class AgentKnowledgeController {
         return R.ok(service.getResourceList());
     }
 
-    @Operation(summary = "查询资源详情")
+    @Operation(summary = "查看知识库连接详情")
     @GetMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<AgentKnowledgeVO> getResourceById(@PathVariable long id) {
@@ -55,7 +55,7 @@ public class AgentKnowledgeController {
         return R.ok(service.getResourceById(id));
     }
 
-    @Operation(summary = "新增资源")
+    @Operation(summary = "新增知识库连接")
     @PostMapping
     @RequirePermission(dynamic = true)
     public R<AgentKnowledgeVO> create(@Valid @RequestBody AgentKnowledgeDTO request) {
@@ -63,7 +63,7 @@ public class AgentKnowledgeController {
         return R.ok(service.addResource(request));
     }
 
-    @Operation(summary = "更新资源")
+    @Operation(summary = "更新知识库连接")
     @PutMapping
     @RequirePermission(dynamic = true)
     public R<AgentKnowledgeVO> update(@Valid @RequestBody AgentKnowledgeUpdateDTO request) {
@@ -71,7 +71,7 @@ public class AgentKnowledgeController {
         return R.ok(service.updateResource(request));
     }
 
-    @Operation(summary = "删除资源")
+    @Operation(summary = "删除知识库连接")
     @DeleteMapping("/{id}")
     @RequirePermission(dynamic = true)
     public R<Void> delete(@PathVariable long id) {

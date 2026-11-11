@@ -33,14 +33,14 @@ public class AgentOperationsController {
         return id.toString();
     }
 
-    @Operation(summary = "查询当前用户的每日模型调用额度")
+    @Operation(summary = "查询每日模型调用额度")
     @GetMapping("/quota")
     @RequirePermission(dynamic = true)
     public R<AgentQuotaVO> quota() {
         return R.ok(quota.getQuota(admin()));
     }
 
-    @Operation(summary = "请求取消正在执行的根任务")
+    @Operation(summary = "取消智能体执行")
     @PostMapping("/runs/{id}/cancel")
     @RequirePermission(dynamic = true)
     public R<Void> cancel(@PathVariable String id) {
@@ -49,7 +49,7 @@ public class AgentOperationsController {
         return R.ok();
     }
 
-    @Operation(summary = "使用部署环境中的当前主密钥重加密存量凭据")
+    @Operation(summary = "轮换存储密文")
     @PostMapping("/secrets/rotate")
     @RequirePermission(dynamic = true)
     public R<AgentSecretRotationVO> rotate() {
