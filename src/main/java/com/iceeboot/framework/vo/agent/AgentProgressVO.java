@@ -18,4 +18,8 @@ public class AgentProgressVO {
     private String toolName;
     private String status;
     private long timestamp;
+    private Long durationMs;
+    private Long inputTokens;
+    private Long outputTokens;
+    private Boolean usageKnown;
 }

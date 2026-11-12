@@ -245,6 +245,14 @@ public class ResponseMessage {
 
     /** AgentScope 配置、资源管理和执行相关消息。 */
     public static final class Agent {
+        public static final String RELEASE_AGENT_MISMATCH = "发布版本不属于当前智能体";
+        public static final String FILE_SESSION_LIMIT = "当前会话文件总量达到 100MiB，请移除未使用的附件或新建会话";
+        public static final String FILE_INVALID = "文件无效，单个文件及本轮附件总量不能超过 20MiB";
+        public static final String FILE_NOT_FOUND = "文件不存在或不属于当前会话";
+        public static final String FILE_STORAGE_FAILED = "文件保存失败";
+        public static final String FILE_REQUIRES_SANDBOX = "当前会话版本未开启沙箱，无法使用附件";
+        public static final String FILE_IN_USE = "文件已用于对话，无法删除";
+        public static final String RECOVERY_NOT_ALLOWED = "本轮仍在运行或已成功，无法创建重试会话";
         private Agent() {
         }
 

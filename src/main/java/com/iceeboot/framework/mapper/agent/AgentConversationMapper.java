@@ -7,6 +7,8 @@ import java.util.List;
 /** 按会话归属访问消息与 SDK 原子状态。 */
 @Mapper
 public interface AgentConversationMapper {
+    @Select("SELECT * FROM t_agent_message WHERE agent_id=#{agent} AND user_id=#{user} AND session_id=#{session} AND run_id=#{run} ORDER BY id")
+    List<AgentMessageDO> turn(@Param("agent") long agent,@Param("user") String user,@Param("session") String session,@Param("run") String run);
     @Insert("INSERT INTO t_agent_progress(root_run_id,sequence_no,payload) VALUES(#{root},#{sequence},#{payload})")
     int insertProgress(@Param("root") String root, @Param("sequence") long sequence, @Param("payload") String payload);
 

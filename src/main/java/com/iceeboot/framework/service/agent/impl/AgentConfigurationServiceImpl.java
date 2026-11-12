@@ -102,7 +102,7 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
                                             "plan_enter",
                                             "plan_write",
                                             "plan_exit",
-                                            "todo_write")
+                                            "todo_write", "deliver_artifact")
                                     .contains(c.code()),
                     ResponseMessage.Agent.TOOL_CODE_RESERVED);
         }
@@ -285,6 +285,28 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
     @Override
     public ReleaseView publish(long id, String user) {
         store.lockAgent(id);
+        PublishedAgent preview = preview(id);
+        String releaseId = UUID.randomUUID().toString();
+        PublishedAgent published = new PublishedAgent(releaseId,store.nextVersion(id),preview.agent(),
+                preview.model(),preview.capabilities(),preview.children());
+        store.publish(published,user);
+        return store.releases(id).stream().filter(r -> r.id().equals(releaseId)).findFirst().orElseThrow();
+    }
+
+    @Transactional
+    @Override
+    public ReleaseView rollback(long id,String releaseId,String user) {
+        store.lockAgent(id);
+        PublishedAgent previous = store.release(releaseId);
+        require(Objects.equals(previous.agent().id(),id),ResponseMessage.Agent.RELEASE_AGENT_MISMATCH);
+        String nextId = UUID.randomUUID().toString();
+        store.publish(new PublishedAgent(nextId,store.nextVersion(id),previous.agent(),previous.model(),
+                previous.capabilities(),previous.children()),user);
+        return store.releases(id).stream().filter(r -> r.id().equals(nextId)).findFirst().orElseThrow();
+    }
+
+    @Override
+    public PublishedAgent preview(long id) {
         AgentSpec a = store.agent(id).draft();
         SchemaSupport.checkSchema(a.outputSchema());
         ModelConfig model = store.model(a.modelConfigId());
@@ -318,21 +340,7 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
             validateTree(p, new HashSet<>(Set.of(a.code())), 1);
             children.add(p);
         }
-        String releaseId = UUID.randomUUID().toString();
-        int version = store.nextVersion(id);
-        PublishedAgent p =
-                new PublishedAgent(
-                        releaseId,
-                        version,
-                        a,
-                        model,
-                        List.copyOf(capabilities.values()),
-                        List.copyOf(children));
-        store.publish(p, user);
-        return store.releases(id).stream()
-                .filter(r -> r.id().equals(releaseId))
-                .findFirst()
-                .orElseThrow();
+        return new PublishedAgent("",0,a,model,List.copyOf(capabilities.values()),List.copyOf(children));
     }
 
     private void validateTree(PublishedAgent p, Set<String> path, int depth) {

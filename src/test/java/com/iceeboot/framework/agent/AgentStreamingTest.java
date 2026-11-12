@@ -29,7 +29,7 @@ class AgentStreamingTest {
         control = new AgentRunControl(f.store, f.properties);
         execution = new AgentExecutionServiceImpl(f.store,
                 new HarnessRuntimeFactory(models, f.properties, f.secrets, f.store, mock(ISysUserService.class), f.conversations()),
-                models, f.properties, f.json, f.quota(), control, f.conversations());
+                models, f.properties, f.json, f.quota(), control, f.conversations(), f.files());
     }
     @AfterEach void close() { control.close(); }
     PublishedAgent publish(String code) {
@@ -58,6 +58,10 @@ class AgentStreamingTest {
                 .expectComplete().verify(Duration.ofSeconds(10));
         String root = events.getFirst().rootRunId();
         var saved = f.conversations().progress(agent.agent().id(), "1", "stream_session", root);
+        assertThat(saved).anyMatch(e -> e.type()==AgentProgressType.PHASE_FINISHED && e.callId().equals("ENVIRONMENT") && e.durationMs()!=null);
+        assertThat(saved).filteredOn(e -> e.type()==AgentProgressType.MODEL_FINISHED).hasSize(1).allSatisfy(e -> {
+            assertThat(e.durationMs()).isNotNegative();assertThat(e.usageKnown()).isFalse();
+        });
         assertThat(saved).isNotEmpty().noneMatch(e -> e.type() == AgentProgressType.TEXT_DELTA);
         assertThat(saved).extracting(AgentProgress::sequence).isSorted().doesNotHaveDuplicates();
         assertThat(f.conversations().messages(agent.agent().id(), "1", "stream_session", Long.MAX_VALUE).getLast().getContent()).isEqualTo("第一段第二段");

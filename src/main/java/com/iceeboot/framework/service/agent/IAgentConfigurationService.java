@@ -26,4 +26,6 @@ public interface IAgentConfigurationService {
     AgentView saveAgent(AgentSpec agent);
 
     ReleaseView publish(long id, String user);
+    PublishedAgent preview(long id);
+    ReleaseView rollback(long id,String releaseId,String user);
 }

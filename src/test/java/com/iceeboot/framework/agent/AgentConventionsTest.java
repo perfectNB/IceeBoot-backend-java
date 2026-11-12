@@ -26,6 +26,7 @@ class AgentConventionsTest {
                 endpoints++;
                 if (method.getName().equals("stream"))
                     assertThat(method.getReturnType()).isEqualTo(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.class);
+                else if(method.getName().equals("download")) assertThat(method.getReturnType()).isEqualTo(org.springframework.http.ResponseEntity.class);
                 else assertThat(method.getReturnType()).isEqualTo(R.class);
                 assertThat(method.getAnnotation(RequirePermission.class).dynamic()).isTrue();
                 assertThat(method.getAnnotation(RequirePermission.class).code()).isEmpty();
@@ -39,7 +40,7 @@ class AgentConventionsTest {
                                 .startsWith("com.iceeboot.framework.dto.");
                     }
             }
-        assertThat(endpoints).isEqualTo(55);
+        assertThat(endpoints).isEqualTo(63);
     }
 
     @Test

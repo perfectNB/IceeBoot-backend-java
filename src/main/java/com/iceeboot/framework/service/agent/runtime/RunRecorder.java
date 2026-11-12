@@ -44,6 +44,28 @@ public final class RunRecorder implements MiddlewareBase {
     private AtomicLong sequence = new AtomicLong();
     private final Map<String, StringBuilder> toolOutputs = new java.util.concurrent.ConcurrentHashMap<>();
 
+    private record Stage(String title, long started) {}
+    private final Map<String, Stage> stages = new java.util.concurrent.ConcurrentHashMap<>();
+    public void beginStage(String key, String title) {
+        stages.putIfAbsent(key, new Stage(title, System.nanoTime()));
+        progress(AgentProgressType.PHASE,title,"",key,"","RUNNING");
+    }
+    public void endStage(String key, String status) {
+        Stage stage = stages.remove(key);
+        if (stage != null) measured(AgentProgressType.PHASE_FINISHED, stage.title(), key, status,
+                (System.nanoTime()-stage.started())/1_000_000, null,null,null);
+    }
+    private void measured(AgentProgressType type,String title,String key,String status,long duration,
+            Long input,Long output,Boolean known) {
+        synchronized(sequence) {
+            progress.accept(new AgentProgress(sequence.incrementAndGet(),type,rootId,id,parentId,
+                    snapshot.agent().code(),title,"",key,"",status,System.currentTimeMillis(),duration,input,output,known));
+        }
+    }
+
+    private RunFiles files;
+    public void files(RunFiles value) { files=value; }
+    public RunFiles files() { return files; }
     public void observeProgress(java.util.function.Consumer<AgentProgress> listener) { progress = listener; }
 
     public void progress(AgentProgressType type, String title, String text, String callId, String tool, String status) {
@@ -58,6 +80,7 @@ public final class RunRecorder implements MiddlewareBase {
             Function<ActingInput, Flux<AgentEvent>> next) {
         return Flux.defer(() -> {
             for (ToolUseBlock call : input.toolCalls()) {
+                stages.put("tool:" + call.getId(),new Stage("工具 · " + call.getName(),System.nanoTime()));
                 String title = call.getName().equals("load_skill_through_path") ? "加载技能" : call.getName().startsWith("agent_") ? "委派子智能体" : "调用工具";
                 progress(AgentProgressType.TOOL_STARTED, title + " · " + call.getName(),
                         com.iceeboot.framework.service.agent.support.AgentProgressPreview.input(call.getInput()), call.getId(), call.getName(), "RUNNING");
@@ -68,6 +91,7 @@ public final class RunRecorder implements MiddlewareBase {
 
     private void publish(AgentEvent event) {
         if (event instanceof ModelCallStartEvent model) {
+            endStage("ENVIRONMENT", "SUCCEEDED");
             if (!partial.isEmpty()) progress(AgentProgressType.PHASE, "阶段输出",
                     com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(partialOutput()), "", "", "SUCCEEDED");
             partial.setLength(0);
@@ -98,6 +122,7 @@ public final class RunRecorder implements MiddlewareBase {
                     result.append(text.getDelta(), 0, Math.min(text.getDelta().length(), com.iceeboot.framework.service.agent.support.AgentProgressPreview.MAX_CHARACTERS * 2 - result.length()));
             }
         } else if (event instanceof ToolResultEndEvent result) {
+            endStage("tool:" + result.getToolCallId(),result.getState().name());
             var output = toolOutputs.remove(result.getToolCallId());
             progress(AgentProgressType.TOOL_FINISHED, (result.getState().name().equals("DENIED") ? "工具被拒绝 · " : result.getState().name().equals("ERROR") ? "工具执行失败 · " : "工具返回 · ") + result.getToolCallName(),
                     com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(output == null ? "" : output.toString()),
@@ -180,6 +205,7 @@ public final class RunRecorder implements MiddlewareBase {
     public RunRecorder child(PublishedAgent child, Caller childCaller) {
         RunRecorder result = new RunRecorder(rootId, id, child, childCaller, store, modelBudget, acquireQuota, traceId);
         result.progress = progress;
+        result.files = files;
         result.sequence = sequence;
         return result;
     }
@@ -223,6 +249,7 @@ public final class RunRecorder implements MiddlewareBase {
 
     public void finish(String status, String error) {
         if (started.get() && ended.compareAndSet(false, true)) {
+            for(String key:List.copyOf(stages.keySet())) endStage(key,status);
             for(String key:List.copyOf(reasoning.keySet())) completeReasoning(key,status);
             if (!status.equals("SUCCEEDED") && output.isEmpty()) output = partialOutput();
             store.finishRun(id, status, output, error);
@@ -267,6 +294,9 @@ public final class RunRecorder implements MiddlewareBase {
                                                         .EXECUTION_MODEL_BUDGET_EXCEEDED));
                             acquireQuota.run();
                             String callId = UUID.randomUUID().toString();
+                            long modelStarted = System.nanoTime();
+                            AtomicBoolean firstToken = new AtomicBoolean();
+                            AtomicReference<String> modelStatus = new AtomicReference<>("SUCCEEDED");
                             AtomicReference<ChatUsage> usage = new AtomicReference<>();
                             StringBuilder content = new StringBuilder();
                             AtomicBoolean saved = new AtomicBoolean();
@@ -285,11 +315,18 @@ public final class RunRecorder implements MiddlewareBase {
                                                     u == null ? 0 : u.getInputTokens(),
                                                     u == null ? 0 : u.getOutputTokens(),
                                                     u != null);
+                                            measured(AgentProgressType.MODEL_FINISHED,"模型调用",callId,modelStatus.get(),
+                                                    (System.nanoTime()-modelStarted)/1_000_000,
+                                                    u == null ? 0L : (long)u.getInputTokens(),
+                                                    u == null ? 0L : (long)u.getOutputTokens(),u != null);
                                         }
                                     };
                             return delegate.stream(messages, tools, options)
                                     .doOnNext(
                                             r -> {
+                                                if (r.getContent() != null && !r.getContent().isEmpty() && firstToken.compareAndSet(false,true))
+                                                    measured(AgentProgressType.MODEL_FIRST_TOKEN,"模型首个内容",callId,"SUCCEEDED",
+                                                            (System.nanoTime()-modelStarted)/1_000_000,null,null,null);
                                                 if (r.getUsage() != null) usage.set(r.getUsage());
                                                 if (r.getContent() != null)
                                                     content.append(store.json(r.getContent()))
@@ -298,6 +335,7 @@ public final class RunRecorder implements MiddlewareBase {
                                     .doOnComplete(save)
                                     .doOnError(
                                             e -> {
+                                                modelStatus.set("FAILED");
                                                 String code =
                                                         com.iceeboot.framework.service.agent.support
                                                                 .AgentDiagnostics.failure(
@@ -305,7 +343,7 @@ public final class RunRecorder implements MiddlewareBase {
                                                 store.diagnose(id, code, traceId);
                                                 save.run();
                                             })
-                                    .doOnCancel(save);
+                                    .doOnCancel(() -> { modelStatus.set("CANCELLED"); save.run(); });
                         });
             }
         };

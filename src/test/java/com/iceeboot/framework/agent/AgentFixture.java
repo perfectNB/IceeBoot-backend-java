@@ -54,6 +54,7 @@ class AgentFixture {
         var sessionFactory = factory.getObject();
         for (Class<?> mapper :
                 java.util.List.of(
+                        com.iceeboot.framework.mapper.agent.AgentFileMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentConversationMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentSecretMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentUsageQuotaMapper.class,
@@ -172,6 +173,18 @@ class AgentFixture {
     com.iceeboot.framework.service.agent.IAgentConversationService conversations() {
         return transactional(new com.iceeboot.framework.service.agent.impl.AgentConversationServiceImpl(
                 session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties,json,secrets),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
+    }
+
+    com.iceeboot.framework.service.agent.IAgentFileService files() {
+        return transactional(new com.iceeboot.framework.service.agent.impl.AgentFileServiceImpl(
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentFileMapper.class),conversations(),store),
+                new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
+    }
+    com.iceeboot.framework.service.agent.IAgentRecoveryService recovery() {
+        return transactional(new com.iceeboot.framework.service.agent.impl.AgentRecoveryServiceImpl(conversations(),store,files(),
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),
+                new com.iceeboot.framework.service.agent.convert.AgentApiConverter(json),json),
                 new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
     }
 

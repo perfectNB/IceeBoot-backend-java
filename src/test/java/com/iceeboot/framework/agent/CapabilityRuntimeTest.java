@@ -210,7 +210,7 @@ class CapabilityRuntimeTest {
                         f.properties,
                         f.json,
                         f.quota(),
-                        new AgentRunControl(f.store, f.properties), f.conversations());
+                        new AgentRunControl(f.store, f.properties), f.conversations(), f.files());
         assertThat(
                         service.invoke(
                                         "agent",

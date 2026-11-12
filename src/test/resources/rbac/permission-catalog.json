@@ -1587,5 +1587,61 @@
     "name": "查询会话执行过程",
     "code": "ai:session:events:api",
     "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/preflight",
+    "name": "预检技能与运行环境",
+    "code": "ai:agent:preflight:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/releases/diff",
+    "name": "比较智能体发布版本",
+    "code": "ai:agent:diff:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/releases/{releaseId}/rollback",
+    "name": "回滚智能体发布版本",
+    "code": "ai:agent:rollback:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/files",
+    "name": "上传会话附件",
+    "code": "ai:file:upload:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/files",
+    "name": "查询本轮附件和生成文件",
+    "code": "ai:file:list:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/files/{fileId}",
+    "name": "下载会话文件",
+    "code": "ai:file:download:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/files/{fileId}",
+    "name": "删除未使用的会话附件",
+    "code": "ai:file:delete:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/agents/{id}/sessions/{sessionId}/runs/{runId}/recovery",
+    "name": "准备失败重试会话",
+    "code": "ai:run:recovery:api",
+    "parentCode": "ai:agent"
   }
 ]

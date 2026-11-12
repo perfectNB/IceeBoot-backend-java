@@ -80,7 +80,7 @@ class AgentExceptionHandlingTest {
                         new ObjectMapper(),
                         mock(com.iceeboot.framework.service.agent.IAgentQuotaService.class),
                         new com.iceeboot.framework.service.agent.runtime.AgentRunControl(
-                                store, new AgentProperties()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class));
+                                store, new AgentProperties()), mock(com.iceeboot.framework.service.agent.IAgentConversationService.class), mock(com.iceeboot.framework.service.agent.IAgentFileService.class));
         assertThatThrownBy(
                         () ->
                                 service.invokeModel(

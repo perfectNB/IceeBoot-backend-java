@@ -183,7 +183,7 @@ class AgentOperationsTest {
                             f.properties,
                             f.json,
                             f.quota(),
-                            first, f.conversations());
+                            first, f.conversations(), f.files());
             var result =
                     pool.submit(
                             () ->
@@ -235,7 +235,7 @@ class AgentOperationsTest {
                             f.properties,
                             f.json,
                             f.quota(),
-                            control, f.conversations());
+                            control, f.conversations(), f.files());
             assertThat(
                             service.invokeModel(
                                     new ModelInvokeRequest(m.id(), "hello", null),
@@ -318,7 +318,7 @@ class AgentOperationsTest {
                             f.properties,
                             f.json,
                             f.quota(),
-                            control, f.conversations());
+                            control, f.conversations(), f.files());
             assertThatThrownBy(
                             () ->
                                     service.invokeModel(

@@ -193,7 +193,7 @@ public final class ConfiguredTool extends ToolBase {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
-    static String shellQuote(String value) {
+    public static String shellQuote(String value) {
         return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 }

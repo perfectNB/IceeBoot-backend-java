@@ -193,6 +193,7 @@ public class HarnessRuntimeFactory {
                         "reset_tools",
                         "reset_equipped_tools",
                         "generate_response"));
+        if (p.agent().sandboxEnabled() && recorder.files()!=null) allowed.add("deliver_artifact");
         if (p.agent().sandboxEnabled())
             allowed.addAll(
                     List.of(
@@ -210,6 +211,7 @@ public class HarnessRuntimeFactory {
                     name,
                     new PermissionRule(name, "", PermissionBehavior.ALLOW, "published_binding"));
         String prompt = p.agent().prompt();
+        if(p.agent().sandboxEnabled() && recorder.files()!=null) prompt += recorder.files().hint();
         if (p.agent().outputFormat() == OutputFormat.JSON_SCHEMA)
             prompt += "\n最终结果必须是符合以下 JSON Schema 的纯 JSON：\n" + store.json(p.agent().outputSchema());
         Path workspacePath =
@@ -253,6 +255,9 @@ public class HarnessRuntimeFactory {
                         .disableToolResultEviction()
                         .enableAgentTracingLog(false)
                         .middleware(recorder);
+        // 失败后不自动重放未确认的工具调用，恢复操作由用户明确发起。
+        builder.enablePendingToolRecovery(false);
+        if(p.agent().sandboxEnabled() && recorder.files()!=null) builder.artifactDeliveryTarget(recorder.files().delivery(recorder));
         List<Capability> skills =
                 p.capabilities().stream().filter(c -> c.kind() == CapabilityKind.SKILL).toList();
         if (!skills.isEmpty()) builder.skillRepository(new SnapshotSkillRepository(skills));
@@ -286,7 +291,9 @@ public class HarnessRuntimeFactory {
                 p.agent().environment().forEach((k, v) -> env.put(k, secrets.decrypt(v)));
             workspace.setEnvironment(env);
             E2bFilesystemSpec spec =
-                    new ReleasedE2bFilesystemSpec()
+                    new ReleasedE2bFilesystemSpec().observe(recorder, sandbox -> {
+                        if(recorder.files()!=null) recorder.files().stage(sandbox,recorder);
+                    })
                             .apiKey(e2b.getApiKey())
                             .apiBaseUrl(e2b.getApiBaseUrl())
                             .domain(e2b.getDomain())

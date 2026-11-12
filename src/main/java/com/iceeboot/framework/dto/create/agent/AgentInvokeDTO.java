@@ -20,4 +20,6 @@ public class AgentInvokeDTO {
     @Schema(description = "会话标识")
     @Size(max = 100)
     private String sessionId;
+    @Size(max=5)
+    private java.util.List<@NotBlank @Size(max=64) String> attachmentIds;
 }

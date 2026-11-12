@@ -43,7 +43,7 @@ class HarnessExecutionTest {
                         f.properties,
                         f.json,
                         f.quota(),
-                        new AgentRunControl(f.store, f.properties), f.conversations());
+                        new AgentRunControl(f.store, f.properties), f.conversations(), f.files());
     }
 
     static Model model(BiFunction<List<Msg>, List<ToolSchema>, ChatResponse> handler) {
@@ -425,7 +425,7 @@ class HarnessExecutionTest {
         f.properties.setWorkspace(java.nio.file.Files.createTempDirectory("empty-workspace").toString());
         var secondRuntime=new com.iceeboot.framework.service.agent.impl.AgentExecutionServiceImpl(
             f.store,new HarnessRuntimeFactory(models,f.properties,f.secrets,f.store,users,f.conversations()),
-            models,f.properties,f.json,f.quota(),new AgentRunControl(f.store,f.properties),f.conversations());
+            models,f.properties,f.json,f.quota(),new AgentRunControl(f.store,f.properties),f.conversations(),f.files());
         secondRuntime.invoke("chat",new InvokeRequest("what did I say","same"),new Caller("1","token"));
         assertThat(f.conversations().require(agent.draft().id(),"1","same").getVersion()).isEqualTo(version);
         assertThat(f.conversations().messages(agent.draft().id(),"1","same",Long.MAX_VALUE)).hasSize(4);

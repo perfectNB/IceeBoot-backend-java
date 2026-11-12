@@ -19,7 +19,7 @@ public final class SnapshotSkillRepository implements AgentSkillRepository {
             AgentSkill skill =
                     AgentSkill.builder()
                             .name(c.code())
-                            .description(c.description() == null ? c.name() : c.description())
+                            .description(c.description() == null || c.description().isBlank() ? c.name() : c.description())
                             .skillContent(s.content())
                             .resources(s.resources() == null ? Map.of() : s.resources())
                             .source("iceeboot-release")

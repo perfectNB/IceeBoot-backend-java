@@ -11,6 +11,7 @@ public class AgentSessionDO {
     private String releaseId;
     private Integer version;
     private String title;
+    private long leaseUntil;
     private java.time.LocalDateTime createTime;
     private java.time.LocalDateTime updateTime;
 }

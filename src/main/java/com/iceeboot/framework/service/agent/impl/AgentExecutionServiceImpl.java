@@ -32,6 +32,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
     private final Set<String> activeSessions = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final ObjectMapper json;
     private final IAgentConversationService conversations;
+    private final IAgentFileService files;
 
     public AgentExecutionServiceImpl(
             IAgentPersistenceService store,
@@ -40,7 +41,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             AgentProperties properties,
             ObjectMapper json,
             IAgentQuotaService quota,
-            AgentRunControl control, IAgentConversationService conversations) {
+            AgentRunControl control, IAgentConversationService conversations, IAgentFileService files) {
         this.store = store;
         this.harness = harness;
         this.models = models;
@@ -49,6 +50,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
         this.control = control;
         this.json = json;
         this.conversations = conversations;
+        this.files = files;
     }
 
     @Override
@@ -159,8 +161,16 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             recorder.start(input);
             registration = control.register(recorder.id);
             registration.check();
-            recorder.progress(AgentProgressType.PHASE, "正在装配技能、工具和运行环境", "", "", "", "RUNNING");
+            recorder.beginStage("ENVIRONMENT", "环境准备（含装配、启动和文件同步）");
+            recorder.beginStage("ATTACHMENTS_LOAD", "读取本轮附件");
+            if(request.attachmentIds()!=null && !request.attachmentIds().isEmpty() && !p.agent().sandboxEnabled())
+                throw new IceeBootException(ResponseMessage.Agent.FILE_REQUIRES_SANDBOX);
+            List<AgentFileContent> attached=files.bind(p.agent().id(),caller.userId(),session,turnId,request.attachmentIds());
+            recorder.files(new RunFiles(files,p.agent().id(),caller.userId(),session,turnId,attached));
+            recorder.endStage("ATTACHMENTS_LOAD", "SUCCEEDED");
+            recorder.beginStage("ASSEMBLY", "装配技能与工具");
             var agent = harness.create(p, caller, recorder, budget, resources, session);
+            recorder.endStage("ASSEMBLY", "SUCCEEDED");
             resources.add(agent);
             registration.check();
             RuntimeContext context =

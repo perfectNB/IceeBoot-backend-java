@@ -58,6 +58,19 @@ class E2bWorkspaceTransferTest {
         assertThat(fixture.commands).noneMatch(command -> command.contains("base64") || command.contains("tar -xzf"));
     }
 
+    @Test void sdkNativeBinaryDownloadsAvoidShellTruncationAndEnforceTwentyMibLimit() throws Exception {
+        var fixture=new Fixture(200);
+        fixture.downloaded=new byte[1024*1024];new Random(11).nextBytes(fixture.downloaded);
+        var sandbox=fixture.sandbox();sandbox.start();fixture.commands.clear();
+        var filesystem=new io.agentscope.harness.agent.filesystem.sandbox.PinnedSandboxFilesystem(sandbox);
+        var result=filesystem.downloadFiles(null,List.of("/home/user/workspace/report.bin")).getFirst();
+        assertThat(result.isSuccess()).isTrue();assertThat(result.content()).isEqualTo(fixture.downloaded);
+        assertThat(fixture.commands).isEmpty();
+        fixture.downloaded=new byte[20*1024*1024+1];
+        assertThat(filesystem.downloadFiles(null,List.of("/home/user/workspace/too-big")).getFirst().isSuccess()).isFalse();
+        assertThat(filesystem.downloadFiles(null,List.of("/etc/passwd")).getFirst().isSuccess()).isFalse();
+    }
+
     private byte[] archive() throws Exception {
         var bytes = new ByteArrayOutputStream();
         try(var tar = new org.apache.commons.compress.archivers.tar.TarArchiveOutputStream(bytes)) {
@@ -74,11 +87,17 @@ class E2bWorkspaceTransferTest {
         final AtomicReference<byte[]> uploaded = new AtomicReference<>();
         final List<String> commands = new ArrayList<>();
         final ObjectMapper json = new ObjectMapper();
+        byte[] downloaded;
         final int uploadStatus;
         Fixture(int status) { uploadStatus=status; }
         Sandbox sandbox() {
             var http = new OkHttpClient.Builder().addInterceptor(chain -> {
                 var request = chain.request();
+                if(request.url().encodedPath().equals("/files") && request.method().equals("GET")) {
+                    assertThat(request.header("X-Access-Token")).isEqualTo("fixture-envd-token");
+                    assertThat(request.url().queryParameter("path")).startsWith("/home/user/workspace/");
+                    return response(request,200,downloaded);
+                }
                 if(request.url().encodedPath().equals("/files")) {
                     uploads.incrementAndGet();
                     assertThat(request.header("X-Access-Token")).isEqualTo("fixture-envd-token");
