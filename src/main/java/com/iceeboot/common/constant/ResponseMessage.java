@@ -300,6 +300,7 @@ public class ResponseMessage {
         public static final String MCP_ALLOWED_TOOLS_REQUIRED = "请明确填写允许调用的 MCP 工具名";
         public static final String MCP_CONNECT_FAILED = "MCP 连接失败";
         public static final String MCP_TOOL_NOT_FOUND = "MCP 配置包含不存在的工具：%s";
+        public static final String SANDBOX_WORKSPACE_UPLOAD_FAILED = "沙箱工作区文件上传失败";
         public static final String SANDBOX_TEMPLATE_REQUIRED = "请填写阿里云 E2B 模板 ID 或名称";
         public static final String SANDBOX_TEMPLATE_NOT_SELECTED = "请选择沙箱模板";
         public static final String SANDBOX_CONNECTION_NOT_CONFIGURED = "请在 application 中配置阿里云 E2B 连接信息";
