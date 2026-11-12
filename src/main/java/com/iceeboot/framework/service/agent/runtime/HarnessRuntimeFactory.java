@@ -224,6 +224,7 @@ public class HarnessRuntimeFactory {
                     ResponseMessage.Agent.EXECUTION_WORKSPACE_CREATE_FAILED,
                     e);
         }
+        Model model = models.create(p.model(),p.agent().generation());
         var builder =
                 HarnessAgent.builder()
                         .name(p.agent().code())
@@ -231,7 +232,7 @@ public class HarnessRuntimeFactory {
                         .sessionLogStore(conversations.logStore(recorder))
                         .stateStore(conversations.stateStore(p.agent().id(), caller.userId(), session))
                         .sysPrompt(prompt)
-                        .model(recorder.observe(models.create(p.model(), p.agent().generation())))
+                        .model(recorder.observe(model))
                         .generateOptions(models.options(p.model(), p.agent().generation()))
                         .modelExecutionConfig(
                                 ExecutionConfig.builder()
@@ -258,15 +259,20 @@ public class HarnessRuntimeFactory {
         builder.compaction(io.agentscope.harness.agent.memory.compaction.CompactionConfig.builder()
                 .triggerTokens(contextPolicy.getCompactTriggerTokens()).reserved(4096)
                 .keepTokens(contextPolicy.getKeepRecentTokens()).keepMessages(10)
-                .model(recorder.observeCompaction(models.create(p.model(), p.agent().generation())))
+                .model(recorder.observeCompaction(model))
                 .flushBeforeCompact(false).build());
         if (p.agent().sandboxEnabled()) {
-            // 完整结果保存在沙箱文件，模型接收预览和可重新读取的文件地址；技能正文不能裁剪。
+            // 文件引用跨沙箱生命周期保留，数据库存储仍按三元组隔离并加密。
+            builder.filesystemRoute(ToolResultFileStore.PATH,
+                    new io.agentscope.harness.agent.filesystem.remote.RemoteFilesystem(
+                            new ToolResultFileStore(conversations.stateStore(p.agent().id(),caller.userId(),session)),List.of("tool-results")));
+            // 模型接收预览和可重新读取的文件地址；技能正文不能裁剪。
             Set<String> excluded = new HashSet<>(io.agentscope.harness.agent.memory.compaction.ToolResultEvictionConfig.DEFAULT_EXCLUDED_TOOLS);
             excluded.add("load_skill_through_path");
             builder.toolResultEviction(io.agentscope.harness.agent.memory.compaction.ToolResultEvictionConfig.builder()
                     .maxResultChars(contextPolicy.getMaxToolResultCharacters())
-                    .previewChars(contextPolicy.getToolPreviewCharacters()).excludedToolNames(excluded).build());
+                    .previewChars(contextPolicy.getToolPreviewCharacters()).evictionPath(ToolResultFileStore.PATH)
+                    .excludedToolNames(excluded).build());
         } else builder.disableToolResultEviction();
         // 失败后不自动重放未确认的工具调用，恢复操作由用户明确发起。
         builder.enablePendingToolRecovery(false);

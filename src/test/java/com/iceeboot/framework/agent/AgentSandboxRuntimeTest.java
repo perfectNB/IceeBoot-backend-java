@@ -53,6 +53,25 @@ class AgentSandboxRuntimeTest {
         state.setSandboxOwned(false);
         assertThat(((io.agentscope.extensions.sandbox.e2b.E2bSandboxState) client.deserializeState(client.serializeState(state))).getSandboxId()).isEqualTo("released-instance");
     }
+    @Test void toolResultRouteSurvivesRebuildingSandboxRuntimeWithoutStartingCloud() throws Exception {
+        var f=new AgentFixture();
+        f.properties.getE2b().setApiKey("test-key");f.properties.getE2b().setApiBaseUrl("https://example.invalid");f.properties.getE2b().setDomain("example.invalid");
+        var template=f.configs.saveCapability(new Capability(null,CapabilityKind.SANDBOX,"file_template","模板","",true,null,null,null,new SandboxConfig("test-template",600)));
+        var p=f.publish(f.save("file_route",f.model().id(),List.of(),List.of(),List.of(),List.of(),true,template.id()));
+        var models=mock(AgentModelFactory.class);when(models.options(any(),any())).thenReturn(GenerateOptions.builder().build());
+        when(models.create(any(),any())).thenReturn(HarnessExecutionTest.model((messages,tools)->HarnessExecutionTest.text("unused",1,1)));
+        var factory=new HarnessRuntimeFactory(models,f.properties,f.secrets,f.store,mock(ISysUserService.class),f.conversations());
+        var ctx=RuntimeContext.builder().userId("1").sessionId("file_session").build();
+        String path=ToolResultFileStore.PATH+"test.txt";
+        for(int i=0;i<2;i++) {
+            var recorder=new RunRecorder(null,"",p,new Caller("1","token"),f.store,new AtomicInteger(10));
+            try(var agent=factory.create(p,new Caller("1","token"),recorder,new AtomicInteger(10),new ArrayList<>(),"file_session")) {
+                var fs=agent.getWorkspaceManager().getFilesystem();
+                if(i==0) assertThat(fs.write(ctx,path,"preserved across runtimes").isSuccess()).isTrue();
+                else assertThat(fs.read(ctx,path,0,100).fileData().content()).isEqualTo("preserved across runtimes");
+            }
+        }
+    }
     @Test void relativeWorkspaceStagesSkillScriptsAndAuthorizesOnlyRegisteredSandboxTools() throws Exception {
         var f = new AgentFixture();
         Path base = Path.of(f.properties.getWorkspace());
