@@ -170,6 +170,10 @@ class AgentFixture {
         return (T) proxy.getProxy();
     }
 
+    com.iceeboot.framework.mapper.agent.AgentConversationMapper conversationMapper() {
+        return session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class);
+    }
+
     com.iceeboot.framework.service.agent.IAgentConversationService conversations() {
         return transactional(new com.iceeboot.framework.service.agent.impl.AgentConversationServiceImpl(
                 session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties,json,secrets),

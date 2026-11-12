@@ -42,6 +42,8 @@ public final class RunRecorder implements MiddlewareBase {
     public String partialOutput() { return partial.toString(); }
     private java.util.function.Consumer<AgentProgress> progress = event -> {};
     private AtomicLong sequence = new AtomicLong();
+    private boolean progressClosed;
+    private AtomicBoolean eventStreamClosed = new AtomicBoolean();
     private final Map<String, StringBuilder> toolOutputs = new java.util.concurrent.ConcurrentHashMap<>();
 
     private record Stage(String title, long started) {}
@@ -58,6 +60,7 @@ public final class RunRecorder implements MiddlewareBase {
     private void measured(AgentProgressType type,String title,String key,String status,long duration,
             Long input,Long output,Boolean known) {
         synchronized(sequence) {
+            if (progressClosed || eventStreamClosed.get()) return;
             progress.accept(new AgentProgress(sequence.incrementAndGet(),type,rootId,id,parentId,
                     snapshot.agent().code(),title,"",key,"",status,System.currentTimeMillis(),duration,input,output,known));
         }
@@ -70,6 +73,7 @@ public final class RunRecorder implements MiddlewareBase {
 
     public void progress(AgentProgressType type, String title, String text, String callId, String tool, String status) {
         synchronized (sequence) {
+            if (progressClosed || eventStreamClosed.get()) return;
             progress.accept(new AgentProgress(sequence.incrementAndGet(), type, rootId, id, parentId,
                     snapshot.agent().code(), title, text, callId, tool, status, System.currentTimeMillis()));
         }
@@ -91,7 +95,6 @@ public final class RunRecorder implements MiddlewareBase {
 
     private void publish(AgentEvent event) {
         if (event instanceof ModelCallStartEvent model) {
-            endStage("ENVIRONMENT", "SUCCEEDED");
             if (!partial.isEmpty()) progress(AgentProgressType.PHASE, "阶段输出",
                     com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(partialOutput()), "", "", "SUCCEEDED");
             partial.setLength(0);
@@ -207,6 +210,7 @@ public final class RunRecorder implements MiddlewareBase {
         result.progress = progress;
         result.files = files;
         result.sequence = sequence;
+        result.eventStreamClosed = eventStreamClosed;
         return result;
     }
 
@@ -248,17 +252,23 @@ public final class RunRecorder implements MiddlewareBase {
     }
 
     public void finish(String status, String error) {
-        if (started.get() && ended.compareAndSet(false, true)) {
-            for(String key:List.copyOf(stages.keySet())) endStage(key,status);
-            for(String key:List.copyOf(reasoning.keySet())) completeReasoning(key,status);
-            if (!status.equals("SUCCEEDED") && output.isEmpty()) output = partialOutput();
-            store.finishRun(id, status, output, error);
-            progress(AgentProgressType.AGENT_FINISHED, snapshot.agent().name() + (status.equals("SUCCEEDED") ? " · 处理完成" : " · " + error),
-                    parentId.isEmpty() ? "" : com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(output), "", "", status);
+        synchronized (sequence) {
+            if (started.get() && ended.compareAndSet(false, true)) {
+                for(String key:List.copyOf(stages.keySet())) endStage(key,status);
+                for(String key:List.copyOf(reasoning.keySet())) completeReasoning(key,status);
+                if (!status.equals("SUCCEEDED") && output.isEmpty()) output = partialOutput();
+                store.finishRun(id, status, output, error);
+                progress(AgentProgressType.AGENT_FINISHED, snapshot.agent().name() + (status.equals("SUCCEEDED") ? " · 处理完成" : " · " + error),
+                        parentId.isEmpty() ? "" : com.iceeboot.framework.service.agent.support.AgentProgressPreview.text(output), "", "", status);
+                progressClosed = true;
+                if (parentId.isEmpty()) eventStreamClosed.set(true);
+            }
         }
     }
 
-    public Model observe(Model delegate) {
+    public Model observe(Model delegate) { return observe(delegate, false); }
+    public Model observeCompaction(Model delegate) { return observe(delegate, true); }
+    private Model observe(Model delegate, boolean compaction) {
         return new Model() {
             @Override
             public String getModelName() {
@@ -293,7 +303,9 @@ public final class RunRecorder implements MiddlewareBase {
                                                 ResponseMessage.Agent
                                                         .EXECUTION_MODEL_BUDGET_EXCEEDED));
                             acquireQuota.run();
+                            if (!compaction) endStage("ENVIRONMENT", "SUCCEEDED");
                             String callId = UUID.randomUUID().toString();
+                            if (compaction) beginStage("CONTEXT_COMPACTION", "整理较早对话上下文");
                             long modelStarted = System.nanoTime();
                             AtomicBoolean firstToken = new AtomicBoolean();
                             AtomicReference<String> modelStatus = new AtomicReference<>("SUCCEEDED");
@@ -315,7 +327,7 @@ public final class RunRecorder implements MiddlewareBase {
                                                     u == null ? 0 : u.getInputTokens(),
                                                     u == null ? 0 : u.getOutputTokens(),
                                                     u != null);
-                                            measured(AgentProgressType.MODEL_FINISHED,"模型调用",callId,modelStatus.get(),
+                                            measured(AgentProgressType.MODEL_FINISHED,compaction ? "上下文整理模型调用" : "模型调用",callId,modelStatus.get(),
                                                     (System.nanoTime()-modelStarted)/1_000_000,
                                                     u == null ? 0L : (long)u.getInputTokens(),
                                                     u == null ? 0L : (long)u.getOutputTokens(),u != null);
@@ -324,7 +336,7 @@ public final class RunRecorder implements MiddlewareBase {
                             return delegate.stream(messages, tools, options)
                                     .doOnNext(
                                             r -> {
-                                                if (r.getContent() != null && !r.getContent().isEmpty() && firstToken.compareAndSet(false,true))
+                                                if (!compaction && r.getContent() != null && !r.getContent().isEmpty() && firstToken.compareAndSet(false,true))
                                                     measured(AgentProgressType.MODEL_FIRST_TOKEN,"模型首个内容",callId,"SUCCEEDED",
                                                             (System.nanoTime()-modelStarted)/1_000_000,null,null,null);
                                                 if (r.getUsage() != null) usage.set(r.getUsage());
@@ -343,7 +355,8 @@ public final class RunRecorder implements MiddlewareBase {
                                                 store.diagnose(id, code, traceId);
                                                 save.run();
                                             })
-                                    .doOnCancel(() -> { modelStatus.set("CANCELLED"); save.run(); });
+                                    .doOnCancel(() -> { modelStatus.set("CANCELLED"); save.run(); })
+                                    .doFinally(signal -> { if (compaction) endStage("CONTEXT_COMPACTION", modelStatus.get()); });
                         });
             }
         };

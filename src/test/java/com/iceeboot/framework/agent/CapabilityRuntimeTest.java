@@ -132,6 +132,14 @@ class CapabilityRuntimeTest {
                 .doesNotContain("delete_all", "docs__delete_all");
     }
 
+    @Test void skillCatalogIsSmallWhileInstructionsRemainIntact() {
+        var content="技能的完整执行说明".repeat(100);
+        var definition=new Capability(1L,CapabilityKind.SKILL,"catalog","技能","简介".repeat(1000),true,
+                new SkillConfig(content,Map.of(),List.of()),null,null,null);
+        var skill=new SnapshotSkillRepository(List.of(definition)).getSkill("catalog");
+        assertThat(skill.getDescription()).hasSizeLessThan(350);
+        assertThat(skill.getSkillContent()).isEqualTo(content);
+    }
     @Test
     void harnessLoadsOnlyPublishedSkillAndItsResourceOnDemand() throws Exception {
         AgentFixture f = new AgentFixture();

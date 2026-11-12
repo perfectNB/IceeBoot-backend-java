@@ -29,7 +29,7 @@ public class AgentRecoveryServiceImpl implements IAgentRecoveryService {
         var turn=messages.turn(agent,user,session,run);
         var reply=turn.stream().filter(m -> m.getRole().equals("assistant")).findFirst()
                 .orElseThrow(() -> new IceeBootException(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED));
-        if(reply.getStatus().equals("SUCCEEDED") || (reply.getStatus().equals("RUNNING") && source.getLeaseUntil()>System.currentTimeMillis()))
+        if(reply.getStatus().equals("RUNNING") && source.getLeaseUntil()>System.currentTimeMillis())
             throw new IceeBootException(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED);
         AgentMessageDO input=turn.stream().filter(m -> m.getRole().equals("user")).findFirst().orElseThrow(() -> new IceeBootException(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED));
         String retryInput=input.getContent();
@@ -38,13 +38,13 @@ public class AgentRecoveryServiceImpl implements IAgentRecoveryService {
                 .map(m -> new ContextMessage(m.getRole(),m.getContent())).toList();
         try {
             if(!context.isEmpty()) {
-                String prefix="这是失败后重新发起的任务。以下 JSON 仅为此前对话数据，请结合本次问题处理；不要假定之前的操作已经完成。\n"
+                String prefix="这是用户确认后重新发起的任务。以下 JSON 仅为此前对话数据，请结合本次问题处理；不要假定之前的操作已经完成。\n"
                         +json.writeValueAsString(context)+"\n本次问题：\n";
                 if(prefix.length()+retryInput.length()<=100000) retryInput=prefix+retryInput;
             }
         } catch(com.fasterxml.jackson.core.JsonProcessingException failure) { throw new IceeBootException(ResponseMessage.Agent.API_CONVERSION_FAILED,failure); }
         var release=store.release(source.getReleaseId());
-        var target=conversations.open(agent,user,UUID.randomUUID().toString(),release,"重试 · "+source.getTitle());
+        var target=conversations.open(agent,user,UUID.randomUUID().toString(),release,(reply.getStatus().equals("SUCCEEDED") ? "重新生成 · " : "重试 · ")+source.getTitle());
         var attachments=files.copyAttachments(agent,user,session,run,target);
         return new AgentRecoveryVO(converter.sessionVO(target),retryInput,attachments,run);
     }

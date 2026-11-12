@@ -228,7 +228,7 @@ public class HarnessRuntimeFactory {
                 HarnessAgent.builder()
                         .name(p.agent().code())
                         .agentId(p.agent().id().toString())
-                        .sessionLogStore(conversations.logStore())
+                        .sessionLogStore(conversations.logStore(recorder))
                         .stateStore(conversations.stateStore(p.agent().id(), caller.userId(), session))
                         .sysPrompt(prompt)
                         .model(recorder.observe(models.create(p.model(), p.agent().generation())))
@@ -252,9 +252,22 @@ public class HarnessRuntimeFactory {
                         .disableMemoryHooks()
                         .disableMemoryTools()
                         .disableWebTools()
-                        .disableToolResultEviction()
                         .enableAgentTracingLog(false)
                         .middleware(recorder);
+        var contextPolicy = properties.getContext();
+        builder.compaction(io.agentscope.harness.agent.memory.compaction.CompactionConfig.builder()
+                .triggerTokens(contextPolicy.getCompactTriggerTokens()).reserved(4096)
+                .keepTokens(contextPolicy.getKeepRecentTokens()).keepMessages(10)
+                .model(recorder.observeCompaction(models.create(p.model(), p.agent().generation())))
+                .flushBeforeCompact(false).build());
+        if (p.agent().sandboxEnabled()) {
+            // 完整结果保存在沙箱文件，模型接收预览和可重新读取的文件地址；技能正文不能裁剪。
+            Set<String> excluded = new HashSet<>(io.agentscope.harness.agent.memory.compaction.ToolResultEvictionConfig.DEFAULT_EXCLUDED_TOOLS);
+            excluded.add("load_skill_through_path");
+            builder.toolResultEviction(io.agentscope.harness.agent.memory.compaction.ToolResultEvictionConfig.builder()
+                    .maxResultChars(contextPolicy.getMaxToolResultCharacters())
+                    .previewChars(contextPolicy.getToolPreviewCharacters()).excludedToolNames(excluded).build());
+        } else builder.disableToolResultEviction();
         // 失败后不自动重放未确认的工具调用，恢复操作由用户明确发起。
         builder.enablePendingToolRecovery(false);
         if(p.agent().sandboxEnabled() && recorder.files()!=null) builder.artifactDeliveryTarget(recorder.files().delivery(recorder));

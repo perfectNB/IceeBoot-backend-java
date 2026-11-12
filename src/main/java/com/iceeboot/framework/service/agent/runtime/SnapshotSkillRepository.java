@@ -11,6 +11,7 @@ import java.util.*;
 
 /** 只读发布快照视图，脚本资源由 Harness 按需投影至所选沙箱。 */
 public final class SnapshotSkillRepository implements AgentSkillRepository {
+    private static final int MAX_CATALOG_DESCRIPTION = 320;
     private final Map<String, AgentSkill> skills = new LinkedHashMap<>();
 
     public SnapshotSkillRepository(List<Capability> definitions) {
@@ -19,13 +20,19 @@ public final class SnapshotSkillRepository implements AgentSkillRepository {
             AgentSkill skill =
                     AgentSkill.builder()
                             .name(c.code())
-                            .description(c.description() == null || c.description().isBlank() ? c.name() : c.description())
+                            .description(catalogDescription(c))
                             .skillContent(s.content())
                             .resources(s.resources() == null ? Map.of() : s.resources())
                             .source("iceeboot-release")
                             .build();
             skills.put(c.code(), skill);
         }
+    }
+
+    private static String catalogDescription(Capability capability) {
+        String value = capability.description() == null || capability.description().isBlank() ? capability.name() : capability.description();
+        int end = value.offsetByCodePoints(0, Math.min(value.codePointCount(0,value.length()), MAX_CATALOG_DESCRIPTION));
+        return end == value.length() ? value : value.substring(0,end) + "…（加载技能后查看完整说明）";
     }
 
     @Override

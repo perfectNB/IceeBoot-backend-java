@@ -161,7 +161,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             recorder.start(input);
             registration = control.register(recorder.id);
             registration.check();
-            recorder.beginStage("ENVIRONMENT", "环境准备（含装配、启动和文件同步）");
+            recorder.beginStage("ENVIRONMENT", "首次模型调用前准备（含上下文恢复）");
             recorder.beginStage("ATTACHMENTS_LOAD", "读取本轮附件");
             if(request.attachmentIds()!=null && !request.attachmentIds().isEmpty() && !p.agent().sandboxEnabled())
                 throw new IceeBootException(ResponseMessage.Agent.FILE_REQUIRES_SANDBOX);

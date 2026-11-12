@@ -110,12 +110,15 @@ class AgentFilesRecoveryTest {
         assertThat(result.successful()).isFalse();
         assertThat(result.error()).isEqualTo(ResponseMessage.Agent.FILE_STORAGE_FAILED).doesNotContain("private-storage-detail");
     }
-    @Test void runningSucceededAndForeignTurnsCannotBeRecovered() {
+    @Test void runningAndForeignTurnsCannotBeRecoveredButSucceededCanPrepareRegeneration() {
         var conversation=f.conversations().require(p.agent().id(),"1","session");
         f.conversations().begin(conversation,"running","task");
         assertThatThrownBy(() -> f.recovery().prepare(p.agent().id(),"1","session","running")).hasMessage(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED);
         f.conversations().finish(conversation,"running","done","SUCCEEDED");f.conversations().release(conversation,"running");
-        assertThatThrownBy(() -> f.recovery().prepare(p.agent().id(),"1","session","running")).hasMessage(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED);
+        var regenerated = f.recovery().prepare(p.agent().id(),"1","session","running");
+        assertThat(regenerated.input()).isEqualTo("task");
+        assertThat(regenerated.session().getSessionId()).isNotEqualTo("session");
+        assertThat(f.conversations().messages(p.agent().id(),"1",regenerated.session().getSessionId(),Long.MAX_VALUE)).isEmpty();
         f.conversations().open(p.agent().id(),"2","session",p,"other");
         assertThatThrownBy(() -> f.recovery().prepare(p.agent().id(),"2","session","running")).hasMessage(ResponseMessage.Agent.RECOVERY_NOT_ALLOWED);
     }

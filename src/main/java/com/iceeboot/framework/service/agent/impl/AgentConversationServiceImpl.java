@@ -200,7 +200,11 @@ public class AgentConversationServiceImpl implements IAgentConversationService {
     }
 
     @Override
-    public SessionLogStore logStore() {
+    public SessionLogStore logStore() { return logStore(null); }
+
+    @Override
+    public SessionLogStore logStore(com.iceeboot.framework.service.agent.runtime.RunRecorder recorder) {
+        var opened = new java.util.concurrent.ConcurrentHashMap<SessionKey,SessionLog>();
         return (key,context) -> {
             long agent;
             try { agent=Long.parseLong(key.agentId());
@@ -212,24 +216,7 @@ public class AgentConversationServiceImpl implements IAgentConversationService {
             String user=key.userId(),session=key.sessionId();
             if (!Objects.equals(user,context.getUserId())) throw new IceeBootException(ResponseMessage.Agent.PERMISSION_DENIED);
             validate(session);
-            return new JournalSessionLog(new AtomicSessionStorage() {
-                public Value read(String path) {
-                    AgentSessionStateDO row=mapper.state(agentId,user,session,path);
-                    return row==null?null:new Value(row.getRevision(),row.getPayload());
-                }
-                public boolean compareAndSet(String path,long version,byte[] payload) {
-                    if(version==0) {
-                        try { return mapper.insertState(agentId,user,session,path,payload)==1;
-                        }
-                        catch(DuplicateKeyException race) { return false;
-                        }
-                    }
-                    return mapper.updateState(agentId,user,session,path,version,payload)==1;
-                }
-                public List<String> listPaths(String prefix) {
-                    return mapper.paths(agentId,user,session).stream().filter(p->p.startsWith(prefix)).toList();
-                }
-            },"session");
+            return opened.computeIfAbsent(key, ignored -> new com.iceeboot.framework.service.agent.runtime.CachedJournalSessionLog(mapper,agentId,user,session,recorder));
         };
     }
 }

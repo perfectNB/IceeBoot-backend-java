@@ -15,4 +15,5 @@ public interface IAgentConversationService {
     List<AgentProgress> progress(long agent, String user, String session, String run);
     io.agentscope.core.state.AgentStateStore stateStore(long agent, String user, String session);
     SessionLogStore logStore();
+    default SessionLogStore logStore(com.iceeboot.framework.service.agent.runtime.RunRecorder recorder) { return logStore(); }
 }

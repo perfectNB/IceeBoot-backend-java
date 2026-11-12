@@ -62,12 +62,50 @@ class AgentStreamingTest {
         assertThat(saved).filteredOn(e -> e.type()==AgentProgressType.MODEL_FINISHED).hasSize(1).allSatisfy(e -> {
             assertThat(e.durationMs()).isNotNegative();assertThat(e.usageKnown()).isFalse();
         });
+        assertThat(saved).anyMatch(e -> e.type()==AgentProgressType.PHASE_FINISHED && e.callId().equals("CONTEXT_RESTORE") && e.durationMs()!=null);
         assertThat(saved).isNotEmpty().noneMatch(e -> e.type() == AgentProgressType.TEXT_DELTA);
         assertThat(saved).extracting(AgentProgress::sequence).isSorted().doesNotHaveDuplicates();
         assertThat(f.conversations().messages(agent.agent().id(), "1", "stream_session", Long.MAX_VALUE).getLast().getContent()).isEqualTo("第一段第二段");
         assertThatThrownBy(() -> f.conversations().progress(agent.agent().id(), "2", "stream_session", root)).hasMessageContaining("会话");
         f.conversations().open(agent.agent().id(), "2", "stream_session", agent, "other");
         assertThat(f.conversations().progress(agent.agent().id(), "2", "stream_session", root)).isEmpty();
+    }
+    @Test void finishedRunDoesNotPublishLateSdkProgress() {
+        var agent=publish("late_progress");
+        var recorder=new RunRecorder(null,"",agent,new Caller("1","token"),f.store,new AtomicInteger(10));
+        var events=new ArrayList<AgentProgress>();recorder.observeProgress(events::add);
+        recorder.start(List.of(new UserMessage("task")));
+        recorder.beginStage("initial","准备");
+        var child=recorder.child(agent,new Caller("1","token"));child.start(List.of(new UserMessage("child task")));
+        recorder.finish("CANCELLED","已取消");
+        int count=events.size();
+        recorder.progress(AgentProgressType.PHASE,"迟到事件","","","","RUNNING");
+        recorder.beginStage("late","迟到阶段");recorder.endStage("late","SUCCEEDED");
+        child.progress(AgentProgressType.PHASE,"迟到子任务","","","","RUNNING");child.finish("CANCELLED","已取消");
+        assertThat(events).hasSize(count);
+        assertThat(events.getLast().type()).isEqualTo(AgentProgressType.AGENT_FINISHED);
+    }
+    @Test void longConversationCompactsThroughMeteredModelWithoutChangingVisibleHistory() {
+        f.properties.getContext().setCompactTriggerTokens(4096);
+        f.properties.getContext().setKeepRecentTokens(1024);
+        var agent = publish("compact_context");
+        AtomicInteger summaries = new AtomicInteger();
+        when(models.create(any(),any())).thenReturn(HarnessExecutionTest.model((messages,tools) -> {
+            if (messages.stream().anyMatch(m -> m.getTextContent().contains("Context Extraction Assistant"))) {
+                summaries.incrementAndGet();
+                return HarnessExecutionTest.text("历史摘要：保留用户目标和已完成事项",100,20);
+            }
+            return HarnessExecutionTest.text("已记录",10,2);
+        }));
+        for (int i=0;i<8;i++) execution.invoke("compact_context",new InvokeRequest("用户事实".repeat(1500)+i,"long_context"),new Caller("1","token"));
+        assertThat(summaries.get()).isPositive();
+        var history = f.conversations().messages(agent.agent().id(),"1","long_context",Long.MAX_VALUE);
+        assertThat(history).hasSize(16);
+        assertThat(history.getFirst().getContent()).hasSize(6001);
+        var events=f.conversations().progress(agent.agent().id(),"1","long_context",history.getLast().getRunId());
+        assertThat(events).anyMatch(e->e.type()==AgentProgressType.PHASE_FINISHED && e.callId().equals("CONTEXT_COMPACTION"));
+        assertThat(events).filteredOn(e->e.type()==AgentProgressType.MODEL_FINISHED).hasSize(2);
+        assertThat(events).filteredOn(e->e.type()==AgentProgressType.MODEL_FIRST_TOKEN).hasSize(1);
     }
     @Test void cancellationReturnsTerminalStatusAndReleasesSessionWithoutLosingPartialReply() {
         PublishedAgent agent = publish("cancel_stream");

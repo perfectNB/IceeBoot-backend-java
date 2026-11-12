@@ -34,6 +34,26 @@ public class AgentProperties {
     @jakarta.validation.constraints.Min(1)
     private int maxConcurrentRuns = 8;
 
+    @jakarta.validation.Valid
+    private Context context = new Context();
+
+    @Data
+    public static class Context {
+        /** 超过阈值时由 SDK 将较早对话摘要化，数据库展示记录不受影响。 */
+        @jakarta.validation.constraints.Min(4096)
+        private int compactTriggerTokens = 24000;
+        @jakarta.validation.constraints.Min(1024)
+        private int keepRecentTokens = 8000;
+        @jakarta.validation.constraints.Min(1024)
+        private int maxToolResultCharacters = 12000;
+        @jakarta.validation.constraints.Min(256)
+        private int toolPreviewCharacters = 2000;
+        @jakarta.validation.constraints.AssertTrue(message = "上下文保留预算和工具预览必须小于各自的触发上限")
+        public boolean isBudgetValid() {
+            return keepRecentTokens < compactTriggerTokens && toolPreviewCharacters < maxToolResultCharacters;
+        }
+    }
+
     private E2b e2b = new E2b();
 
     @Data
