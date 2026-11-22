@@ -1643,5 +1643,47 @@
     "name": "准备失败重试会话",
     "code": "ai:run:recovery:api",
     "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/schedules",
+    "name": "查询智能体定时任务",
+    "code": "ai:schedule:read:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/agent-console/schedules",
+    "name": "创建智能体定时任务",
+    "code": "ai:schedule:create:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/schedules",
+    "name": "更新智能体定时任务",
+    "code": "ai:schedule:update:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/schedules/{id}/enabled",
+    "name": "启停智能体定时任务",
+    "code": "ai:schedule:status:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/schedules/{id}",
+    "name": "删除智能体定时任务",
+    "code": "ai:schedule:delete:api",
+    "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/schedules/{id}/executions",
+    "name": "查询智能体定时执行记录",
+    "code": "ai:schedule:history:api",
+    "parentCode": "ai:agent"
   }
 ]

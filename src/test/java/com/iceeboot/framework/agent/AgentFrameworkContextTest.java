@@ -68,6 +68,14 @@ class AgentFrameworkContextTest {
         }
 
         @Bean
+        com.iceeboot.framework.service.system.IAuthCacheService auth() {
+            return mock(com.iceeboot.framework.service.system.IAuthCacheService.class);
+        }
+
+        @Bean
+        org.quartz.Scheduler scheduler() { return mock(org.quartz.Scheduler.class); }
+
+        @Bean
         PlatformTransactionManager transactionManager(DataSource source) {
             return new DataSourceTransactionManager(source);
         }

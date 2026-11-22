@@ -34,6 +34,11 @@ public class AgentProperties {
     @jakarta.validation.constraints.Min(1)
     private int maxConcurrentRuns = 8;
 
+    /** 定时任务独立线程数，仍受总运行并发限制。 */
+    @jakarta.validation.constraints.Min(1)
+    @jakarta.validation.constraints.Max(32)
+    private int scheduleConcurrency = 2;
+
     @jakarta.validation.Valid
     private Context context = new Context();
 

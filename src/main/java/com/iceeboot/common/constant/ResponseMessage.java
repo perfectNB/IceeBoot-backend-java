@@ -245,6 +245,15 @@ public class ResponseMessage {
 
     /** AgentScope 配置、资源管理和执行相关消息。 */
     public static final class Agent {
+        public static final String SCHEDULE_NOT_FOUND = "定时任务不存在或无权访问";
+        public static final String SCHEDULE_TIME_INVALID = "请选择未来的执行时间或有效的下一次触发时间";
+        public static final String SCHEDULE_CRON_INVALID = "时区或 Cron 无效，秒位必须为 0，最小触发间隔为一分钟";
+        public static final String SCHEDULE_BUSY = "任务正在执行，请结束后再编辑或删除";
+        public static final String SCHEDULE_PERMISSION_DENIED = "任务所有者已失去定时执行或智能体调用权限";
+        public static final String SCHEDULE_PROJECT_TOOL_UNSUPPORTED = "定时任务暂不支持依赖用户登录令牌的项目 API 工具";
+        public static final String SCHEDULE_OVERLAP = "上一轮尚未结束，本轮已跳过";
+        public static final String SCHEDULE_MISFIRE = "已错过周期执行时间，本轮已跳过";
+        public static final String SCHEDULE_START_FAILED = "智能体定时调度启动失败";
         public static final String RELEASE_AGENT_MISMATCH = "发布版本不属于当前智能体";
         public static final String FILE_SESSION_LIMIT = "当前会话文件总量达到 100MiB，请移除未使用的附件或新建会话";
         public static final String FILE_INVALID = "文件无效，单个文件及本轮附件总量不能超过 20MiB";

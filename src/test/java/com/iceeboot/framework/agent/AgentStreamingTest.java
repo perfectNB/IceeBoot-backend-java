@@ -162,13 +162,23 @@ class AgentStreamingTest {
         } finally { gate.tryEmitEmpty(); }
     }
 
+    private boolean cleanupPending(PublishedAgent agent, String session) {
+        // 消息终态先写入，资源关闭后才释放会话；等待两个异步结果，避免抢在 finally 前断言。
+        String status = f.conversations().messages(agent.agent().id(), "1", session, Long.MAX_VALUE)
+                .getLast().getStatus();
+        String owner = f.jdbc.queryForObject(
+                "SELECT owner FROM t_agent_session WHERE agent_id=? AND user_id=? AND session_id=?",
+                String.class, agent.agent().id(), "1", session);
+        return status.equals("RUNNING") || !owner.isEmpty();
+    }
+
     @Test void clientDisconnectCancelsExecutionAndReleasesTheConversationLease() throws Exception {
         PublishedAgent agent = publish("disconnect");
         when(models.create(any(), any())).thenReturn(streaming(Flux.concat(Flux.just(chunk("partial", null)), Flux.never())));
         StepVerifier.create(execution.stream("disconnect", new InvokeRequest("test", "disconnect_session"), new Caller("1", "token")))
                 .thenConsumeWhile(event -> event.type() != AgentProgressType.TEXT_DELTA).expectNextCount(1).thenCancel().verify(Duration.ofSeconds(5));
         long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
-        while (f.conversations().messages(agent.agent().id(), "1", "disconnect_session", Long.MAX_VALUE).getLast().getStatus().equals("RUNNING") && System.nanoTime() < deadline) Thread.sleep(10);
+        while (cleanupPending(agent, "disconnect_session") && System.nanoTime() < deadline) Thread.sleep(10);
         assertThat(f.conversations().messages(agent.agent().id(), "1", "disconnect_session", Long.MAX_VALUE).getLast().getStatus()).isEqualTo("CANCELLED");
         assertThat(f.jdbc.queryForObject("SELECT owner FROM t_agent_session WHERE agent_id=? AND user_id=? AND session_id=?", String.class, agent.agent().id(), "1", "disconnect_session")).isEmpty();
     }
@@ -181,7 +191,7 @@ class AgentStreamingTest {
         StepVerifier.create(execution.stream("analysis_disconnect",new InvokeRequest("test","analysis_session"),new Caller("1","token")).doOnNext(received::add))
                 .thenConsumeWhile(event -> event.type()!=AgentProgressType.REASONING_DELTA).expectNextCount(1).thenCancel().verify(Duration.ofSeconds(5));
         long deadline=System.nanoTime()+Duration.ofSeconds(5).toNanos();
-        while(f.conversations().messages(agent.agent().id(),"1","analysis_session",Long.MAX_VALUE).getLast().getStatus().equals("RUNNING") && System.nanoTime()<deadline) Thread.sleep(10);
+        while(cleanupPending(agent, "analysis_session") && System.nanoTime()<deadline) Thread.sleep(10);
         assertThat(f.conversations().messages(agent.agent().id(),"1","analysis_session",Long.MAX_VALUE).getLast().getStatus()).isEqualTo("CANCELLED");
         assertThat(f.conversations().progress(agent.agent().id(),"1","analysis_session",received.getFirst().rootRunId()))
                 .anyMatch(event -> event.type()==AgentProgressType.REASONING_FINISHED && event.status().equals("CANCELLED") && event.text().equals("partial-provider-analysis"))
