@@ -165,6 +165,45 @@ class AgentMemoryIntegrationTest {
         assertThat(settings.rule(USER, id).revision()).isZero();
     }
 
+    @Test void administratorEditsTargetUserWithoutMergingOwnersAndAuditsTheActualActor() {
+        enable(USER);
+        profiles.editUser("7", "1", "language", "Java", 0);
+        assertThat(profiles.view(USER, 0, "7").values()).containsEntry("language", "Java");
+        assertThat(profiles.view(USER, 0, "1").values()).isEmpty();
+        assertThat(profiles.view(USER, 0, "8").values()).isEmpty();
+        assertThat(f.jdbc.queryForObject("SELECT actor_user_id FROM t_agent_memory_change", String.class)).isEqualTo("1");
+        assertThat(f.jdbc.queryForObject("SELECT origin FROM t_agent_memory_change", String.class)).isEqualTo("ADMIN");
+        assertThat(f.jdbc.queryForObject("SELECT source_user_id FROM t_agent_memory_update_job", String.class)).isEqualTo("7");
+        long revision = profiles.view(USER, 0, "7").revision();
+        profiles.editUser("7", "1", "language", null, revision);
+        assertThat(profiles.view(USER, 0, "7").forgottenFields()).contains("language");
+        assertThat(profiles.view(USER, 0, "7").values()).isEmpty();
+        assertThatThrownBy(() -> profiles.editUser("7", "1", "language", "Python", revision))
+                .hasMessage(com.iceeboot.common.constant.ResponseMessage.Agent.MEMORY_CHANGED);
+    }
+
+    @Test void administratorReviewsOnlyTheSelectedUsersCandidatesAndRecordsReviewer() {
+        settings.save(USER, 0, new MemoryRequest.PolicyDTO(0, true, true, "提取明确偏好", Map.of("language", FieldType.TEXT)));
+        settings.share("7", id, new MemoryRequest.GrantDTO(0, Set.of("language"), Set.of("language")));
+        f.publish(agent);
+        chat("我使用 Java", "general_profile_review");
+        extract(USER);
+        var pending = changes.pending(USER, 0, "7");
+        assertThat(pending).hasSize(1);
+        assertThatThrownBy(() -> changes.reviewUser("8", "1", pending.getFirst().id(), true))
+                .hasMessage(com.iceeboot.common.constant.ResponseMessage.Agent.PERMISSION_DENIED);
+        assertThat(changes.reviewUser("7", "1", pending.getFirst().id(), true)).isTrue();
+        assertThat(profiles.view(USER, 0, "7").values()).containsEntry("language", "Java");
+        assertThat(profiles.view(USER, 0, "8").values()).isEmpty();
+        assertThat(f.jdbc.queryForObject("SELECT reviewer_user_id FROM t_agent_memory_change WHERE id=?", String.class, pending.getFirst().id())).isEqualTo("1");
+    }
+
+    @Test void administratorUsingTheUserManagementEndpointIsAuditedEvenWhenEditingOwnProfile() {
+        enable(USER);
+        profiles.editUser("1", "1", "language", "Java", 0);
+        assertThat(f.jdbc.queryForObject("SELECT origin FROM t_agent_memory_change", String.class)).isEqualTo("ADMIN");
+    }
+
     @Test void staleLeaseCannotCommitAndScheduledInputDoesNotBecomeEvidence() {
         enable(AGENT_USER);
         f.publish(agent);

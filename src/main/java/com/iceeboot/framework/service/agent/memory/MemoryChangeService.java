@@ -124,6 +124,15 @@ public class MemoryChangeService {
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public boolean review(MemoryScope scope, long agent, String user, long changeId, boolean approve) {
+        return reviewOwned(scope, agent, user, user, changeId, approve);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public boolean reviewUser(String user, String actor, long changeId, boolean approve) {
+        return reviewOwned(MemoryScope.USER, 0, user, actor, changeId, approve);
+    }
+
+    private boolean reviewOwned(MemoryScope scope, long agent, String user, String actor, long changeId, boolean approve) {
         var owner = profiles.find(scope, agent, user);
         if (owner == null) throw new IceeBootException(ResponseMessage.Agent.PERMISSION_DENIED);
         var row = mapper.lockProfile(owner.getId());
@@ -150,11 +159,11 @@ public class MemoryChangeService {
                 if (!valid) continue;
                 doc.values().putAll(patch);
                 doc.evidence().putAll(evidence);
-                profiles.write(row, doc, false, change, user);
+                profiles.write(row, doc, false, change, actor);
                 return true;
             }
         }
-        mapper.decide(changeId, approve ? "STALE" : "REJECTED", 0, user, System.currentTimeMillis());
+        mapper.decide(changeId, approve ? "STALE" : "REJECTED", 0, actor, System.currentTimeMillis());
         return !approve;
     }
 }

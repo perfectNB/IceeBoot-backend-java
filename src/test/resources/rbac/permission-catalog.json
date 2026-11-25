@@ -1797,5 +1797,47 @@
     "name": "配置平台通用画像策略",
     "code": "ai:memory:platform-policy-write:api",
     "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/users",
+    "name": "分页查询画像用户",
+    "code": "ai:memory:user-list:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/users/{userId}/profile",
+    "name": "查看指定用户通用画像",
+    "code": "ai:memory:user-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/users/{userId}/fields/{field}",
+    "name": "修改指定用户通用画像",
+    "code": "ai:memory:user-edit:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/memory/users/{userId}/fields/{field}",
+    "name": "忘记指定用户通用画像字段",
+    "code": "ai:memory:user-forget:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/users/{userId}/reviews",
+    "name": "查看指定用户画像候选",
+    "code": "ai:memory:user-review-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/users/{userId}/reviews/{id}",
+    "name": "审核指定用户画像候选",
+    "code": "ai:memory:user-review:api",
+    "parentCode": "ai:memory"
   }
 ]

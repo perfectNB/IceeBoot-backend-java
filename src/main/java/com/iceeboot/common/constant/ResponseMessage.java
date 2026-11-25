@@ -245,6 +245,7 @@ public class ResponseMessage {
 
     /** AgentScope 配置、资源管理和执行相关消息。 */
     public static final class Agent {
+        public static final String MEMORY_USER_NOT_FOUND = "画像用户不存在或已删除";
         public static final String MEMORY_SCHEMA_CHANGE = "已有画像字段不可移除或更改类型";
         public static final String MEMORY_CHANGED = "记忆、策略或授权已更新，请刷新后重试";
         public static final String MEMORY_VALUE_INVALID = "画像字段或字段值不符合策略";

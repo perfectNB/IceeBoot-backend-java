@@ -68,10 +68,10 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(17);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(19);
 
         List<Endpoint> expected = catalog();
-        assertThat(expected).hasSize(257);
+        assertThat(expected).hasSize(263);
         assertThat(expected.stream().map(Endpoint::key)).doesNotHaveDuplicates();
         assertThat(expected.stream().map(Endpoint::code)).doesNotHaveDuplicates();
         assertThat(dynamicControllerEndpoints()).containsExactlyInAnyOrderElementsOf(
@@ -210,6 +210,27 @@ class FrameworkPermissionMigrationTest {
                         + " WHERE p.type='menu' AND p.del_flag=0"
                         + " AND (p.parent_id IS NULL OR (p.parent_id<>0 AND parent.id IS NULL))"))
                 .isZero();
+    }
+
+    @Test
+    void generalProfilesReuseMenuAndKeepPersonalPermissionsSeparate() throws Exception {
+        var source = source();
+        var jdbc = new JdbcTemplate(source);
+        seedHistoricalState(source, jdbc);
+        var migrations = new AgentSchemaMigrationService(source);
+        migrations.migrateSchema();
+        migrations.migratePermissions();
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_menu WHERE name='AgentMemory' AND hidden=0 AND title='通用画像' AND status='active' AND del_flag=0")).isEqualTo(1);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_menu WHERE name='AgentMemory' AND status='inactive' AND del_flag=0")).isZero();
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_permission WHERE code LIKE 'ai:memory:%' AND type='api' AND status='active' AND del_flag=0")).isEqualTo(22);
+        var before = rbacSnapshot(jdbc);
+        // 重现旧版升级至新版；只改变菜单入口，不改变已授权的角色关联。
+        jdbc.update("DELETE FROM t_agent_schema_history WHERE version IN (18,19)");
+        jdbc.update("UPDATE t_menu SET status='active',hidden=0 WHERE name='AgentMemory'");
+        migrations.migratePermissions();
+        migrations.migratePermissions();
+        assertSameSnapshot(before, rbacSnapshot(jdbc));
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_role_menu rm JOIN t_menu m ON m.id=rm.menu_id JOIN t_role r ON r.id=rm.role_id WHERE m.name='AgentMemory' AND r.code='superAdmin' AND rm.del_flag=0")).isEqualTo(1);
     }
 
     private static DriverManagerDataSource source() {

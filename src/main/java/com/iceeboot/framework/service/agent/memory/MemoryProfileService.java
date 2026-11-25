@@ -52,6 +52,16 @@ public class MemoryProfileService {
     /** 由用户操作触发。null 表示永久忽略该字段，只有用户手动填写才能恢复。 */
     @Transactional
     public void edit(MemoryScope scope, long agent, String user, String field, String value, long revision) {
+        editOwned(scope, agent, user, user, field, value, revision, scope == MemoryScope.AGENT);
+    }
+
+    /** 管理员修改指定用户，画像归属与操作人分别记录。 */
+    @Transactional
+    public void editUser(String owner, String actor, String field, String value, long revision) {
+        editOwned(MemoryScope.USER, 0, owner, actor, field, value, revision, true);
+    }
+
+    private void editOwned(MemoryScope scope, long agent, String user, String actor, String field, String value, long revision, boolean administrative) {
         Rule policy = settings.rule(scope, agent);
         FieldType type = policy.fields().get(field);
         if (type == null || (value != null && !validValue(type, value)))
@@ -78,13 +88,12 @@ public class MemoryProfileService {
         job.setSourceReleaseId("");
         job.setRequestCiphertext(encrypt(List.of(field)));
         job.setPolicySnapshotCiphertext(encrypt(policy));
-        boolean shared = scope == MemoryScope.AGENT;
-        jobs.insert(job, shared ? "ADMIN_EDIT" : "USER_EDIT", "SUCCEEDED");
+        jobs.insert(job, administrative ? "ADMIN_EDIT" : "USER_EDIT", "SUCCEEDED");
         // 用空对象表示删除，审计里不复制被删除的内容。
         var patch = value == null ? Map.of("forget", field) : Map.of(field, value);
         var change = change(row, job.getId(), encrypt(patch), encrypt(List.of(field)));
-        profiles.insertChange(change, shared ? "ADMIN" : "USER", user);
-        write(row, data, value == null, change, user);
+        profiles.insertChange(change, administrative ? "ADMIN" : "USER", actor);
+        write(row, data, value == null, change, actor);
     }
 
     static boolean validValue(FieldType type, String value) {

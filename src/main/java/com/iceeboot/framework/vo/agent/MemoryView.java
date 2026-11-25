@@ -6,6 +6,7 @@ import java.util.*;
 public final class MemoryView {
     private MemoryView() {}
 
+    public record User(String userId, String username, String nickname, String status) {}
     public record Agent(long id, String name) {}
     public record Policy(long revision, boolean enabled, boolean reviewRequired, String prompt,
                          Map<String, FieldType> fields) {}

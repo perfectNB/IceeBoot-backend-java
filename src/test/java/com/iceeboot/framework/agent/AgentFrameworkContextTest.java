@@ -63,6 +63,9 @@ class AgentFrameworkContextTest {
         }
 
         @Bean
+        com.iceeboot.framework.mapper.system.SysUserMapper userMapper() { return mock(com.iceeboot.framework.mapper.system.SysUserMapper.class); }
+
+        @Bean
         ISysUserService users() {
             return mock(ISysUserService.class);
         }
