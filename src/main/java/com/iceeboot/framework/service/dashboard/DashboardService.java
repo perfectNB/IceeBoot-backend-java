@@ -32,7 +32,7 @@ public interface DashboardService {
      * 
      * @return 访问趋势列表
      */
-    List<VisitTrendVO> getVisitTrend();
+    List<VisitTrendVO> getVisitTrend(int days);
 
     /**
      * 获取用户分布
