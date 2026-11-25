@@ -1,5 +1,7 @@
 package com.iceeboot.framework.service.agent.impl;
 
+import com.iceeboot.framework.service.agent.memory.MemorySettingsService;
+
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.framework.enums.agent.*;
@@ -23,7 +25,10 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
     private final IAgentPersistenceService store;
     private final AgentSecrets secrets;
 
-    public AgentConfigurationServiceImpl(IAgentPersistenceService store, AgentSecrets secrets) {
+    private final MemorySettingsService memory;
+    public AgentConfigurationServiceImpl(IAgentPersistenceService store, AgentSecrets secrets,
+            MemorySettingsService memory) {
+        this.memory = memory;
         this.store = store;
         this.secrets = secrets;
     }
@@ -288,7 +293,7 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
         PublishedAgent preview = preview(id);
         String releaseId = UUID.randomUUID().toString();
         PublishedAgent published = new PublishedAgent(releaseId,store.nextVersion(id),preview.agent(),
-                preview.model(),preview.capabilities(),preview.children());
+                preview.model(),preview.capabilities(),preview.children(), memory.releaseRules(id));
         store.publish(published,user);
         return store.releases(id).stream().filter(r -> r.id().equals(releaseId)).findFirst().orElseThrow();
     }
@@ -301,7 +306,7 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
         require(Objects.equals(previous.agent().id(),id),ResponseMessage.Agent.RELEASE_AGENT_MISMATCH);
         String nextId = UUID.randomUUID().toString();
         store.publish(new PublishedAgent(nextId,store.nextVersion(id),previous.agent(),previous.model(),
-                previous.capabilities(),previous.children()),user);
+                previous.capabilities(),previous.children(),previous.memoryRules()),user);
         return store.releases(id).stream().filter(r -> r.id().equals(nextId)).findFirst().orElseThrow();
     }
 

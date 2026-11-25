@@ -245,6 +245,9 @@ public class ResponseMessage {
 
     /** AgentScope 配置、资源管理和执行相关消息。 */
     public static final class Agent {
+        public static final String MEMORY_SCHEMA_CHANGE = "已有画像字段不可移除或更改类型";
+        public static final String MEMORY_CHANGED = "记忆、策略或授权已更新，请刷新后重试";
+        public static final String MEMORY_VALUE_INVALID = "画像字段或字段值不符合策略";
         public static final String SCHEDULE_NOT_FOUND = "定时任务不存在或无权访问";
         public static final String SCHEDULE_TIME_INVALID = "请选择未来的执行时间或有效的下一次触发时间";
         public static final String SCHEDULE_CRON_INVALID = "时区或 Cron 无效，秒位必须为 0，最小触发间隔为一分钟";

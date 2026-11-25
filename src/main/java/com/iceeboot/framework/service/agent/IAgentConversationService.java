@@ -1,4 +1,6 @@
 package com.iceeboot.framework.service.agent;
+
+import com.iceeboot.framework.model.agent.memory.MemoryData.Turn;
 import com.iceeboot.framework.entity.agent.*;
 import com.iceeboot.framework.model.agent.*;
 import io.agentscope.core.session.SessionLogStore;
@@ -9,6 +11,9 @@ public interface IAgentConversationService {
     List<AgentSessionDO> sessions(long agent, String user, int offset);
     List<AgentMessageDO> messages(long agent, String user, String session, long before);
     void begin(AgentSessionDO session, String run, String input);
+    Turn prepareMemory(PublishedAgent release, String user);
+    void finishWithMemory(AgentSessionDO session, String run, String output,
+                          Turn turn);
     void finish(AgentSessionDO session, String run, String output, String status);
     void release(AgentSessionDO session, String run);
     void recordProgress(AgentProgress event);

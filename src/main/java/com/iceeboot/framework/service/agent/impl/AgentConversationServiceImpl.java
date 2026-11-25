@@ -1,5 +1,8 @@
 package com.iceeboot.framework.service.agent.impl;
 
+import com.iceeboot.framework.model.agent.memory.MemoryData.Turn;
+import com.iceeboot.framework.service.agent.memory.MemoryTurnService;
+
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.config.agent.AgentProperties;
@@ -19,6 +22,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AgentConversationServiceImpl implements IAgentConversationService {
     private final AgentConversationMapper mapper;
+    private final MemoryTurnService memory;
     private final AgentProperties properties;
     private final com.fasterxml.jackson.databind.ObjectMapper json;
     private final com.iceeboot.framework.service.agent.security.AgentSecrets secrets;
@@ -103,6 +107,19 @@ public class AgentConversationServiceImpl implements IAgentConversationService {
             mapper.insertMessage(message);
         }
     }
+    @Override
+    public Turn prepareMemory(PublishedAgent release, String user) {
+        return memory.prepare(release, user);
+    }
+
+    @Override
+    @Transactional
+    public void finishWithMemory(AgentSessionDO session, String run, String output,
+            Turn turn) {
+        mapper.finish(session.getAgentId(), session.getUserId(), session.getSessionId(), run, output, "SUCCEEDED");
+        memory.enqueue(session, run, turn);
+    }
+
     @Override
     public void finish(AgentSessionDO session,String run,String output,String status) {
         mapper.finish(session.getAgentId(),session.getUserId(),session.getSessionId(),run,output,status);

@@ -54,6 +54,8 @@ class AgentFixture {
         var sessionFactory = factory.getObject();
         for (Class<?> mapper :
                 java.util.List.of(
+                        com.iceeboot.framework.mapper.agent.AgentMemoryMapper.class,
+                        com.iceeboot.framework.mapper.agent.AgentMemoryJobMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentFileMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentConversationMapper.class,
                         com.iceeboot.framework.mapper.agent.AgentSecretMapper.class,
@@ -148,7 +150,7 @@ class AgentFixture {
         secrets = new AgentSecrets(properties);
         var configTarget =
                 new com.iceeboot.framework.service.agent.impl.AgentConfigurationServiceImpl(
-                        store, secrets);
+                        store, secrets, memorySettings());
         var configProxy = new org.springframework.aop.framework.ProxyFactory(configTarget);
         configProxy.addAdvice(
                 new org.springframework.transaction.interceptor.TransactionInterceptor(
@@ -158,7 +160,7 @@ class AgentFixture {
         configs = (IAgentConfigurationService) configProxy.getProxy();
     }
 
-    private static <T> T transactional(
+    static <T> T transactional(
             T target, org.springframework.transaction.PlatformTransactionManager manager) {
         var proxy = new org.springframework.aop.framework.ProxyFactory(target);
         proxy.setProxyTargetClass(true);
@@ -170,13 +172,31 @@ class AgentFixture {
         return (T) proxy.getProxy();
     }
 
+    <T> T mapper(Class<T> type) {
+        return session.getMapper(type);
+    }
+
     com.iceeboot.framework.mapper.agent.AgentConversationMapper conversationMapper() {
         return session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class);
     }
 
+    com.iceeboot.framework.service.agent.memory.MemorySettingsService memorySettings() {
+        return new com.iceeboot.framework.service.agent.memory.MemorySettingsService(
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentMemoryMapper.class),
+                new com.iceeboot.framework.service.agent.support.AgentJsonCodec(json), store);
+    }
+
+    com.iceeboot.framework.service.agent.memory.MemoryTurnService memoryTurns() {
+        var profiles = session.getMapper(com.iceeboot.framework.mapper.agent.AgentMemoryMapper.class);
+        var jobs = session.getMapper(com.iceeboot.framework.mapper.agent.AgentMemoryJobMapper.class);
+        var codec = new com.iceeboot.framework.service.agent.support.AgentJsonCodec(json);
+        var memory = new com.iceeboot.framework.service.agent.memory.MemoryProfileService(profiles, jobs, memorySettings(), codec, secrets);
+        return new com.iceeboot.framework.service.agent.memory.MemoryTurnService(memory, memorySettings(), jobs, conversationMapper(), codec);
+    }
+
     com.iceeboot.framework.service.agent.IAgentConversationService conversations() {
         return transactional(new com.iceeboot.framework.service.agent.impl.AgentConversationServiceImpl(
-                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),properties,json,secrets),
+                session.getMapper(com.iceeboot.framework.mapper.agent.AgentConversationMapper.class),memoryTurns(),properties,json,secrets),
                 new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
     }
 

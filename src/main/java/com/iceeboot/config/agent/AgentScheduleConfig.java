@@ -1,5 +1,7 @@
 package com.iceeboot.config.agent;
 
+import com.iceeboot.framework.job.MemoryExtractionJob;
+
 import com.iceeboot.framework.job.AgentScheduleDispatchJob;
 import org.quartz.*;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,6 +36,15 @@ public class AgentScheduleConfig {
         public void start() {
             try {
                 JobKey key = JobKey.jobKey("agent-schedule-dispatch", "agent-system");
+                JobKey memoryKey = JobKey.jobKey("agent-memory-extraction", "agent-system");
+                if (!scheduler.checkExists(memoryKey)) {
+                    scheduler.scheduleJob(JobBuilder.newJob(MemoryExtractionJob.class)
+                                    .withIdentity(memoryKey).build(),
+                            TriggerBuilder.newTrigger().withIdentity("agent-memory-scan", "agent-system")
+                                    .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(3)
+                                            .repeatForever().withMisfireHandlingInstructionNextWithExistingCount())
+                                    .startNow().build());
+                }
                 if (scheduler.checkExists(key)) return;
                 scheduler.scheduleJob(JobBuilder.newJob(AgentScheduleDispatchJob.class).withIdentity(key).build(),
                         TriggerBuilder.newTrigger().withIdentity("agent-schedule-scan", "agent-system")

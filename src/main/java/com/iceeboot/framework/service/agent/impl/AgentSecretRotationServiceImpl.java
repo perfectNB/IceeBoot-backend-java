@@ -52,10 +52,47 @@ public class AgentSecretRotationServiceImpl implements IAgentSecretRotationServi
             mapper.updateReleaseSecret(row.getId(), snapshot(row.getSnapshotJson()));
             updated++;
         }
+        updated += rotateMemory();
         var result = new AgentSecretRotationVO();
         result.setActiveKeyId(properties.getEncryptionKeyId());
         result.setUpdatedRows(updated);
         return result;
+    }
+
+    private int rotateMemory() {
+        int updated = 0;
+        long after = 0;
+        // 与后台任务使用相同的锁顺序，密钥轮换不改变画像业务版本。
+        var jobs = mapper.lockMemoryJobs(after);
+        while (!jobs.isEmpty()) {
+            for (var row : jobs) {
+                row.setPolicySnapshotCiphertext(secrets.reencrypt(row.getPolicySnapshotCiphertext()));
+                row.setRequestCiphertext(secrets.reencrypt(row.getRequestCiphertext()));
+                mapper.rotateJob(row);
+                updated++;
+            }
+            jobs = mapper.lockMemoryJobs(jobs.getLast().getId());
+        }
+        var profiles = mapper.lockMemoryProfiles(after);
+        while (!profiles.isEmpty()) {
+            for (var row : profiles) {
+                row.setProfileCiphertext(secrets.reencrypt(row.getProfileCiphertext()));
+                mapper.rotateProfile(row);
+                updated++;
+            }
+            profiles = mapper.lockMemoryProfiles(profiles.getLast().getId());
+        }
+        var changes = mapper.lockMemoryChanges(after);
+        while (!changes.isEmpty()) {
+            for (var row : changes) {
+                row.setPatchCiphertext(secrets.reencrypt(row.getPatchCiphertext()));
+                row.setEvidenceCiphertext(secrets.reencrypt(row.getEvidenceCiphertext()));
+                mapper.rotateChange(row);
+                updated++;
+            }
+            changes = mapper.lockMemoryChanges(changes.getLast().getId());
+        }
+        return updated;
     }
 
     private String values(String value) {

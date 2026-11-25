@@ -1685,5 +1685,117 @@
     "name": "查询智能体定时执行记录",
     "code": "ai:schedule:history:api",
     "parentCode": "ai:agent"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/agents",
+    "name": "智能体选项",
+    "code": "ai:memory:read-agents:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/policies/{scope}/{agent}",
+    "name": "查看画像策略",
+    "code": "ai:memory:policy-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/policies/{scope}/{agent}",
+    "name": "配置画像策略",
+    "code": "ai:memory:policy-write:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/profiles/{scope}/{agent}",
+    "name": "查看记忆",
+    "code": "ai:memory:read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/profiles/{scope}/{agent}/fields/{field}",
+    "name": "修改我的记忆",
+    "code": "ai:memory:edit:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/memory/profiles/{scope}/{agent}/fields/{field}",
+    "name": "忘记我的记忆",
+    "code": "ai:memory:forget:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/shared/{agent}/fields/{field}",
+    "name": "修改智能体公共经验",
+    "code": "ai:memory:shared-edit:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/agent-console/memory/shared/{agent}/fields/{field}",
+    "name": "删除智能体公共经验",
+    "code": "ai:memory:shared-forget:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/grants/{agent}",
+    "name": "查看我的共享授权",
+    "code": "ai:memory:grant-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/grants/{agent}",
+    "name": "设置我的共享授权",
+    "code": "ai:memory:grant-write:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/reviews/{scope}/{agent}",
+    "name": "查看我的待确认记忆",
+    "code": "ai:memory:review-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/reviews/{scope}/{agent}/{id}",
+    "name": "确认我的记忆",
+    "code": "ai:memory:review:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/shared/{agent}/reviews",
+    "name": "查看公共经验候选",
+    "code": "ai:memory:shared-review-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/shared/{agent}/reviews/{id}",
+    "name": "审核公共经验",
+    "code": "ai:memory:shared-review:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/agent-console/memory/platform-policy",
+    "name": "查看平台通用画像策略",
+    "code": "ai:memory:platform-policy-read:api",
+    "parentCode": "ai:memory"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/agent-console/memory/platform-policy",
+    "name": "配置平台通用画像策略",
+    "code": "ai:memory:platform-policy-write:api",
+    "parentCode": "ai:memory"
   }
 ]

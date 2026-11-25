@@ -31,7 +31,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             List.of(
                     "V001__agent_baseline.sql",
                     "V002__agent_operations.sql",
-                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql", "V009__agent_progress.sql", "V012__agent_files.sql", "V014__agent_schedules.sql");
+                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql", "V009__agent_progress.sql", "V012__agent_files.sql", "V014__agent_schedules.sql", "V016__agent_memory.sql");
 
     @Override
     public void run(ApplicationArguments args) {
@@ -44,7 +44,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
 
     public void migratePermissions() {
         migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql", "V010__agent_stream_permissions.sql",
-                "V011__authorization_indexes.sql", "V013__agent_workbench_permissions.sql", "V015__agent_schedule_permissions.sql"));
+                "V011__authorization_indexes.sql", "V013__agent_workbench_permissions.sql", "V015__agent_schedule_permissions.sql", "V017__agent_memory_permissions.sql"));
     }
 
     private synchronized void migrate(List<String> migrations) {

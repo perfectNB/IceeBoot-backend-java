@@ -44,4 +44,22 @@ public interface AgentSecretMapper {
 
     @Update("UPDATE t_agent_release SET snapshot_json=#{value} WHERE id=#{id}")
     int updateReleaseSecret(@Param("id") String id, @Param("value") String value);
+
+    @Select("SELECT id,profile_ciphertext FROM t_agent_memory_profile WHERE id>#{after} ORDER BY id LIMIT 100 FOR UPDATE")
+    List<MemoryProfileDO> lockMemoryProfiles(long after);
+
+    @Update("UPDATE t_agent_memory_profile SET profile_ciphertext=#{profileCiphertext} WHERE id=#{id}")
+    void rotateProfile(MemoryProfileDO row);
+
+    @Select("SELECT id,policy_snapshot_ciphertext,request_ciphertext FROM t_agent_memory_update_job WHERE id>#{after} ORDER BY id LIMIT 100 FOR UPDATE")
+    List<MemoryJobDO> lockMemoryJobs(long after);
+
+    @Update("UPDATE t_agent_memory_update_job SET policy_snapshot_ciphertext=#{policySnapshotCiphertext},request_ciphertext=#{requestCiphertext} WHERE id=#{id}")
+    void rotateJob(MemoryJobDO row);
+
+    @Select("SELECT id,patch_ciphertext,evidence_ciphertext FROM t_agent_memory_change WHERE id>#{after} ORDER BY id LIMIT 100 FOR UPDATE")
+    List<MemoryChangeDO> lockMemoryChanges(long after);
+
+    @Update("UPDATE t_agent_memory_change SET patch_ciphertext=#{patchCiphertext},evidence_ciphertext=#{evidenceCiphertext} WHERE id=#{id}")
+    void rotateChange(MemoryChangeDO row);
 }

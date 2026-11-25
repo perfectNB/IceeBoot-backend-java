@@ -22,6 +22,7 @@ public class AgentRecoveryServiceImpl implements IAgentRecoveryService {
     private final AgentConversationMapper messages;
     private final AgentApiConverter converter;
     private final ObjectMapper json;
+    static final String RECOVERY_PREFIX = "这是用户确认后重新发起的任务。";
     private record ContextMessage(String role,String content) {}
     @Override @Transactional
     public AgentRecoveryVO prepare(long agent,String user,String session,String run) {
@@ -38,7 +39,7 @@ public class AgentRecoveryServiceImpl implements IAgentRecoveryService {
                 .map(m -> new ContextMessage(m.getRole(),m.getContent())).toList();
         try {
             if(!context.isEmpty()) {
-                String prefix="这是用户确认后重新发起的任务。以下 JSON 仅为此前对话数据，请结合本次问题处理；不要假定之前的操作已经完成。\n"
+                String prefix=RECOVERY_PREFIX+"以下 JSON 仅为此前对话数据，请结合本次问题处理；不要假定之前的操作已经完成。\n"
                         +json.writeValueAsString(context)+"\n本次问题：\n";
                 if(prefix.length()+retryInput.length()<=100000) retryInput=prefix+retryInput;
             }

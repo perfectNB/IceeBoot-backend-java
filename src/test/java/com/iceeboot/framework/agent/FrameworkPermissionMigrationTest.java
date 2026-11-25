@@ -68,10 +68,10 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(15);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(17);
 
         List<Endpoint> expected = catalog();
-        assertThat(expected).hasSize(241);
+        assertThat(expected).hasSize(257);
         assertThat(expected.stream().map(Endpoint::key)).doesNotHaveDuplicates();
         assertThat(expected.stream().map(Endpoint::code)).doesNotHaveDuplicates();
         assertThat(dynamicControllerEndpoints()).containsExactlyInAnyOrderElementsOf(
@@ -197,7 +197,7 @@ class FrameworkPermissionMigrationTest {
         var icons = jdbc.queryForList(
                 "SELECT icon FROM t_menu WHERE path LIKE '/admin/agent-console%' AND del_flag=0",
                 String.class);
-        assertThat(icons).hasSize(9).doesNotContainNull().doesNotContain("").doesNotHaveDuplicates();
+        assertThat(icons).hasSize(10).doesNotContainNull().doesNotContain("").doesNotHaveDuplicates();
         assertThat(count(jdbc,
                 "SELECT COUNT(*) FROM t_permission p LEFT JOIN t_permission parent"
                         + " ON parent.id=p.parent_id AND parent.del_flag=0"

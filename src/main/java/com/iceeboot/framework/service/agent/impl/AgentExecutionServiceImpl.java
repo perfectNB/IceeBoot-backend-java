@@ -1,5 +1,6 @@
 package com.iceeboot.framework.service.agent.impl;
 
+import com.iceeboot.framework.model.agent.memory.MemoryData.Turn;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iceeboot.common.constant.ResponseMessage;
 import com.iceeboot.common.enums.ResultCodeEnum;
@@ -158,6 +159,11 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
             conversations.begin(conversation,turnId,request.input());
             turnStarted = true;
             List<Msg> input = List.of(new UserMessage(request.input()));
+            var memory = Turn.EMPTY;
+            if (caller.accessToken() != null && !request.input().startsWith(AgentRecoveryServiceImpl.RECOVERY_PREFIX)) {
+                memory = conversations.prepareMemory(p, caller.userId());
+            }
+            recorder.useMemory(memory.context(), input.get(0).getId());
             recorder.start(input);
             registration = control.register(recorder.id);
             registration.check();
@@ -200,7 +206,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                             .block(Duration.ofSeconds(properties.getExecutionTimeoutSeconds()));
             registration.check();
             RunDetail detail = store.runDetail(recorder.rootId);
-            conversations.finish(conversation,turnId,RunRecorder.text(response),"SUCCEEDED");
+            conversations.finishWithMemory(conversation, turnId, RunRecorder.text(response), memory);
             return new InvokeResult(
                     recorder.rootId, session,
                     RunRecorder.text(response),
