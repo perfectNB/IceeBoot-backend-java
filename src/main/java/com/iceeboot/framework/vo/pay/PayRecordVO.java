@@ -70,6 +70,11 @@ public class PayRecordVO {
     @Schema(description = "业务到账状态")
     private String businessStatus;
 
+    @Schema(description = "已收款且需要手动核对补发的旧会员订单")
+    private boolean legacyGrantMissing;
+
+    private String entitlementCode;
+
     @Schema(description = "业务补偿重试次数")
     private Integer businessRetryCount;
 

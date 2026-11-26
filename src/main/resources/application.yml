@@ -195,6 +195,10 @@ iceeboot:
     wechat-default-role-id: 3
     exclude-paths:
       # 支付平台通过签名认证回调，无需后台登录。
+      - /v1/pay/notify/wechat
+      - /v1/pay/notify/alipay
+      - /iceeboot/api/v1/pay/notify/wechat
+      - /iceeboot/api/v1/pay/notify/alipay
       - /v1/pay/callback
       - /iceeboot/api/v1/pay/callback
       - /v1/auth/test/**

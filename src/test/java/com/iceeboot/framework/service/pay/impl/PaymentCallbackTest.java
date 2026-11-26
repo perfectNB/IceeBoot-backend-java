@@ -43,6 +43,8 @@ class PaymentCallbackTest {
     static final String KEY = "fixture-signing-key";
     PayRecordServiceImpl service;
     PayRecordMapper mapper;
+    com.iceeboot.framework.mapper.pay.PayTermsMapper terms;
+    JdbcTemplate jdbc;
     PayService strategy;
     TransactionTemplate tx;
 
@@ -54,13 +56,20 @@ class PaymentCallbackTest {
         String ddl = ReflectionTestUtils.invokeMethod(new DatabaseInitService(null),
                 "generateCreateTableSql", PayRecordDO.class, "t_pay_record");
         new JdbcTemplate(dataSource).execute(Objects.requireNonNull(ddl).replaceAll("(?s) ENGINE=.*$", ""));
+        jdbc = new JdbcTemplate(dataSource);
+        try (var connection = dataSource.getConnection()) {
+            org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(connection,
+                    new ClassPathResource("db/agent/V023__payment_entitlements.sql"));
+        }
         var configuration = new MybatisConfiguration();
+        configuration.addMapper(com.iceeboot.framework.mapper.pay.PayTermsMapper.class);
         configuration.addMapper(PayRecordMapper.class);
         var factory = new MybatisSqlSessionFactoryBean();
         factory.setDataSource(dataSource);
         factory.setConfiguration(configuration);
         factory.setMapperLocations(new ClassPathResource("mapper/pay/PayRecordMapper.xml"));
         mapper = new SqlSessionTemplate(Objects.requireNonNull(factory.getObject())).getMapper(PayRecordMapper.class);
+        terms = new SqlSessionTemplate(factory.getObject()).getMapper(com.iceeboot.framework.mapper.pay.PayTermsMapper.class);
         var configs = mock(IPayConfigService.class);
         var payFactory = mock(PayFactory.class);
         strategy = mock(PayService.class);
@@ -70,7 +79,7 @@ class PaymentCallbackTest {
         when(payFactory.hasStrategy("TEST_HOOK")).thenReturn(true);
         when(payFactory.getStrategy("TEST_HOOK")).thenReturn(strategy);
         service = new PayRecordServiceImpl(configs, mock(RedisTemplate.class), payFactory,
-                mock(ISysUserService.class), mock(YunGouPayClient.class));
+                mock(ISysUserService.class), mock(YunGouPayClient.class), terms, java.util.List.of());
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         ReflectionTestUtils.setField(service, "key", KEY);
         ReflectionTestUtils.setField(service, "mchId", "merchant-fixture");
@@ -139,6 +148,31 @@ class PaymentCallbackTest {
         assertThat(retried).isTrue();
         assertThat(order().getBusinessStatus()).isEqualTo(PaymentBusinessStatuses.SUCCESS);
         verify(strategy, times(2)).execute(eq(7L), any());
+    }
+
+    @Test
+    void officialNotificationMatchesChannelAmountAndTransactionBeforeGrant() {
+        var channel = com.iceeboot.framework.enums.pay.PaymentChannel.ALIPAY;
+        var notice = new com.iceeboot.common.service.pay.client.VerifiedPayment("order-fixture", "txn", 1250);
+        terms.save(order().getId(), channel, "TEST_HOOK");
+        assertThat(call(callback("1", "12.50", "merchant-fixture"))).isEqualTo("fail");
+        assertThatThrownBy(() -> service.confirmPayment(com.iceeboot.framework.enums.pay.PaymentChannel.WECHAT_NATIVE, notice))
+                .hasMessageContaining("订单不符");
+        var wrong = new com.iceeboot.common.service.pay.client.VerifiedPayment("order-fixture", "txn", 1249);
+        assertThatThrownBy(() -> service.confirmPayment(channel, wrong)).hasMessageContaining("订单不符");
+        tx.executeWithoutResult(s -> service.confirmPayment(channel, notice));
+        tx.executeWithoutResult(s -> service.confirmPayment(channel, notice));
+        verify(strategy, times(1)).execute(eq(7L), any());
+        assertThat(order().getTradeNo()).isEqualTo("txn");
+    }
+
+    @Test
+    void permanentMembershipPersistsOnlyOnceForThePaidOrder() {
+        PayService member = new PayFactory(terms).getStrategy("SPA_MEMBER");
+        member.execute(7L, order());
+        member.execute(7L, order());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM t_pay_entitlement WHERE user_id=7 AND pay_code='SPA_MEMBER'",
+                Integer.class)).isEqualTo(1);
     }
 
     @Test

@@ -12,6 +12,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iceeboot.common.constant.SystemConstants;
+import com.iceeboot.common.service.pay.factory.PayFactory;
+import org.springframework.transaction.annotation.Transactional;
 import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.framework.dto.create.pay.PayConfigDTO;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfigDO> implements IPayConfigService {
 
 
+    private final PayFactory payFactory;
     private final PayConfigMapper payConfigMapper;
     private final ISysUserService sysUserService;
     @Override
@@ -56,7 +59,8 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
         LambdaQueryWrapper<PayConfigDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(query.getConfigName()), PayConfigDO::getConfigName, query.getConfigName())
                 .like(StringUtils.hasText(query.getPayCode()), PayConfigDO::getPayCode, query.getPayCode())
-                .like(PayConfigDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
+                .eq(StringUtils.hasText(query.getStatus()), PayConfigDO::getStatus, query.getStatus())
+                .eq(PayConfigDO::getDelFlag, SystemConstants.DeleteFlag.NOT_DELETED)
                 .ge(query.getMinAmount() != null, PayConfigDO::getAmount, query.getMinAmount())
                 .le(query.getMaxAmount() != null, PayConfigDO::getAmount, query.getMaxAmount())
                 .orderByDesc(PayConfigDO::getCreateTime);
@@ -77,6 +81,7 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
     @Override
     public boolean addPayConfig(PayConfigDTO configDTO) {
         log.info("新增支付配置：{}", configDTO);
+        payFactory.getStrategy(configDTO.getPayCode());
 
         PayConfigDO config = new PayConfigDO();
         BeanUtils.copyProperties(configDTO, config);
@@ -87,6 +92,9 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
     @Override
     public boolean updatePayConfig(PayConfigUpdateDTO configDTO) {
         log.info("更新支付配置：{}", configDTO);
+        if (configDTO.getPayCode() != null) {
+            payFactory.getStrategy(configDTO.getPayCode());
+        }
 
         // 检查配置是否存在
         PayConfigDO existingConfig = this.getById(configDTO.getId());
@@ -101,6 +109,7 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
     }
 
     @Override
+    @Transactional
     public boolean deletePayConfigs(List<Long> ids) {
         log.info("删除支付配置，IDs：{}", ids);
         for (Long id : ids) {
@@ -108,7 +117,7 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
             if (existingConfig == null) {
                 throw new IceeBootException("支付配置不存在");
             }
-            if (existingConfig.getStatus().equals(SystemConstants.Status.ACTIVE)) {
+            if (SystemConstants.Status.ACTIVE.equals(existingConfig.getStatus())) {
                 throw new IceeBootException("支付配置正在使用中，无法删除");
             }
             existingConfig.setDelFlag(SystemConstants.DeleteFlag.DELETED);
@@ -123,6 +132,8 @@ public class PayConfigServiceImpl extends ServiceImpl<PayConfigMapper, PayConfig
 
         PayConfigDO config = new PayConfigDO();
         config.setId(id);
+        if (!"active".equals(status) && !"inactive".equals(status)) throw new IceeBootException("无效的支付配置状态");
+        config.setStatus(status);
 
         return this.updateById(config);
     }

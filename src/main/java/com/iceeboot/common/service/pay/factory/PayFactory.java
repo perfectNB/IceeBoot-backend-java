@@ -9,7 +9,8 @@ package com.iceeboot.common.service.pay.factory;
 
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.service.pay.service.PayService;
-import com.iceeboot.common.service.pay.service.impl.*;
+import com.iceeboot.common.service.pay.service.impl.MemberEntitlementService;
+import com.iceeboot.framework.mapper.pay.PayTermsMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -36,30 +37,17 @@ public class PayFactory {
     /**
      * 构造函数，初始化所有策略实例
      */
-    public PayFactory() {
-        initStrategies();
+    public PayFactory(PayTermsMapper mapper) {
+        register(new MemberEntitlementService("ESSENTIAL_OIL_MEMBER", "精油会员", mapper));
+        register(new MemberEntitlementService("MMK_MEMBER", "MMK会员", mapper));
+        register(new MemberEntitlementService("NINETY_EIGHT_MEMBER", "98会员（入门级会员）", mapper));
+        register(new MemberEntitlementService("SCRUB_MEMBER", "搓背会员", mapper));
+        register(new MemberEntitlementService("SPA_MEMBER", "SPA会员", mapper));
+        log.info("支付策略工厂初始化完成，共注册 {} 个策略: {}", serviceMap.size(), serviceMap.keySet());
     }
 
-    /**
-     * 初始化所有策略实例
-     */
-    private void initStrategies() {
-        // SPA会员
-        serviceMap.put("SPA_MEMBER", new SpaMemberService());
-
-        // MMK会员
-        serviceMap.put("MMK_MEMBER", new MmkMemberService());
-
-        // 98会员
-        serviceMap.put("NINETY_EIGHT_MEMBER", new NinetyEightMemberService());
-
-        // 搓背会员
-        serviceMap.put("SCRUB_MEMBER", new ScrubMemberService());
-
-        // 精油会员
-        serviceMap.put("ESSENTIAL_OIL_MEMBER", new EssentialOilMemberService());
-
-        log.info("支付策略工厂初始化完成，共注册 {} 个策略: {}", serviceMap.size(), serviceMap.keySet());
+    private void register(PayService strategy) {
+        serviceMap.put(strategy.getStrategyCode(), strategy);
     }
 
     /**

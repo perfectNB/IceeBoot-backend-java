@@ -24,6 +24,9 @@ import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.impl.identity.Authentication;
+import com.iceeboot.framework.vo.workflow.ProcessInstanceVO;
+import com.iceeboot.common.utils.TokenUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -87,39 +90,37 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
+    @Transactional
     public ProcessInstance startProcess(ProcessStartDTO dto) {
         if (dto == null || dto.getProcessDefinitionKey() == null || dto.getProcessDefinitionKey().isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_KEY_EMPTY);
         }
-        ProcessInstance processInstance;
-        if (dto.getBusinessKey() != null && !dto.getBusinessKey().isBlank()) {
-            processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getBusinessKey(), dto.getVariables());
-        } else {
-            processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getVariables());
-        }
-        if (dto.getProcessInstanceName() != null && !dto.getProcessInstanceName().isBlank()) {
-            runtimeService.setProcessInstanceName(processInstance.getId(), dto.getProcessInstanceName());
-        }
-        return processInstance;
-    }
-
-    @Override
-    public void completeTask(String taskId, Map<String, Object> variables) {
+        String previous = Authentication.getAuthenticatedUserId();
+        Authentication.setAuthenticatedUserId(TokenUtils.getCurrentUserIdAsString());
         try {
-            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if (task == null) {
-                throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
+            ProcessInstance processInstance;
+            if (dto.getBusinessKey() != null && !dto.getBusinessKey().isBlank()) {
+                processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getBusinessKey(), dto.getVariables());
+            } else {
+                processInstance = startProcess(dto.getProcessDefinitionKey(), dto.getVariables());
             }
-            
-            taskService.complete(taskId, variables);
-            log.info("完成任务成功，任务ID: {}, 任务名称: {}", taskId, task.getName());
-        } catch (Exception e) {
-            log.error("完成任务失败，任务ID: {}", taskId, e);
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.COMPLETE_TASK_FAILED, e);
+            if (dto.getProcessInstanceName() != null && !dto.getProcessInstanceName().isBlank()) {
+                runtimeService.setProcessInstanceName(processInstance.getId(), dto.getProcessInstanceName());
+            }
+            return processInstance;
+        } finally {
+            Authentication.setAuthenticatedUserId(previous);
         }
     }
 
     @Override
+    @Transactional
+    public void completeTask(String taskId, Map<String, Object> variables) {
+        completeTask(taskId, variables, null);
+    }
+
+    @Override
+    @Transactional
     public void completeTask(TaskCompleteDTO dto) {
         if (dto == null || dto.getTaskId() == null || dto.getTaskId().isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
@@ -151,20 +152,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 }
             }
             List<String> roleCodes = assigneeId == null ? List.of() : userService.getUserRoles(assigneeId);
-            var query = taskService.createTaskQuery();
-            if (!assigneeCandidates.isEmpty() || (roleCodes != null && !roleCodes.isEmpty())) {
-                query.or();
-                for (String candidate : assigneeCandidates) {
-                    query.taskAssignee(candidate);
-                }
-                if (roleCodes != null && !roleCodes.isEmpty()) {
-                    query.taskCandidateGroupIn(roleCodes);
-                }
-                query.endOr();
-            } else {
-                query.taskAssignee(assignee);
+            Map<String, Task> matches = new HashMap<>();
+            for (String candidate : assigneeCandidates) {
+                addTasks(matches, taskService.createTaskQuery().taskAssignee(candidate).list());
             }
-            List<Task> tasks = query.orderByTaskCreateTime().desc().list();
+            if (roleCodes != null && !roleCodes.isEmpty()) {
+                addTasks(matches, taskService.createTaskQuery().taskCandidateGroupIn(roleCodes).list());
+            }
+            List<Task> tasks = matches.values().stream().sorted(Comparator.comparing(Task::getCreateTime).reversed()).toList();
             log.debug("查询用户任务成功，用户: {}, 任务数量: {}", assignee, tasks.size());
             return tasks;
         } catch (Exception e) {
@@ -190,20 +185,33 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
+    @Transactional
     public void claimTask(String taskId, String userId) {
         if (taskId == null || taskId.isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
         }
-        if (userId == null || userId.isBlank()) {
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_CLAIM_USER_EMPTY);
+        Long actor = requireActor();
+        String username = actorName(actor);
+        if (userId != null && !userId.equals(actor.toString()) && !userId.equals(username)) {
+            throw new IceeBootException("只能为当前用户认领任务");
         }
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
             if (task == null) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
-            taskService.claim(taskId, userId);
-            log.info("认领任务成功，任务ID: {}, 认领人: {}", taskId, userId);
+            if (task.getAssignee() != null) {
+                requireAssignee(task);
+                return;
+            }
+            List<String> roles = userService.getUserRoles(actor);
+            boolean eligible = taskService.getIdentityLinksForTask(taskId).stream().anyMatch(link ->
+                    "candidate".equals(link.getType()) && (actor.toString().equals(link.getUserId())
+                    || (username != null && username.equals(link.getUserId()))
+                    || (link.getGroupId() != null && roles != null && roles.contains(link.getGroupId()))));
+            if (!eligible) throw new IceeBootException("当前用户不是任务候选人");
+            taskService.claim(taskId, actor.toString());
+            log.info("认领任务成功，任务ID: {}, 认领人: {}", taskId, actor);
         } catch (Exception e) {
             log.error("认领任务失败，任务ID: {}, 认领人: {}", taskId, userId, e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_CLAIM_FAILED, e);
@@ -211,6 +219,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
     }
 
     @Override
+    @Transactional
     public void unclaimTask(String taskId) {
         if (taskId == null || taskId.isBlank()) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_ID_EMPTY);
@@ -220,7 +229,8 @@ public class WorkflowServiceImpl implements IWorkflowService {
             if (task == null) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
-            taskService.claim(taskId, null);
+            requireAssignee(task);
+            taskService.unclaim(taskId);
             log.info("取消认领任务成功，任务ID: {}", taskId);
         } catch (Exception e) {
             log.error("取消认领任务失败，任务ID: {}", taskId, e);
@@ -495,12 +505,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 item.put(SystemConstants.WorkflowResponseKey.KEY, instance.getProcessDefinitionKey());
                 item.put(SystemConstants.WorkflowResponseKey.NAME, instance.getName());
                 item.put(SystemConstants.WorkflowResponseKey.BUSINESS_KEY, instance.getBusinessKey());
-                HistoricProcessInstance historic = historyService.createHistoricProcessInstanceQuery()
-                        .processInstanceId(instance.getId())
-                        .singleResult();
-                if (historic != null) {
-                    item.put(SystemConstants.WorkflowResponseKey.START_TIME, historic.getStartTime());
-                }
+                item.put(SystemConstants.WorkflowResponseKey.START_TIME, instance.getStartTime());
                 item.put(SystemConstants.WorkflowResponseKey.STATUS, SystemConstants.WorkflowNodeStatus.ACTIVE);
                 result.add(item);
             }
@@ -531,6 +536,15 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.error("查询流程实例列表失败", e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.QUERY_PROCESS_INSTANCES_FAILED, e);
         }
+    }
+
+    @Override
+    public ProcessInstanceVO getInstanceDetail(String id) {
+        ProcessInstance running = getProcessInstance(id);
+        if (running != null) return ProcessInstanceVO.from(running);
+        HistoricProcessInstance historic = historyService.createHistoricProcessInstanceQuery().processInstanceId(id).singleResult();
+        if (historic == null) throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_INSTANCE_NOT_EXIST);
+        return ProcessInstanceVO.from(historic);
     }
 
     @Override
@@ -762,15 +776,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public boolean isProcessEnded(String processInstanceId) {
-        try {
-            ProcessInstance processInstance = getProcessInstance(processInstanceId);
-            boolean isEnded = processInstance == null;
-            log.debug("判断流程是否结束，流程实例ID: {}, 是否结束: {}", processInstanceId, isEnded);
-            return isEnded;
-        } catch (Exception e) {
-            log.error("判断流程是否结束失败，流程实例ID: {}", processInstanceId, e);
-            throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_ENDED_CHECK_FAILED, e);
-        }
+        return getInstanceDetail(processInstanceId).ended();
     }
 
     @Override
@@ -781,11 +787,31 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 runtimeService.deleteProcessInstance(processInstanceId, SystemConstants.WorkflowValue.DEFAULT_END_REASON);
                 log.info("结束流程成功，流程实例ID: {}", processInstanceId);
             } else {
-                log.warn("流程实例不存在或已结束，流程实例ID: {}", processInstanceId);
+                getInstanceDetail(processInstanceId);
             }
         } catch (Exception e) {
             log.error("结束流程失败，流程实例ID: {}", processInstanceId, e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.END_PROCESS_FAILED, e);
+        }
+    }
+
+    private Long requireActor() {
+        Long actor = TokenUtils.getCurrentUserId();
+        if (actor == null) throw new IceeBootException(ResponseMessage.Common.UNAUTHORIZED);
+        return actor;
+    }
+
+    private String actorName(Long actor) {
+        var user = userService.getById(actor);
+        if (user == null) throw new IceeBootException(ResponseMessage.Auth.USER_NOT_EXIST);
+        return user.getUsername();
+    }
+
+    private void requireAssignee(Task task) {
+        String assigned = task.getAssignee();
+        Long actor = requireActor();
+        if (assigned == null || !(assigned.equals(actor.toString()) || assigned.equals(actorName(actor)))) {
+            throw new IceeBootException("只有任务办理人可以执行此操作");
         }
     }
 
@@ -795,21 +821,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
             if (task == null) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
+            requireAssignee(task);
             if (comment != null && !comment.isBlank()) {
-                String authenticatedUser = null;
-                Long currentUserId = com.iceeboot.common.utils.TokenUtils.getCurrentUserId();
-                if (currentUserId != null) {
-                    authenticatedUser = String.valueOf(currentUserId);
-                } else if (task.getAssignee() != null && !task.getAssignee().isBlank()) {
-                    authenticatedUser = task.getAssignee();
-                }
-                if (authenticatedUser != null) {
-                    Authentication.setAuthenticatedUserId(authenticatedUser);
-                }
+                String previous = Authentication.getAuthenticatedUserId();
+                Authentication.setAuthenticatedUserId(requireActor().toString());
                 try {
                     taskService.addComment(taskId, task.getProcessInstanceId(), comment);
                 } finally {
-                    Authentication.setAuthenticatedUserId(null);
+                    Authentication.setAuthenticatedUserId(previous);
                 }
             }
             taskService.complete(taskId, variables);

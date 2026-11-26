@@ -25,6 +25,8 @@ public class PayConfigQuery extends BaseQuery {
     @Schema(description = "配置名称")
     private String configName;
 
+    private String status;
+
     @Schema(description = "支付策略码")
     private String payCode;
 

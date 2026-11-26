@@ -165,7 +165,7 @@ YunGouOS:
   mchId: ${YUN_GOU_OS_MCH_ID}
   key: ${YUN_GOU_OS_KEY}
   ## 支付回掉
-  notifyUrl: http://127.0.0.1:9000/iceeboot/api/v1/pay/callback
+  notifyUrl: ${YUNGOU_NOTIFY_URL:http://127.0.0.1:9000/iceeboot/api/v1/pay/callback}
   ## 前端地址（微信授权后重定向到前端）
   frontendUrl: http://127.0.0.1:4396
   ## 微信OAuth回调地址（后端接口，由微信服务器调用）

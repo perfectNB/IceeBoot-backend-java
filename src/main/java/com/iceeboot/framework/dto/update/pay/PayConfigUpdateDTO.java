@@ -39,7 +39,10 @@ public class PayConfigUpdateDTO {
     private String description;
 
     @Schema(description = "状态（active-激活，inactive-禁用）")
+    @jakarta.validation.constraints.Pattern(regexp = "active|inactive")
     private String status;
+
+    private String payCode;
 
     @Schema(description = "排序")
     private Integer sort;

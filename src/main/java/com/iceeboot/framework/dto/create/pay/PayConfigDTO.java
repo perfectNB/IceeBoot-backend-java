@@ -35,7 +35,12 @@ public class PayConfigDTO {
     private String description;
 
     @Schema(description = "策略code")
+    @NotBlank(message = "请选择权益策略")
     private String payCode;
+
+    @jakarta.validation.constraints.NotNull
+    @jakarta.validation.constraints.Pattern(regexp = "active|inactive")
+    private String status = "active";
 
     @Schema(description = "排序")
     private Integer sort;

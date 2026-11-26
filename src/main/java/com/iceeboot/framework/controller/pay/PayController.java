@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.iceeboot.framework.enums.pay.PaymentChannel;
 import java.util.List;
 
 /**
@@ -46,6 +47,23 @@ public class PayController {
     public R<String> createPaymentQR(@PathVariable("configId") Long configId) {
         String qrCodeUrl = payRecordService.createPaymentQR(configId);
         return R.ok(qrCodeUrl);
+    }
+
+    @GetMapping("/channels")
+    public R<List<PaymentChannel>> channels() {
+        return R.ok(payRecordService.enabledChannels());
+    }
+
+    @PostMapping("/orders/{configId}")
+    public R<String> createOrder(@PathVariable Long configId,
+            @RequestParam PaymentChannel channel) {
+        return R.ok(payRecordService.createPaymentQR(configId, channel));
+    }
+
+    @GetMapping("/records/{id}")
+    @RequirePermission(dynamic = true)
+    public R<PayRecordVO> detail(@PathVariable Long id) {
+        return R.ok(payRecordService.getPayRecordById(id));
     }
 
     @Operation(summary = "支付回调接口", description = "由支付平台调用，处理支付结果")
@@ -79,6 +97,12 @@ public class PayController {
         return R.ok(result);
     }
 
+    @PutMapping("/configs/{id}/status")
+    @RequirePermission(dynamic = true)
+    public R<Boolean> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        return R.ok(payConfigService.updateStatus(id, status));
+    }
+
     @Operation(summary = "删除支付配置", description = "批量删除支付配置")
     @DeleteMapping("/configs")
     @RequirePermission(dynamic = true)
@@ -100,6 +124,7 @@ public class PayController {
     @PutMapping("/records/{id}/retry-business")
     @RequirePermission(dynamic = true)
     public R<Boolean> retryPaymentBusiness(@PathVariable Long id) {
+        payRecordService.getPayRecordById(id);
         return R.ok(payRecordService.retryPaymentBusiness(id));
     }
 

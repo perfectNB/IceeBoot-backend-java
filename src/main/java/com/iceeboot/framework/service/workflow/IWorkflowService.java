@@ -94,6 +94,8 @@ public interface IWorkflowService {
      * @param processInstanceId 流程实例ID
      * @return 流程实例
      */
+    com.iceeboot.framework.vo.workflow.ProcessInstanceVO getInstanceDetail(String processInstanceId);
+
     ProcessInstance getProcessInstance(String processInstanceId);
 
     List<Map<String, Object>> getProcessInstanceNodes(String processInstanceId);

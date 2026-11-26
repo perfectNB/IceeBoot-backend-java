@@ -1,5 +1,19 @@
 [
   {
+    "method": "PUT",
+    "path": "/v1/pay/configs/{id}/status",
+    "name": "更新支付配置状态",
+    "code": "pay:config:status:api",
+    "parentCode": "pay:config"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pay/records/{id}",
+    "name": "查看支付记录详情",
+    "code": "pay:record:detail:api",
+    "parentCode": "pay:record"
+  },
+  {
     "method": "GET",
     "path": "/v1/agent-console/usage",
     "name": "查看智能体用量概览",

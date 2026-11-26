@@ -11,6 +11,8 @@ import com.iceeboot.framework.service.workflow.IWorkflowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import com.iceeboot.framework.vo.workflow.ProcessInstanceVO;
+import com.iceeboot.framework.vo.workflow.WorkflowTaskVO;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.springframework.validation.annotation.Validated;
@@ -39,9 +41,9 @@ public class WorkflowController {
     @Operation(summary = "启动流程实例", description = "根据流程定义Key启动流程实例")
     @PostMapping("/start")
     @RequirePermission(dynamic = true)
-    public R<ProcessInstance> startProcess(@Validated @RequestBody ProcessStartDTO dto) {
+    public R<ProcessInstanceVO> startProcess(@Validated @RequestBody ProcessStartDTO dto) {
         ProcessInstance processInstance = workflowService.startProcess(dto);
-        return R.ok(processInstance);
+        return R.ok(ProcessInstanceVO.from(processInstance));
     }
 
     /**
@@ -65,9 +67,9 @@ public class WorkflowController {
     @Operation(summary = "获取用户任务列表", description = "获取指定用户的任务列表")
     @GetMapping("/tasks/user/{assignee}")
     @RequirePermission(dynamic = true)
-    public R<List<Task>> getUserTasks(@PathVariable("assignee") String assignee) {
+    public R<List<WorkflowTaskVO>> getUserTasks(@PathVariable("assignee") String assignee) {
         List<Task> tasks = workflowService.getUserTasks(assignee);
-        return R.ok(tasks);
+        return R.ok(tasks.stream().map(WorkflowTaskVO::from).toList());
     }
 
     /**
@@ -76,23 +78,23 @@ public class WorkflowController {
     @Operation(summary = "获取候选任务列表", description = "获取指定候选用户的任务列表")
     @GetMapping("/tasks/candidate/{candidateUser}")
     @RequirePermission(dynamic = true)
-    public R<List<Task>> getCandidateTasks(@PathVariable("candidateUser") String candidateUser) {
+    public R<List<WorkflowTaskVO>> getCandidateTasks(@PathVariable("candidateUser") String candidateUser) {
         List<Task> tasks = workflowService.getCandidateTasks(candidateUser);
-        return R.ok(tasks);
+        return R.ok(tasks.stream().map(WorkflowTaskVO::from).toList());
     }
 
     @Operation(summary = "获取我的任务列表", description = "获取当前登录用户的任务列表")
     @GetMapping("/tasks/my")
     @RequirePermission(dynamic = true)
-    public R<List<Task>> getMyTasks() {
+    public R<List<WorkflowTaskVO>> getMyTasks() {
         List<Task> tasks = workflowService.getMyTasks();
-        return R.ok(tasks);
+        return R.ok(tasks.stream().map(WorkflowTaskVO::from).toList());
     }
 
     @Operation(summary = "认领任务", description = "认领指定任务")
     @PostMapping("/task/{taskId}/claim")
     @RequirePermission(dynamic = true)
-    public R<Void> claimTask(@PathVariable("taskId") String taskId, @RequestParam("userId") String userId) {
+    public R<Void> claimTask(@PathVariable("taskId") String taskId, @RequestParam(value = "userId", required = false) String userId) {
         workflowService.claimTask(taskId, userId);
         return R.ok();
     }
@@ -179,9 +181,8 @@ public class WorkflowController {
     @Operation(summary = "获取流程实例", description = "根据流程实例ID获取流程实例")
     @GetMapping("/process/{processInstanceId}")
     @RequirePermission(dynamic = true)
-    public R<ProcessInstance> getProcessInstance(@PathVariable("processInstanceId") String processInstanceId) {
-        ProcessInstance processInstance = workflowService.getProcessInstance(processInstanceId);
-        return R.ok(processInstance);
+    public R<ProcessInstanceVO> getProcessInstance(@PathVariable("processInstanceId") String processInstanceId) {
+        return R.ok(workflowService.getInstanceDetail(processInstanceId));
     }
 
     @Operation(summary = "获取流程实例节点", description = "获取流程实例节点状态与坐标")

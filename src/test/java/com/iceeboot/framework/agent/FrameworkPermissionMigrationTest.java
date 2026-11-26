@@ -68,10 +68,10 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(22);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(24);
 
         List<Endpoint> expected = catalog();
-        assertThat(expected).hasSize(264);
+        assertThat(expected).hasSize(266);
         assertThat(expected.stream().map(Endpoint::key)).doesNotHaveDuplicates();
         assertThat(expected.stream().map(Endpoint::code)).doesNotHaveDuplicates();
         assertThat(dynamicControllerEndpoints()).containsExactlyInAnyOrderElementsOf(

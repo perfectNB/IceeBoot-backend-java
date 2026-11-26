@@ -7,6 +7,10 @@
 package com.iceeboot.framework.service.pay.impl;
 
 import com.iceeboot.common.constant.ApplicationConstants;
+import com.iceeboot.framework.enums.pay.PaymentChannel;
+import com.iceeboot.framework.mapper.pay.PayTermsMapper;
+import com.iceeboot.common.service.pay.client.OfficialPayClient;
+import com.iceeboot.common.service.pay.client.VerifiedPayment;
 import com.iceeboot.common.constant.PaymentBusinessStatuses;
 import com.iceeboot.common.constant.PaymentBusinessTypes;
 import cn.hutool.core.util.StrUtil;
@@ -80,6 +84,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
 
     private final YunGouPayClient yunGouPayClient;
 
+    private final PayTermsMapper terms;
+    private final List<OfficialPayClient> officialClients;
+
     /** 支付方式：微信 */
     private static final Integer PAY_TYPE_WECHAT = 1;
     
@@ -108,7 +115,8 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         // 构建查询条件
         LambdaQueryWrapper<PayRecordDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(query.getOutTradeNo()), PayRecordDO::getOutTradeNo, query.getOutTradeNo())
-                .eq(PayRecordDO::getCreateBy,userId)
+                .and(scope -> scope.eq(PayRecordDO::getUserId, userId)
+                        .or(legacy -> legacy.isNull(PayRecordDO::getUserId).eq(PayRecordDO::getCreateBy, userId)))
                 .eq(query.getPayType() != null, PayRecordDO::getPayType, query.getPayType())
                 .eq(query.getPayStatus() != null, PayRecordDO::getPayStatus, query.getPayStatus())
                 .eq(query.getConfigId() != null, PayRecordDO::getConfigId, query.getConfigId())
@@ -136,11 +144,16 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     public PayRecordVO getPayRecordById(Long id) {
         log.info("根据ID获取支付记录详情，ID：{}", id);
         PayRecordDO payRecord = this.getById(id);
-        if (payRecord == null) {
+        Long viewer = TokenUtils.getCurrentUserId();
+        if (viewer == null || payRecord == null || !(viewer.equals(payRecord.getUserId())
+                || (payRecord.getUserId() == null && viewer.toString().equals(payRecord.getCreateBy())))) {
             throw new IceeBootException("支付记录不存在");
         }
 
-        return convertToVO(payRecord);
+        PayRecordVO detail = convertToVO(payRecord);
+        detail.setEntitlementCode(resolvePayCode(payRecord));
+        detail.setLegacyGrantMissing(needsLegacyGrant(payRecord, detail.getEntitlementCode()));
+        return detail;
     }
 
     @Override
@@ -154,6 +167,22 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String createPaymentQR(Long configId) {
+        return createPaymentQR(configId, PaymentChannel.YUNGOUOS);
+    }
+
+    @Override
+    public List<PaymentChannel> enabledChannels() {
+        var channels = new java.util.ArrayList<PaymentChannel>();
+        if (StringUtils.hasText(key) && StringUtils.hasText(mchId)) {
+            channels.add(PaymentChannel.YUNGOUOS);
+        }
+        officialClients.forEach(client -> channels.add(client.channel()));
+        return List.copyOf(channels);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createPaymentQR(Long configId, PaymentChannel channel) {
         log.info("创建支付二维码，配置ID：{}", configId);
         
         // 获取当前用户ID
@@ -162,11 +191,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         
         // 防止频繁请求
         String redisKey = CacheConstants.Pay.QR_LIMIT + userId;
-        String limitFlag = (String) redisTemplate.opsForValue().get(redisKey);
-        if (StrUtil.isNotBlank(limitFlag)) {
-            throw new IceeBootException("您点的实在是太快啦！！！");
+        if (!Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, "1", 5, TimeUnit.SECONDS))) {
+            throw new IceeBootException("请稍后再创建支付订单");
         }
-        redisTemplate.opsForValue().set(redisKey, "1", 5, TimeUnit.SECONDS);
 
         // 获取支付配置
         PayConfigDO config = paymentConfigService.getById(configId);
@@ -174,6 +201,12 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
             throw new IceeBootException("不存在该支付配置");
         }
 
+        if (config.getStatus() != null && !"active".equals(config.getStatus())) {
+            throw new IceeBootException("该支付配置已停用");
+        }
+        if (!strategyFactory.hasStrategy(config.getPayCode())) {
+            throw new IceeBootException("支付配置缺少有效的权益策略");
+        }
         // 生成商户订单号
         String outTradeNo = cn.hutool.core.util.IdUtil.getSnowflakeNextIdStr();
 
@@ -186,7 +219,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
                 .setBusinessStatus(PaymentBusinessStatuses.PENDING)
                 .setBusinessRetryCount(0)
                 .setOrderName(config.getConfigName())
-                .setPayType(PAY_TYPE_WECHAT)
+                .setPayType(channel == PaymentChannel.ALIPAY ? 2 : PAY_TYPE_WECHAT)
                 .setConfigId(configId)
                 .setPayAmount(config.getAmount())
                 .setPayStatus(PAY_STATUS_PAYING);
@@ -197,6 +230,15 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         }
 
         log.info("支付订单创建成功，订单号：{}", outTradeNo);
+
+        terms.save(payRecord.getId(), channel, config.getPayCode());
+        if (channel != PaymentChannel.YUNGOUOS) {
+            OfficialPayClient client = officialClients.stream().filter(c -> c.channel() == channel)
+                    .findFirst().orElseThrow(() -> new IceeBootException("支付渠道未启用"));
+            String qr = client.prepay(outTradeNo, config.getConfigName(), config.getAmount());
+            if (!StringUtils.hasText(qr)) throw new IceeBootException("支付渠道未返回二维码");
+            return qr;
+        }
 
         // 调用YunGouOS生成支付二维码
         try {
@@ -285,6 +327,8 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
                 return "fail";
             }
 
+            if (orderChannel(payRecord) != PaymentChannel.YUNGOUOS) return "fail";
+
             // 校验回调金额与本地订单金额一致
             if (!isValidCallbackAmount(money, payRecord)) {
                 log.error("支付回调 - 金额校验失败，订单号：{}，回调金额：{}，订单金额：{}",
@@ -294,6 +338,7 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
 
             // 检查订单状态，避免重复处理
             if (PAY_STATUS_SUCCESS.equals(payRecord.getPayStatus())) {
+                if (StringUtils.hasText(payRecord.getTradeNo()) && !tradeNo.equals(payRecord.getTradeNo())) return "fail";
                 processPaymentBusiness(payRecord);
                 redisTemplate.delete(tempKey);
                 return CALLBACK_SUCCESS_RESPONSE;
@@ -324,7 +369,8 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
 
             // 可能是并发回调已由其他线程更新为成功，按幂等返回 success
             PayRecordDO latestRecord = baseMapper.selectByOutTradeNoForUpdate(outTradeNo);
-            if (latestRecord != null && PAY_STATUS_SUCCESS.equals(latestRecord.getPayStatus())) {
+            if (latestRecord != null && PAY_STATUS_SUCCESS.equals(latestRecord.getPayStatus())
+                    && tradeNo.equals(latestRecord.getTradeNo())) {
                 log.info("支付回调 - 并发幂等命中，订单已处理成功，订单号：{}", outTradeNo);
                 redisTemplate.delete(tempKey);
                 return CALLBACK_SUCCESS_RESPONSE;
@@ -350,7 +396,16 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         if (payRecord == null || !PAY_STATUS_SUCCESS.equals(payRecord.getPayStatus())) {
             return false;
         }
+        if (PaymentBusinessStatuses.SUCCESS.equals(payRecord.getBusinessStatus())) {
+            if (needsLegacyGrant(payRecord, resolvePayCode(payRecord))) executePaymentStrategy(payRecord);
+            return true;
+        }
         return processPaymentBusiness(payRecord);
+    }
+
+    private boolean needsLegacyGrant(PayRecordDO order, String code) {
+        return PAY_STATUS_SUCCESS.equals(order.getPayStatus()) && PaymentBusinessStatuses.SUCCESS.equals(order.getBusinessStatus())
+                && strategyFactory.hasStrategy(code) && terms.channel(order.getId()) == null && terms.countGrants(order.getId()) == 0;
     }
 
     private boolean processPaymentBusiness(PayRecordDO payRecord) {
@@ -386,11 +441,31 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         }
     }
 
+    private PaymentChannel orderChannel(PayRecordDO order) {
+        PaymentChannel channel = terms.channel(order.getId());
+        return channel == null ? PaymentChannel.YUNGOUOS : channel;
+    }
+
     @Override
-    public boolean deletePayRecords(List<Long> ids) {
-        log.info("删除支付记录，IDs：{}", ids);
-        
-        return this.removeByIds(ids);
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmPayment(PaymentChannel channel, VerifiedPayment payment) {
+        if (!StringUtils.hasText(payment.orderNo()) || !StringUtils.hasText(payment.transactionId())) {
+            throw new IceeBootException("支付通知缺少订单号");
+        }
+        PayRecordDO order = baseMapper.selectByOutTradeNoForUpdate(payment.orderNo());
+        if (order == null || orderChannel(order) != channel || order.getPayAmount() == null
+                || order.getPayAmount() != payment.amountFen()) {
+            throw new IceeBootException("支付通知与订单不符");
+        }
+        if (PAY_STATUS_SUCCESS.equals(order.getPayStatus())) {
+            if (!payment.transactionId().equals(order.getTradeNo())) throw new IceeBootException("支付流水不匹配");
+        } else {
+            int updated = baseMapper.updateToSuccessIfPaying(payment.orderNo(), payment.transactionId(),
+                    payment.amountFen(), PAY_STATUS_SUCCESS, PAY_STATUS_PAYING);
+            if (updated != 1) throw new IceeBootException("订单状态不支持确认收款");
+            order.setPayStatus(PAY_STATUS_SUCCESS).setTradeNo(payment.transactionId());
+        }
+        processPaymentBusiness(order);
     }
 
     /**
@@ -399,28 +474,20 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
      * 
      * @param payRecord 支付记录
      */
+    private String resolvePayCode(PayRecordDO payRecord) {
+        String payCode = terms.payCode(payRecord.getId());
+        if (payCode == null && payRecord.getConfigId() != null) {
+            PayConfigDO legacyConfig = paymentConfigService.getById(payRecord.getConfigId());
+            if (legacyConfig != null) payCode = legacyConfig.getPayCode();
+        }
+
+        return payCode;
+    }
+
     private void executePaymentStrategy(PayRecordDO payRecord) {
         log.info("执行支付策略 - 开始，支付记录ID: {}", payRecord.getId());
         
-        // 1. 获取支付配置
-        Long configId = payRecord.getConfigId();
-        if (configId == null) {
-            log.warn("执行支付策略 - 支付配置ID为空，跳过策略执行");
-            return;
-        }
-        
-        PayConfigDO config = paymentConfigService.getById(configId);
-        if (config == null) {
-            throw new IceeBootException("支付配置不存在：" + configId);
-        }
-        
-        // 2. 获取策略编码
-        String payCode = config.getPayCode();
-        if (!StringUtils.hasText(payCode)) {
-            log.warn("执行支付策略 - 支付配置未设置payCode，跳过策略执行，configId: {}", configId);
-            return;
-        }
-        
+        String payCode = resolvePayCode(payRecord);
         // 3. 检查策略是否存在
         if (!strategyFactory.hasStrategy(payCode)) {
             throw new IceeBootException("支付策略不存在：" + payCode);
@@ -490,9 +557,9 @@ public class PayRecordServiceImpl extends ServiceImpl<PayRecordMapper, PayRecord
         }
         
         // 获取用户名
-        if (StrUtil.isNotBlank(payRecord.getCreateBy())) {
+        if (payRecord.getUserId() != null || StrUtil.isNotBlank(payRecord.getCreateBy())) {
             try {
-                Long userId = Long.valueOf(payRecord.getCreateBy());
+                Long userId = payRecord.getUserId() != null ? payRecord.getUserId() : Long.valueOf(payRecord.getCreateBy());
                 vo.setUserId(userId);
                 SysUserVO user = sysUserService.getUserById(userId);
                 if (user != null) {

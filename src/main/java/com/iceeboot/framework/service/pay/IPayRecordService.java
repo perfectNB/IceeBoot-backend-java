@@ -13,6 +13,8 @@ import com.iceeboot.framework.query.pay.PayRecordQuery;
 import com.iceeboot.framework.vo.pay.PayRecordVO;
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.iceeboot.framework.enums.pay.PaymentChannel;
+import com.iceeboot.common.service.pay.client.VerifiedPayment;
 import java.util.List;
 
 /**
@@ -65,11 +67,9 @@ public interface IPayRecordService extends IService<PayRecordDO> {
 
     boolean retryPaymentBusiness(Long payRecordId);
 
-    /**
-     * 删除支付记录
-     *
-     * @param ids ID列表
-     * @return 是否成功
-     */
-    boolean deletePayRecords(List<Long> ids);
+    List<PaymentChannel> enabledChannels();
+
+    String createPaymentQR(Long configId, PaymentChannel channel);
+
+    void confirmPayment(PaymentChannel channel, VerifiedPayment payment);
 }
