@@ -1,5 +1,75 @@
 [
   {
+    "method": "GET",
+    "path": "/v1/workflow/approvals/drafts",
+    "name": "审批草稿列表",
+    "code": "workflow:approval:drafts:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/approvals/roles",
+    "name": "审批角色选项",
+    "code": "workflow:approval:roles:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "PUT",
+    "path": "/v1/workflow/approvals/drafts",
+    "name": "保存审批草稿",
+    "code": "workflow:approval:save:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/approvals/drafts/{code}/publish",
+    "name": "发布审批模板",
+    "code": "workflow:approval:publish:api",
+    "parentCode": "workflow:definition"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/approvals/published",
+    "name": "选择已发布审批",
+    "code": "workflow:approval:published:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/approvals/cases",
+    "name": "提交审批申请",
+    "code": "workflow:approval:start:api",
+    "parentCode": "workflow:process"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/approvals/cases",
+    "name": "查看个人审批列表",
+    "code": "workflow:approval:list:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workflow/approvals/cases/{id}",
+    "name": "查看审批轨迹",
+    "code": "workflow:approval:detail:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/approvals/cases/{id}/review/{action}",
+    "name": "处理角色审批",
+    "code": "workflow:approval:review:api",
+    "parentCode": "workflow:task"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workflow/approvals/cases/{id}/owner/{action}",
+    "name": "重提或作废申请",
+    "code": "workflow:approval:revise:api",
+    "parentCode": "workflow:process"
+  },
+  {
     "method": "PUT",
     "path": "/v1/pay/configs/{id}/status",
     "name": "更新支付配置状态",

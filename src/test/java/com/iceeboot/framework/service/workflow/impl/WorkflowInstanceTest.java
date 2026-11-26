@@ -60,6 +60,8 @@ class WorkflowInstanceTest {
             var start = new ProcessStartDTO();
             start.setProcessDefinitionKey("approval");
             String id = service.startProcess(start).getId();
+            assertThatThrownBy(() -> service.getUserTasks("someone_else")).hasMessageContaining("自己的待办");
+            assertThatThrownBy(() -> service.getCandidateTasks("someone_else")).hasMessageContaining("自己的待办");
             String task = service.getMyTasks().get(0).getId();
             assertThatThrownBy(() -> service.completeTask(task, null)).isInstanceOf(RuntimeException.class);
             service.claimTask(task, null);

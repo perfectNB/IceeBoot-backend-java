@@ -130,28 +130,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public List<Task> getUserTasks(String assignee) {
+        Long actor = requireActor();
+        String username = actorName(actor);
+        requireOwnTaskList(assignee, actor, username);
         try {
             Set<String> assigneeCandidates = new HashSet<>();
-            if (assignee != null && !assignee.isBlank()) {
-                assigneeCandidates.add(assignee);
-            }
-            Long assigneeId = parseUserId(assignee);
-            if (assigneeId == null && assignee != null && !assignee.isBlank()) {
-                var assigneeUser = userService.getUserByUsername(assignee);
-                if (assigneeUser != null) {
-                    assigneeId = assigneeUser.getId();
-                    if (assigneeUser.getUsername() != null && !assigneeUser.getUsername().isBlank()) {
-                        assigneeCandidates.add(assigneeUser.getUsername());
-                    }
-                    assigneeCandidates.add(String.valueOf(assigneeUser.getId()));
-                }
-            } else if (assigneeId != null) {
-                var assigneeUser = userService.getById(assigneeId);
-                if (assigneeUser != null && assigneeUser.getUsername() != null && !assigneeUser.getUsername().isBlank()) {
-                    assigneeCandidates.add(assigneeUser.getUsername());
-                }
-            }
-            List<String> roleCodes = assigneeId == null ? List.of() : userService.getUserRoles(assigneeId);
+            assigneeCandidates.add(actor.toString());
+            assigneeCandidates.add(username);
+            List<String> roleCodes = userService.getUserRoles(actor);
             Map<String, Task> matches = new HashMap<>();
             for (String candidate : assigneeCandidates) {
                 addTasks(matches, taskService.createTaskQuery().taskAssignee(candidate).list());
@@ -170,6 +156,8 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public List<Task> getCandidateTasks(String candidateUser) {
+        Long actor = requireActor();
+        requireOwnTaskList(candidateUser, actor, actorName(actor));
         try {
             List<Task> tasks = taskService.createTaskQuery()
                     .taskCandidateUser(candidateUser)
@@ -793,6 +781,11 @@ public class WorkflowServiceImpl implements IWorkflowService {
             log.error("结束流程失败，流程实例ID: {}", processInstanceId, e);
             throw new IceeBootException(ResponseMessage.WorkflowMessage.END_PROCESS_FAILED, e);
         }
+    }
+
+    private void requireOwnTaskList(String requested, Long actor, String username) {
+        if (!actor.toString().equals(requested) && !username.equals(requested))
+            throw new IceeBootException("只能查询自己的待办");
     }
 
     private Long requireActor() {

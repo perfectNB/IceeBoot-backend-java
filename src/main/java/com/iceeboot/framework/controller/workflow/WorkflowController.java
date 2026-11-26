@@ -148,7 +148,7 @@ public class WorkflowController {
     @RequirePermission(dynamic = true)
     public R<String> getDefinitionXml(@PathVariable("definitionId") String definitionId) {
         String xml = workflowService.getDefinitionXml(definitionId);
-        return R.ok(xml);
+        return R.ok("读取成功", xml);
     }
 
     @Operation(summary = "获取流程定义图", description = "获取流程定义的图片Base64")
