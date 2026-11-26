@@ -135,7 +135,7 @@ class AgentFixture {
                                 session.getMapper(
                                         com.iceeboot.framework.mapper.agent.AgentModelCallMapper
                                                 .class),
-                                codec),
+                                codec, properties),
                         transactionManager);
         var target =
                 new com.iceeboot.framework.service.agent.impl.AgentPersistenceServiceImpl(

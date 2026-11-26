@@ -21,6 +21,7 @@ public record RunView(
         String error,
         long inputTokens,
         long outputTokens,
+        Long cachedTokens,
         boolean usageKnown,
         LocalDateTime startedAt,
         LocalDateTime finishedAt,

@@ -23,4 +23,10 @@ public class AgentVO {
 
     @Schema(description = "调用次数")
     private long callCount;
+
+    private Long totalInputTokens;
+
+    private Long totalOutputTokens;
+
+    private Long totalCachedTokens;
 }

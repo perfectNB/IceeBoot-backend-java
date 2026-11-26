@@ -113,7 +113,8 @@ public class AgentDefinitionStorageServiceImpl implements IAgentDefinitionStorag
                         codec.list(r.getKnowledgeIdsJson(), Long.class),
                         codec.list(r.getChildAgentIdsJson(), Long.class),
                         codec.map(r.getEnvironmentJson(), String.class));
-        return new AgentView(draft, r.getActiveReleaseId(), r.getActiveVersion(), r.getCallCount());
+        return new AgentView(draft, r.getActiveReleaseId(), r.getActiveVersion(), r.getCallCount(),
+                r.getTotalInputTokens(), r.getTotalOutputTokens(), r.getTotalCachedTokens());
     }
 
     @Override

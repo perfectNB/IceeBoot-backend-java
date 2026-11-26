@@ -491,7 +491,7 @@ public class AgentConfigurationServiceImpl implements IAgentConfigurationService
                 environment(v.draft(), mask(v.draft().environment())),
                 v.activeReleaseId(),
                 v.activeVersion(),
-                v.callCount());
+                v.callCount(), v.totalInputTokens(), v.totalOutputTokens(), v.totalCachedTokens());
     }
 
     private static AgentSpec environment(AgentSpec a, Map<String, String> env) {

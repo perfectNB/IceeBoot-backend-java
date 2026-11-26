@@ -32,7 +32,7 @@ class AgentConsolePermissionTest {
                                                 || m.isAnnotationPresent(PostMapping.class)
                                                 || m.isAnnotationPresent(DeleteMapping.class))
                         .toList();
-        assertThat(endpoints).hasSize(21);
+        assertThat(endpoints).hasSize(22);
         for (var method : endpoints) {
             RequirePermission permission = method.getAnnotation(RequirePermission.class);
             assertThat(permission).as(method.getName()).isNotNull();

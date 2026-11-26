@@ -2,6 +2,8 @@ package com.iceeboot.framework.service.agent;
 
 import com.iceeboot.framework.enums.agent.CapabilityKind;
 import com.iceeboot.framework.model.agent.*;
+import com.iceeboot.framework.enums.agent.UsagePeriod;
+import com.iceeboot.framework.vo.agent.UsageOverviewVO;
 
 import java.util.List;
 
@@ -64,7 +66,11 @@ public interface IAgentPersistenceService {
             String output,
             long in,
             long out,
+            Long cached,
+            BillingSource billing,
             boolean known);
+
+    UsageOverviewVO usageOverview(UsagePeriod period);
 
     List<RunView> runs();
 

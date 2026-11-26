@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iceeboot.framework.mapper.agent.AgentModelCallMapper">
+    <select id="summarize" resultType="com.iceeboot.framework.vo.agent.UsageOverviewVO$Row">
+        SELECT
+        <choose><when test="daily">DATE(c.create_time) label, NULL provider,</when>
+                <otherwise>c.model label, c.provider,</otherwise></choose>
+        COUNT(*) calls, SUM(CASE WHEN c.usage_known THEN 1 ELSE 0 END) known_calls,
+        COUNT(c.estimated_cost_cny) priced_calls, SUM(c.estimated_cost_cny) cost_cny,
+        SUM(c.input_tokens) input_tokens, SUM(c.output_tokens) output_tokens,
+        SUM(c.cached_tokens) cached_tokens, SUM(c.cache_write_tokens) cache_write_tokens
+        FROM t_agent_model_call c JOIN t_agent_run r ON r.id=c.run_id
+        WHERE c.del_flag=0 AND r.del_flag=0 AND r.agent_id > 0 AND c.create_time &lt;= #{end}
+        <if test="start != null">AND c.create_time >= #{start}</if>
+        <choose><when test="daily">GROUP BY DATE(c.create_time) ORDER BY DATE(c.create_time)</when>
+                <otherwise>GROUP BY c.model, c.provider ORDER BY SUM(c.input_tokens)+SUM(c.output_tokens) DESC, c.model, c.provider</otherwise></choose>
+    </select>
+</mapper>

@@ -10,6 +10,7 @@ import com.iceeboot.framework.service.agent.runtime.AgentModelFactory;
 import com.iceeboot.framework.service.agent.support.AgentJsonCodec;
 import io.agentscope.core.message.*;
 import io.agentscope.core.model.ChatUsage;
+import com.iceeboot.framework.service.agent.runtime.ModelTokenUsage;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Component;
@@ -81,17 +82,21 @@ public class MemoryExtractionWorker {
                     new UserMessage(json.json(input)));
             var text = new StringBuilder();
             var usage = new AtomicReference<ChatUsage>();
-            models.create(model, null).stream(messages, List.of(), models.options(model, null))
-                    .doOnNext(chunk -> {
-                        if (chunk.getUsage() != null) usage.set(chunk.getUsage());
-                        if (chunk.getContent() != null) for (var block : chunk.getContent()) {
-                            if (block instanceof TextBlock content) text.append(content.getText());
-                        }
-                        if (text.length() > 65536) throw new IceeBootException(ResponseMessage.Agent.MEMORY_VALUE_INVALID);
-                    }).then().block(Duration.ofSeconds(120));
-            var tokens = usage.get();
-            store.modelCall(UUID.randomUUID().toString(), run, run, release.agent().code(), model.model(),
-                    "", "", tokens == null ? 0 : tokens.getInputTokens(), tokens == null ? 0 : tokens.getOutputTokens(), tokens != null);
+            try {
+                models.create(model, null).stream(messages, List.of(), models.options(model, null))
+                        .doOnNext(chunk -> {
+                            if (chunk.getUsage() != null) usage.set(chunk.getUsage());
+                            if (chunk.getContent() != null) for (var block : chunk.getContent()) {
+                                if (block instanceof TextBlock content) text.append(content.getText());
+                            }
+                            if (text.length() > 65536) throw new IceeBootException(ResponseMessage.Agent.MEMORY_VALUE_INVALID);
+                        }).then().block(Duration.ofSeconds(120));
+            } finally {
+                var tokens = usage.get();
+                store.modelCall(UUID.randomUUID().toString(), run, run, release.agent().code(), model.model(),
+                        "", "", tokens == null ? 0 : tokens.getInputTokens(), tokens == null ? 0 : tokens.getOutputTokens(), ModelTokenUsage.confirmedCachedTokens(tokens),
+                        com.iceeboot.framework.model.agent.BillingSource.of(model, ModelTokenUsage.confirmedWriteTokens(tokens)), tokens != null);
+            }
             String output = text.toString().trim().replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "");
             var result = json.read(output, Extraction.class);
             if (result == null || result.updates() == null || result.updates().size() > 96)

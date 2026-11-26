@@ -13,6 +13,7 @@ public interface AgentRunMapper extends BaseMapper<AgentRunDO> {
             @Param("id") String id,
             @Param("input") long input,
             @Param("output") long output,
+            @Param("cached") Long cached,
             @Param("known") boolean known);
 
     @org.apache.ibatis.annotations.Update(

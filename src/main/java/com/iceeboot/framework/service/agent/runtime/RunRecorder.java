@@ -80,14 +80,14 @@ public final class RunRecorder implements MiddlewareBase {
     public void endStage(String key, String status) {
         Stage stage = stages.remove(key);
         if (stage != null) measured(AgentProgressType.PHASE_FINISHED, stage.title(), key, status,
-                (System.nanoTime()-stage.started())/1_000_000, null,null,null);
+                (System.nanoTime()-stage.started())/1_000_000, null,null,null,null);
     }
     private void measured(AgentProgressType type,String title,String key,String status,long duration,
-            Long input,Long output,Boolean known) {
+            Long input,Long output,Long cached,Boolean known) {
         synchronized(sequence) {
             if (progressClosed || eventStreamClosed.get()) return;
             progress.accept(new AgentProgress(sequence.incrementAndGet(),type,rootId,id,parentId,
-                    snapshot.agent().code(),title,"",key,"",status,System.currentTimeMillis(),duration,input,output,known));
+                    snapshot.agent().code(),title,"",key,"",status,System.currentTimeMillis(),duration,input,output,cached,known));
         }
     }
 
@@ -341,6 +341,7 @@ public final class RunRecorder implements MiddlewareBase {
                                     () -> {
                                         if (saved.compareAndSet(false, true)) {
                                             ChatUsage u = usage.get();
+                                            Long cached = ModelTokenUsage.confirmedCachedTokens(u);
                                             store.modelCall(
                                                     callId,
                                                     id,
@@ -351,11 +352,11 @@ public final class RunRecorder implements MiddlewareBase {
                                                     content.toString(),
                                                     u == null ? 0 : u.getInputTokens(),
                                                     u == null ? 0 : u.getOutputTokens(),
-                                                    u != null);
+                                                    cached, BillingSource.of(snapshot.model(), ModelTokenUsage.confirmedWriteTokens(u)), u != null);
                                             measured(AgentProgressType.MODEL_FINISHED,compaction ? "上下文整理模型调用" : "模型调用",callId,modelStatus.get(),
                                                     (System.nanoTime()-modelStarted)/1_000_000,
                                                     u == null ? 0L : (long)u.getInputTokens(),
-                                                    u == null ? 0L : (long)u.getOutputTokens(),u != null);
+                                                    u == null ? 0L : (long)u.getOutputTokens(),cached,u != null);
                                         }
                                     };
                             return delegate.stream(withMemory(messages, compaction), tools, options)
@@ -363,7 +364,7 @@ public final class RunRecorder implements MiddlewareBase {
                                             r -> {
                                                 if (!compaction && r.getContent() != null && !r.getContent().isEmpty() && firstToken.compareAndSet(false,true))
                                                     measured(AgentProgressType.MODEL_FIRST_TOKEN,"模型首个内容",callId,"SUCCEEDED",
-                                                            (System.nanoTime()-modelStarted)/1_000_000,null,null,null);
+                                                            (System.nanoTime()-modelStarted)/1_000_000,null,null,null,null);
                                                 if (r.getUsage() != null) usage.set(r.getUsage());
                                                 if (r.getContent() != null)
                                                     content.append(store.json(r.getContent()))

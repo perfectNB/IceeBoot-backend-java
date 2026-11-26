@@ -46,4 +46,6 @@ public class AgentModelCallVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createdAt;
+
+    private Long cachedTokens;
 }

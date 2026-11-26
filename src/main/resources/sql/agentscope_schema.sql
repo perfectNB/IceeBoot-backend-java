@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS t_agent_run (
     error_text VARCHAR(500) NOT NULL DEFAULT '',
     input_tokens BIGINT NOT NULL DEFAULT 0,
     output_tokens BIGINT NOT NULL DEFAULT 0,
+    cached_tokens BIGINT DEFAULT NULL,
     usage_known BOOLEAN NOT NULL DEFAULT TRUE,
     started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     finished_at DATETIME,
@@ -203,6 +204,10 @@ CREATE TABLE IF NOT EXISTS t_agent_model_call (
     output_text LONGTEXT NOT NULL,
     input_tokens BIGINT NOT NULL,
     output_tokens BIGINT NOT NULL,
+    provider VARCHAR(40) DEFAULT NULL,
+    cache_write_tokens BIGINT DEFAULT NULL,
+    estimated_cost_cny DECIMAL(22,10) DEFAULT NULL,
+    cached_tokens BIGINT DEFAULT NULL,
     usage_known BOOLEAN NOT NULL DEFAULT TRUE,
     create_by VARCHAR(64),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -210,6 +215,7 @@ CREATE TABLE IF NOT EXISTS t_agent_model_call (
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     del_flag TINYINT NOT NULL DEFAULT 0,
     KEY idx_agent_model_call_root(root_run_id),
+    KEY idx_agent_call_usage_time(create_time),
     KEY idx_agent_model_call_run(run_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

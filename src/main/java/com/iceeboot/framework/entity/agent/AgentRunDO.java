@@ -110,4 +110,7 @@ public class AgentRunDO implements java.io.Serializable {
     @TableLogic
     @TableField("del_flag")
     private Integer delFlag;
+
+    @TableField("cached_tokens")
+    private Long cachedTokens;
 }

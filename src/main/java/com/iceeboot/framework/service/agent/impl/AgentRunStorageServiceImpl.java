@@ -7,6 +7,8 @@ import com.iceeboot.framework.entity.agent.*;
 import com.iceeboot.framework.enums.agent.*;
 import com.iceeboot.framework.mapper.agent.*;
 import com.iceeboot.framework.model.agent.*;
+import com.iceeboot.framework.enums.agent.UsagePeriod;
+import com.iceeboot.framework.vo.agent.UsageOverviewVO;
 import com.iceeboot.framework.service.agent.*;
 import com.iceeboot.framework.service.agent.support.AgentJsonCodec;
 
@@ -25,6 +27,7 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
     private final AgentRunMapper runs;
     private final AgentModelCallMapper calls;
     private final AgentJsonCodec codec;
+    private final com.iceeboot.config.agent.AgentProperties properties;
 
     private static <T> T required(T value, String message) {
         if (value == null) throw new IceeBootException(message);
@@ -85,6 +88,8 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
             String output,
             long in,
             long out,
+            Long cached,
+            BillingSource billing,
             boolean known) {
         AgentModelCallDO row = new AgentModelCallDO();
         row.setId(id);
@@ -96,9 +101,30 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
         row.setOutputText(output);
         row.setInputTokens(in);
         row.setOutputTokens(out);
+        row.setCachedTokens(cached);
+        row.setProvider(billing.provider());
+        row.setCacheWriteTokens(billing.cacheWriteTokens());
+        var price = properties.getTokenPrices().get(billing.connectionId());
+        if (known && price != null && model.equals(price.getModel())) {
+            row.setEstimatedCostCny(price.estimate(in, out, cached, billing.cacheWriteTokens()));
+        }
         row.setUsageKnown(known);
         changed(calls.insert(row), ResponseMessage.Agent.MODEL_CALL_RECORD_FAILED);
-        changed(runs.addUsage(run, in, out, known), ResponseMessage.Agent.RUN_NOT_FOUND);
+        changed(runs.addUsage(run, in, out, cached, known), ResponseMessage.Agent.RUN_NOT_FOUND);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsageOverviewVO usageOverview(UsagePeriod period) {
+        var now = LocalDateTime.now();
+        var today = now.toLocalDate();
+        LocalDateTime start = switch (period) {
+            case TODAY -> today.atStartOfDay();
+            case MONTH -> today.withDayOfMonth(1).atStartOfDay();
+            case ALL -> null;
+        };
+        var dailyStart = start == null ? today.minusDays(29).atStartOfDay() : start;
+        return new UsageOverviewVO(now, calls.summarize(start, now, false), calls.summarize(dailyStart, now, true));
     }
 
     @Override
@@ -147,6 +173,7 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
                                                 r.getOutputText(),
                                                 r.getInputTokens(),
                                                 r.getOutputTokens(),
+                                                r.getCachedTokens(),
                                                 Boolean.TRUE.equals(r.getUsageKnown()),
                                                 r.getCreateTime()))
                         .toList();
@@ -155,6 +182,8 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
                 modelCalls,
                 modelCalls.stream().mapToLong(ModelCallView::inputTokens).sum(),
                 modelCalls.stream().mapToLong(ModelCallView::outputTokens).sum(),
+                modelCalls.stream().map(ModelCallView::cachedTokens).filter(Objects::nonNull)
+                        .reduce(Long::sum).orElse(null),
                 modelCalls.stream().allMatch(ModelCallView::usageKnown));
     }
 
@@ -173,6 +202,7 @@ public class AgentRunStorageServiceImpl implements IAgentRunStorageService {
                 r.getErrorText(),
                 r.getInputTokens(),
                 r.getOutputTokens(),
+                r.getCachedTokens(),
                 Boolean.TRUE.equals(r.getUsageKnown()),
                 r.getStartedAt(),
                 r.getFinishedAt(),

@@ -135,4 +135,13 @@ public class AgentDefinitionDO extends IceeBootDO {
 
     @TableField(exist = false)
     private Long callCount;
+
+    @TableField(exist = false)
+    private Long totalInputTokens;
+
+    @TableField(exist = false)
+    private Long totalOutputTokens;
+
+    @TableField(exist = false)
+    private Long totalCachedTokens;
 }

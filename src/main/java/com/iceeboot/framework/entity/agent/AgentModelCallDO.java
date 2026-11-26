@@ -70,4 +70,11 @@ public class AgentModelCallDO implements java.io.Serializable {
     @TableLogic
     @TableField("del_flag")
     private Integer delFlag;
+
+    @TableField("cached_tokens")
+    private Long cachedTokens;
+
+    private String provider;
+    private Long cacheWriteTokens;
+    private java.math.BigDecimal estimatedCostCny;
 }

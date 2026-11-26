@@ -1,6 +1,13 @@
 [
   {
     "method": "GET",
+    "path": "/v1/agent-console/usage",
+    "name": "查看智能体用量概览",
+    "code": "ai:run:usage:api",
+    "parentCode": "ai:run"
+  },
+  {
+    "method": "GET",
     "path": "/v1/agent-console/models",
     "name": "查询模型连接列表",
     "code": "ai:model:list:api",

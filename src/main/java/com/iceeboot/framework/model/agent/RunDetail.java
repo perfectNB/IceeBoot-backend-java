@@ -12,4 +12,5 @@ public record RunDetail(
         List<ModelCallView> modelCalls,
         long totalInputTokens,
         long totalOutputTokens,
+        Long totalCachedTokens,
         boolean usageKnown) {}

@@ -49,6 +49,14 @@ public class AgentConsoleController {
         return new Caller(id.toString(), TokenUtils.getToken());
     }
 
+    @Operation(summary = "智能体用量概览")
+    @GetMapping("/usage")
+    @RequirePermission(dynamic = true)
+    public R<UsageOverviewVO> usage(@RequestParam(defaultValue = "MONTH") UsagePeriod period) {
+        admin();
+        return R.ok(store.usageOverview(period));
+    }
+
     @Operation(summary = "查询模型连接列表")
     @GetMapping("/models")
     @RequirePermission(dynamic = true)

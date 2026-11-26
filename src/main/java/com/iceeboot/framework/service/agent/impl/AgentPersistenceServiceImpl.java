@@ -2,6 +2,8 @@ package com.iceeboot.framework.service.agent.impl;
 
 import com.iceeboot.framework.enums.agent.*;
 import com.iceeboot.framework.model.agent.*;
+import com.iceeboot.framework.enums.agent.UsagePeriod;
+import com.iceeboot.framework.vo.agent.UsageOverviewVO;
 import com.iceeboot.framework.service.agent.*;
 import com.iceeboot.framework.service.agent.support.AgentJsonCodec;
 
@@ -149,8 +151,15 @@ public class AgentPersistenceServiceImpl implements IAgentPersistenceService {
             String output,
             long in,
             long out,
+            Long cached,
+            BillingSource billing,
             boolean known) {
-        this.run.modelCall(id, run, root, agent, model, input, output, in, out, known);
+        this.run.modelCall(id, run, root, agent, model, input, output, in, out, cached, billing, known);
+    }
+
+    @Override
+    public UsageOverviewVO usageOverview(UsagePeriod period) {
+        return run.usageOverview(period);
     }
 
     @Override

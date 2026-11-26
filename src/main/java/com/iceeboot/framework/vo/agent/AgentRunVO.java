@@ -70,4 +70,6 @@ public class AgentRunVO {
 
     @Schema(description = "已请求取消，等待执行节点停止")
     private boolean cancelRequested;
+
+    private Long cachedTokens;
 }

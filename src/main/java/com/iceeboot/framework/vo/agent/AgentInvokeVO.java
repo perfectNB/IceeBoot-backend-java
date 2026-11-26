@@ -26,6 +26,8 @@ public class AgentInvokeVO {
     @Schema(description = "输出 Token 数")
     private long outputTokens;
 
+    private Long cachedTokens;
+
     @Schema(description = "是否取得真实用量")
     private boolean usageKnown;
 }

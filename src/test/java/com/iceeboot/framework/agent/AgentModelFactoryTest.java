@@ -78,7 +78,7 @@ class AgentModelFactoryTest {
                             "data:"
                                 + " {\"id\":\"r\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ok\"},\"finish_reason\":null}]}\n\n"
                                 + "data:"
-                                + " {\"id\":\"r\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":2,\"total_tokens\":13}}\n\n"
+                                + " {\"id\":\"r\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":2,\"prompt_cache_hit_tokens\":7,\"total_tokens\":13}}\n\n"
                                 + "data: [DONE]\n\n";
                     byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
                     e.getResponseHeaders().set("Content-Type", "text/event-stream");
@@ -122,7 +122,8 @@ class AgentModelFactoryTest {
             assertThat(response).isNotEmpty();
             assertThat(auth.get()).isEqualTo("Bearer fixture-key");
             assertThat(body.get()).contains("lookup", "fixture-model", "thinking");
-            assertThat(response.stream().filter(r -> r.getUsage() != null).toList()).isNotEmpty();
+            assertThat(response.stream().filter(r -> r.getUsage() != null)
+                    .map(r -> r.getUsage().getCachedTokens()).toList()).contains(7);
         } finally {
             server.stop(0);
         }

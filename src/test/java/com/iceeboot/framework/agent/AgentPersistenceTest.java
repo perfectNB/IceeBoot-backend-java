@@ -172,6 +172,50 @@ class AgentPersistenceTest {
     }
 
     @Test
+    void tokenTotalsFollowTheExecutingAgentAcrossRuns() throws Exception {
+        var f = new AgentFixture();
+        var model = f.model();
+        var agent = f.save("accounting", model.id(), List.of(), List.of(), List.of(), List.of(), false, null);
+        var child = f.save("helper", model.id(), List.of(), List.of(), List.of(), List.of(), false, null);
+        var published = f.publish(agent);
+        f.store.startRun("root", "root", "", published, "1", "");
+        f.store.startRun("next", "next", "", published, "1", "");
+        f.store.startRun("child", "root", "root", f.publish(child), "1", "");
+        var price = new com.iceeboot.config.agent.AgentProperties.TokenPrice();
+        price.setModel("m");
+        price.setInput(java.math.BigDecimal.ONE);
+        price.setOutput(java.math.BigDecimal.TEN);
+        price.setCacheRead(java.math.BigDecimal.ZERO);
+        f.properties.getTokenPrices().put(model.id(), price);
+        f.store.modelCall("one", "root", "root", "accounting", "m", "", "", 100, 20, 80L, BillingSource.of(model, 2L), true);
+        f.store.modelCall("two", "next", "next", "accounting", "m", "", "", 30, 5, null, BillingSource.of(model, null), true);
+        f.store.modelCall("three", "child", "root", "helper", "m", "", "", 15, 3, 4L, BillingSource.of(model, 2L), true);
+        var overview = f.store.usageOverview(UsagePeriod.TODAY);
+        assertThat(overview.models()).singleElement().satisfies(row -> {
+            assertThat(row.getCalls()).isEqualTo(3);
+            assertThat(row.getInputTokens()).isEqualTo(145);
+            assertThat(row.getOutputTokens()).isEqualTo(28);
+            assertThat(row.getCachedTokens()).isEqualTo(84);
+            assertThat(row.getCacheWriteTokens()).isEqualTo(4);
+            assertThat(row.getProvider()).isEqualTo(model.provider().name());
+            assertThat(row.getPricedCalls()).isEqualTo(2);
+            assertThat(row.getCostCny()).isEqualByComparingTo("0.000261");
+        });
+        f.jdbc.update("UPDATE t_agent_model_call SET create_time='2001-01-01' WHERE id='two'");
+        assertThat(f.store.usageOverview(UsagePeriod.MONTH).models().get(0).getCalls()).isEqualTo(2);
+        var all = f.store.usageOverview(UsagePeriod.ALL);
+        assertThat(all.models().get(0).getCalls()).isEqualTo(3);
+        assertThat(all.days()).singleElement().satisfies(row -> assertThat(row.getCalls()).isEqualTo(2));
+        var totals = f.configs.agent(agent.draft().id());
+        assertThat(totals.totalInputTokens()).isEqualTo(130);
+        assertThat(totals.totalOutputTokens()).isEqualTo(25);
+        assertThat(totals.totalCachedTokens()).isEqualTo(80);
+        assertThat(f.store.runDetail("root").modelCalls()).extracting(ModelCallView::cachedTokens)
+                .containsExactlyInAnyOrder(80L, 4L);
+        assertThat(f.store.runDetail("next").modelCalls().get(0).cachedTokens()).isNull();
+    }
+
+    @Test
     void failedUsageUpdateRollsBackModelCall() throws Exception {
         var f = new AgentFixture();
         assertThatThrownBy(
@@ -186,6 +230,8 @@ class AgentPersistenceTest {
                                         "output",
                                         1,
                                         2,
+                                        null,
+                                        new BillingSource(1L, "GPT", null),
                                         true))
                 .hasMessageContaining("执行记录不存在");
         assertThat(f.jdbc.queryForObject("SELECT COUNT(*) FROM t_agent_model_call", Integer.class))

@@ -17,5 +17,6 @@ public record ModelCallView(
         String output,
         long inputTokens,
         long outputTokens,
+        Long cachedTokens,
         boolean usageKnown,
         LocalDateTime createdAt) {}

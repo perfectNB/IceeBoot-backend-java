@@ -25,6 +25,35 @@ public class AgentProperties {
     @jakarta.validation.constraints.Min(1)
     private int maxModelRequestsPerRun = 100;
 
+    /** 按模型连接 ID 配置，每百万 Token 的人民币价格。缺省时费用保持未知。 */
+    @jakarta.validation.Valid
+    private java.util.Map<Long, TokenPrice> tokenPrices = new java.util.LinkedHashMap<>();
+
+    @Data
+    public static class TokenPrice {
+        @jakarta.validation.constraints.NotBlank private String model;
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero
+        private java.math.BigDecimal input;
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.PositiveOrZero
+        private java.math.BigDecimal output;
+        @jakarta.validation.constraints.PositiveOrZero private java.math.BigDecimal cacheRead;
+        @jakarta.validation.constraints.PositiveOrZero private java.math.BigDecimal cacheWrite;
+
+        public java.math.BigDecimal estimate(long in, long out, Long read, Long written) {
+            var readRate = cacheRead == null ? input : cacheRead;
+            var writeRate = cacheWrite == null ? input : cacheWrite;
+            if (read == null && readRate.compareTo(input) != 0) return null;
+            if (written == null && writeRate.compareTo(input) != 0) return null;
+            long hits = read == null ? 0 : read;
+            long writes = written == null ? 0 : written;
+            if (hits + writes > in) return null;
+            return input.multiply(java.math.BigDecimal.valueOf(in - hits - writes))
+                    .add(output.multiply(java.math.BigDecimal.valueOf(out)))
+                    .add(readRate.multiply(java.math.BigDecimal.valueOf(hits)))
+                    .add(writeRate.multiply(java.math.BigDecimal.valueOf(writes))).movePointLeft(6);
+        }
+    }
+
     private String workspace = "./.agentscope/iceeboot";
     private String projectApiBaseUrl = "http://127.0.0.1:9000/iceeboot/api";
 

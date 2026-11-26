@@ -6,10 +6,10 @@ import com.iceeboot.framework.enums.agent.AgentProgressType;
 public record AgentProgress(long sequence, AgentProgressType type, String rootRunId, String runId,
         String parentRunId, String agentCode, String title, String text, String callId,
         String toolName, String status, long timestamp, Long durationMs,
-        Long inputTokens, Long outputTokens, Boolean usageKnown) {
+        Long inputTokens, Long outputTokens, Long cachedTokens, Boolean usageKnown) {
     public AgentProgress(long sequence, AgentProgressType type, String rootRunId, String runId,
             String parentRunId, String agentCode, String title, String text, String callId,
             String toolName, String status, long timestamp) {
-        this(sequence,type,rootRunId,runId,parentRunId,agentCode,title,text,callId,toolName,status,timestamp,null,null,null,null);
+        this(sequence,type,rootRunId,runId,parentRunId,agentCode,title,text,callId,toolName,status,timestamp,null,null,null,null,null);
     }
 }

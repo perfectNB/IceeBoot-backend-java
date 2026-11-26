@@ -26,6 +26,8 @@ public class AgentRunDetailVO {
     @Schema(description = "总输出 Token 数")
     private long totalOutputTokens;
 
+    private Long totalCachedTokens;
+
     @Schema(description = "是否取得真实用量")
     private boolean usageKnown;
 }

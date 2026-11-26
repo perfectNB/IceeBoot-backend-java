@@ -22,4 +22,6 @@ public class AgentProgressVO {
     private Long inputTokens;
     private Long outputTokens;
     private Boolean usageKnown;
+
+    private Long cachedTokens;
 }

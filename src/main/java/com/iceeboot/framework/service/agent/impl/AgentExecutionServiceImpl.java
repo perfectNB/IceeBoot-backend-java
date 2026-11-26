@@ -212,6 +212,7 @@ public class AgentExecutionServiceImpl implements IAgentExecutionService {
                     RunRecorder.text(response),
                     detail.totalInputTokens(),
                     detail.totalOutputTokens(),
+                    detail.totalCachedTokens(),
                     detail.usageKnown());
         } catch (RuntimeException e) {
             try {
