@@ -9,6 +9,7 @@ import com.iceeboot.framework.dto.update.workflow.ProcessInstanceDeleteDTO;
 import com.iceeboot.framework.dto.update.workflow.TaskCompleteDTO;
 import com.iceeboot.framework.query.workflow.ProcessDefinitionQuery;
 import com.iceeboot.framework.service.workflow.IWorkflowService;
+import static com.iceeboot.framework.service.workflow.ApprovalEngine.TENANT;
 import com.iceeboot.framework.service.system.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -185,7 +186,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         }
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if (task == null) {
+            if (task == null || TENANT.equals(task.getTenantId())) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
             if (task.getAssignee() != null) {
@@ -214,7 +215,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         }
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if (task == null) {
+            if (task == null || TENANT.equals(task.getTenantId())) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
             requireAssignee(task);
@@ -264,6 +265,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 : repositoryService.createProcessDefinitionQuery().orderByProcessDefinitionKey().asc().list();
         List<Map<String, Object>> result = new ArrayList<>();
         for (ProcessDefinition definition : definitions) {
+            if (TENANT.equals(definition.getTenantId())) continue;
             Map<String, Object> item = new HashMap<>();
             item.put(SystemConstants.WorkflowResponseKey.ID, definition.getId());
             item.put(SystemConstants.WorkflowResponseKey.KEY, definition.getKey());
@@ -285,6 +287,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_FILE_EMPTY);
         }
         try {
+            rejectManagedTenant(dto.getTenantId());
             String fileName = dto.getFile().getOriginalFilename();
             if (fileName == null || fileName.isBlank()) {
                 fileName = SystemConstants.WorkflowValue.DEFAULT_BPMN_FILE_NAME;
@@ -322,7 +325,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
                 .singleResult();
-        if (definition == null) {
+        if (definition == null || TENANT.equals(definition.getTenantId())) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
         }
         try {
@@ -334,6 +337,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             if (deployName == null || deployName.isBlank()) {
                 deployName = definition.getName();
             }
+            rejectManagedTenant(dto.getTenantId());
             String category = dto.getCategory();
             String tenantId = dto.getTenantId();
             Deployment deployment = repositoryService.createDeployment()
@@ -362,7 +366,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
                 .singleResult();
-        if (definition == null) {
+        if (definition == null || TENANT.equals(definition.getTenantId())) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
         }
         try {
@@ -377,7 +381,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
                 .singleResult();
-        if (definition == null) {
+        if (definition == null || TENANT.equals(definition.getTenantId())) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
         }
         try (InputStream inputStream = repositoryService.getResourceAsStream(definition.getDeploymentId(), definition.getResourceName())) {
@@ -395,7 +399,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(definitionId)
                 .singleResult();
-        if (definition == null) {
+        if (definition == null || TENANT.equals(definition.getTenantId())) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
         }
         String diagramResourceName = definition.getDiagramResourceName();
@@ -449,6 +453,9 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public List<Map<String, Object>> getDefinitionNodes(String definitionId) {
+        var definition = repositoryService.createProcessDefinitionQuery().processDefinitionId(definitionId).singleResult();
+        if (definition == null) throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
+        rejectManagedTenant(definition.getTenantId());
         BpmnModel model = repositoryService.getBpmnModel(definitionId);
         if (model == null) {
             throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_DEFINITION_NOT_EXIST);
@@ -487,6 +494,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             }
             List<ProcessInstance> runningInstances = runtimeQuery.orderByProcessInstanceId().desc().list();
             for (ProcessInstance instance : runningInstances) {
+                if (TENANT.equals(instance.getTenantId())) continue;
                 Map<String, Object> item = new HashMap<>();
                 item.put(SystemConstants.WorkflowResponseKey.ID, instance.getId());
                 item.put(SystemConstants.WorkflowResponseKey.PROCESS_DEFINITION_ID, instance.getProcessDefinitionId());
@@ -507,6 +515,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 }
                 List<HistoricProcessInstance> finishedInstances = historyQuery.orderByProcessInstanceEndTime().desc().list();
                 for (HistoricProcessInstance instance : finishedInstances) {
+                    if (TENANT.equals(instance.getTenantId())) continue;
                     Map<String, Object> item = new HashMap<>();
                     item.put(SystemConstants.WorkflowResponseKey.ID, instance.getId());
                     item.put(SystemConstants.WorkflowResponseKey.PROCESS_DEFINITION_ID, instance.getProcessDefinitionId());
@@ -531,7 +540,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         ProcessInstance running = getProcessInstance(id);
         if (running != null) return ProcessInstanceVO.from(running);
         HistoricProcessInstance historic = historyService.createHistoricProcessInstanceQuery().processInstanceId(id).singleResult();
-        if (historic == null) throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_INSTANCE_NOT_EXIST);
+        if (historic == null || TENANT.equals(historic.getTenantId())) throw new IceeBootException(ResponseMessage.WorkflowMessage.PROCESS_INSTANCE_NOT_EXIST);
         return ProcessInstanceVO.from(historic);
     }
 
@@ -542,6 +551,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                     .processInstanceId(processInstanceId)
                     .singleResult();
             log.debug("查询流程实例成功，流程实例ID: {}", processInstanceId);
+            if (processInstance != null) rejectManagedTenant(processInstance.getTenantId());
             return processInstance;
         } catch (Exception e) {
             log.error("查询流程实例失败，流程实例ID: {}", processInstanceId, e);
@@ -556,12 +566,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 .processInstanceId(processInstanceId)
                 .singleResult();
         if (processInstance != null) {
+            rejectManagedTenant(processInstance.getTenantId());
             definitionId = processInstance.getProcessDefinitionId();
         } else {
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceId(processInstanceId)
                     .singleResult();
             if (historicProcessInstance != null) {
+                rejectManagedTenant(historicProcessInstance.getTenantId());
                 definitionId = historicProcessInstance.getProcessDefinitionId();
             }
         }
@@ -619,12 +631,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 .processInstanceId(processInstanceId)
                 .singleResult();
         if (processInstance != null) {
+            rejectManagedTenant(processInstance.getTenantId());
             definitionId = processInstance.getProcessDefinitionId();
         } else {
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceId(processInstanceId)
                     .singleResult();
             if (historicProcessInstance != null) {
+                rejectManagedTenant(historicProcessInstance.getTenantId());
                 definitionId = historicProcessInstance.getProcessDefinitionId();
             }
         }
@@ -676,6 +690,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public List<Map<String, Object>> getProcessInstanceHistory(String processInstanceId) {
+        getInstanceDetail(processInstanceId);
         List<Map<String, Object>> items = new ArrayList<>();
         List<org.activiti.engine.history.HistoricTaskInstance> tasks = historyService.createHistoricTaskInstanceQuery()
                 .processInstanceId(processInstanceId)
@@ -742,6 +757,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
     @Override
     public void deleteProcessInstance(String processInstanceId, String deleteReason) {
         try {
+            getProcessInstance(processInstanceId);
             runtimeService.deleteProcessInstance(processInstanceId, deleteReason);
             log.info("删除流程实例成功，流程实例ID: {}, 删除原因: {}", processInstanceId, deleteReason);
         } catch (Exception e) {
@@ -783,6 +799,10 @@ public class WorkflowServiceImpl implements IWorkflowService {
         }
     }
 
+    private static void rejectManagedTenant(String tenant) {
+        if (TENANT.equals(tenant)) throw new IceeBootException("请通过审批工作台处理此流程");
+    }
+
     private void requireOwnTaskList(String requested, Long actor, String username) {
         if (!actor.toString().equals(requested) && !username.equals(requested))
             throw new IceeBootException("只能查询自己的待办");
@@ -811,7 +831,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private void completeTask(String taskId, Map<String, Object> variables, String comment) {
         try {
             Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if (task == null) {
+            if (task == null || TENANT.equals(task.getTenantId())) {
                 throw new IceeBootException(ResponseMessage.WorkflowMessage.TASK_NOT_EXIST_PREFIX + taskId);
             }
             requireAssignee(task);
@@ -837,6 +857,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             return;
         }
         for (Task task : tasks) {
+            if (TENANT.equals(task.getTenantId())) continue;
             taskMap.putIfAbsent(task.getId(), task);
         }
     }

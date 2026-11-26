@@ -8,5 +8,7 @@ public final class ApprovalRequests {
     public record Draft(int revision, ApprovalDesign design) {}
     public record Version(int revision) {}
     public record Submit(String code, int version, Map<String, String> values) {}
-    public record Change(int revision, String reason, Map<String, String> values) {}
+    public record Change(int revision, String reason, Map<String, String> values, String taskId) {
+        public Change(int revision, String reason, Map<String,String> values) { this(revision,reason,values,null); }
+    }
 }

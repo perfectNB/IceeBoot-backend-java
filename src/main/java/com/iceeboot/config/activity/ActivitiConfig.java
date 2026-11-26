@@ -1,7 +1,8 @@
 package com.iceeboot.config.activity;
 
 import org.activiti.engine.*;
-import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
+import org.activiti.spring.SpringProcessEngineConfiguration;
+import org.springframework.transaction.PlatformTransactionManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,13 +20,15 @@ import javax.sql.DataSource;
 public class ActivitiConfig {
 
     private final DataSource dataSource;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * 流程引擎配置
      */
     @Bean
     public ProcessEngineConfiguration processEngineConfiguration() {
-        StandaloneProcessEngineConfiguration configuration = new StandaloneProcessEngineConfiguration();
+        SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
+        configuration.setTransactionManager(transactionManager);
         configuration.setDataSource(dataSource);
         configuration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
         configuration.setAsyncExecutorActivate(false);

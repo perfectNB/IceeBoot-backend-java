@@ -27,6 +27,7 @@ public class ApprovalCaseService {
     private final ApprovalDesignService designs;
     private final ISysUserService users;
     private final ObjectMapper json;
+    private final ApprovalEngine engine;
 
     private record Application(Item item, long owner, String role, int version, ApprovalDesign design, Map<String,String> values) {}
     private long actor() {
@@ -43,8 +44,13 @@ public class ApprovalCaseService {
             case "inbox" -> {
                 List<String> roles = users.getUserRoles(user);
                 if (roles.isEmpty()) return List.of();
-                filter = "status='PENDING' AND role_code IN (" + String.join(",", Collections.nCopies(roles.size(), "?")) + ")";
+                String placeholders = String.join(",",Collections.nCopies(roles.size(),"?"));
+                filter = "status='PENDING' AND (role_code IN ("+placeholders+") OR EXISTS ("+
+                        "SELECT 1 FROM t_workflow_engine_round er JOIN ACT_RU_TASK t ON t.PROC_INST_ID_=er.instance_id "+
+                        "JOIN ACT_RU_IDENTITYLINK l ON l.TASK_ID_=t.ID_ AND l.TYPE_='candidate' "+
+                        "WHERE er.application_id=a.id AND er.round_no=a.round_no AND l.GROUP_ID_ IN ("+placeholders+")))";
                 args.addAll(roles);
+                roles.stream().map(ApprovalBpmn::group).forEach(args::add);
             }
             case "handled" -> {
                 filter = "EXISTS (SELECT 1 FROM t_workflow_review_event e WHERE e.application_id=a.id AND e.actor_id=? AND e.action IN ('APPROVE','REJECT'))";
@@ -65,41 +71,66 @@ public class ApprovalCaseService {
         var a = load(id, false);
         long user = actor();
         boolean mine = a.owner == user;
-        boolean review = PENDING.equals(a.item.status()) && users.getUserRoles(user).contains(a.role);
+        var roles = users.getUserRoles(user);
+        String instance = engine.instance(id,a.item.round());
+        var pending = engine.pending(instance,a.design,roles);
+        boolean review = PENDING.equals(a.item.status()) && (instance == null ? roles.contains(a.role) :
+                pending.stream().anyMatch(PendingTask::actionable));
         if (!mine && !review && jdbc.queryForObject("SELECT COUNT(*) FROM t_workflow_review_event WHERE application_id=? AND actor_id=? AND action IN ('APPROVE','REJECT')",
                 Long.class, id, user) == 0L) throw new IceeBootException("无权查看该申请");
         var events = jdbc.query("SELECT * FROM t_workflow_review_event WHERE application_id=? ORDER BY id", (r,i) ->
                 new Event(r.getInt("round_no"), r.getString("action"), r.getString("node_name"), r.getLong("actor_id"),
                         r.getString("actor_name"), r.getString("reason"), r.getTimestamp("created_at").toLocalDateTime(),
-                        values(r.getString("submitted_form"))), id);
+                        values(r.getString("submitted_form")),r.getString("review_role")), id);
+        var visibleRoles = new HashSet<String>();
+        a.design.nodes().forEach(n -> visibleRoles.addAll(n.reviewers()));
+        var roleNames = new HashMap<String,String>();
+        designs.roles().stream().filter(r -> visibleRoles.contains(r.code())).forEach(r -> roleNames.put(r.code(),r.name()));
         return new Detail(a.item, a.version, a.design, a.values, events,
-                ApprovalRouting.plan(a.design,a.values).stream().map(Node::id).toList(), mine, review);
+                ApprovalRouting.plan(a.design,a.values).stream().map(Node::id).toList(), mine, review,pending,roleNames);
     }
 
     @Transactional
     public String submit(Submit request) {
         var b = designs.published(request.code(), request.version());
-        var plan = ApprovalRouting.plan(b.design(), request.values());
-        Node first = plan.getFirst();
         String id = UUID.randomUUID().toString();
+        String instance = engine.start(id,1,b.design(),b.version(),request.values());
+        String first = engine.pending(instance,b.design(),List.of()).getFirst().node();
         String form = designs.write(request.values());
         long user = actor();
         jdbc.update("INSERT INTO t_workflow_application(id,blueprint_code,version,blueprint,title,owner_id,status,round_no,revision,node_id,role_code,form_data) VALUES(?,?,?,?,?,?,?,1,1,?,?,?)",
                 id,b.design().code(),b.version(),designs.write(b.design()),b.design().name(),user,PENDING,
-                first.id(),first.role(),form);
+                first,"",form);
         event(id,1,"SUBMIT","发起申请",user,"",form);
         return id;
     }
 
     @Transactional
     public void review(String id, String action, Change request) {
-        var a = current(id, request.revision());
+        var a = load(id,true);
+        String instance = engine.instance(id,a.item.round());
+        if (a.item.revision() != request.revision() && (instance == null || request.taskId() == null))
+            throw new IceeBootException("申请已更新，请刷新后处理");
         long user = actor();
-        if (!PENDING.equals(a.item.status()) || !users.getUserRoles(user).contains(a.role))
+        var roles = users.getUserRoles(user);
+        if (!PENDING.equals(a.item.status()) || (instance == null && !roles.contains(a.role)))
             throw new IceeBootException("此任务已处理或不属于你的角色");
         if (request.values() != null) throw new IceeBootException("审批中不能修改申请内容");
         String reason = request.reason() == null ? "" : request.reason().strip();
         if (reason.length() > 2000 || ("reject".equals(action) && reason.isEmpty())) throw new IceeBootException("驳回时须填写理由，意见最多 2000 字");
+        if (instance != null) {
+            if (!"approve".equals(action) && !"reject".equals(action)) throw new IceeBootException("未知的审批操作");
+            var task = ApprovalEngine.choose(engine.pending(instance,a.design,roles),request.taskId());
+            boolean reject = "reject".equals(action);
+            engine.decide(instance,task,reject,reason,user);
+            var remaining = engine.pending(instance,a.design,roles);
+            var status = reject ? REJECTED : remaining.isEmpty() ? APPROVED : PENDING;
+            moveEngine(a,status,remaining,a.item.round(),a.values);
+            var node = a.design.nodes().stream().filter(n -> n.id().equals(task.node())).findFirst().orElseThrow();
+            event(id,a.item.round(),action.toUpperCase(Locale.ROOT),node.name(),user,reason,null,task.role());
+            return;
+        }
+        // Only instances already in flight before the engine migration take this path.
         var path = ApprovalRouting.plan(a.design,a.values);
         int index = 0;
         while (index < path.size() && !path.get(index).id().equals(a.item.node())) index++;
@@ -124,17 +155,24 @@ public class ApprovalCaseService {
             move(a,VOID,null,a.item.round(),a.values);
             event(id,a.item.round(),"VOID","作废申请",user,"",null);
         } else if ("resubmit".equals(action)) {
-            var path = ApprovalRouting.plan(a.design,request.values());
-            Node first = path.getFirst();
             int round = a.item.round()+1;
-            move(a,PENDING,first,round,request.values());
+            String instance = engine.start(id,round,a.design,a.version,request.values());
+            moveEngine(a,PENDING,engine.pending(instance,a.design,List.of()),round,request.values());
             event(id,round,"RESUBMIT","重新发起",user,"",designs.write(request.values()));
         } else throw new IceeBootException("未知的申请操作");
     }
 
     private void move(Application a,String status,Node next,int round,Map<String,String> values) {
+        saveState(a,status,next == null ? "" : next.id(),next == null ? "" : next.role(),round,values);
+    }
+
+    private void moveEngine(Application a,String status,List<PendingTask> pending,int round,Map<String,String> values) {
+        saveState(a,status,pending.isEmpty() ? "" : pending.getFirst().node(),"",round,values);
+    }
+
+    private void saveState(Application a,String status,String node,String role,int round,Map<String,String> values) {
         ApprovalDesignService.checkUpdated(jdbc.update("UPDATE t_workflow_application SET status=?,node_id=?,role_code=?,round_no=?,form_data=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND revision=?",
-                status,next == null ? "" : next.id(),next == null ? "" : next.role(),round,designs.write(values),a.item.id(),a.item.revision()));
+                status,node,role,round,designs.write(values),a.item.id(),a.item.revision()));
     }
 
     private Application current(String id,int revision) {
@@ -159,9 +197,12 @@ public class ApprovalCaseService {
         catch (JsonProcessingException e) { throw new IllegalStateException("无法读取申请表单",e); }
     }
     private void event(String id,int round,String action,String node,long user,String reason,String form) {
+        event(id,round,action,node,user,reason,form,"");
+    }
+    private void event(String id,int round,String action,String node,long user,String reason,String form,String role) {
         var account = users.getById(user);
         String name = account == null ? Long.toString(user) : account.getUsername();
-        jdbc.update("INSERT INTO t_workflow_review_event(application_id,round_no,action,node_name,actor_id,actor_name,reason,submitted_form) VALUES(?,?,?,?,?,?,?,?)",
-                id,round,action,node,user,name,reason,form);
+        jdbc.update("INSERT INTO t_workflow_review_event(application_id,round_no,action,node_name,actor_id,actor_name,reason,submitted_form,review_role) VALUES(?,?,?,?,?,?,?,?,?)",
+                id,round,action,node,user,name,reason,form,role);
     }
 }

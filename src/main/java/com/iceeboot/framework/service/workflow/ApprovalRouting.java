@@ -59,7 +59,7 @@ public final class ApprovalRouting {
         for (Node n : d.nodes()) {
             if (n == null || !identifier(n.id()) || !label(n.name()) || nodes.put(n.id(), n) != null)
                 fail("审批节点缺少名称或标识重复");
-            if (n.role() == null || !roles.contains(n.role())) fail("请选择有效的审批角色：" + n.name());
+            if (n.reviewers().size() > 50 || new HashSet<>(n.reviewers()).size() != n.reviewers().size() || !n.reviewers().stream().allMatch(r -> r != null && roles.contains(r))) fail("请选择有效的审批角色：" + n.name());
         }
         validateExit(d.start(), fields, nodes);
         if (END.equals(d.start().fallback()) || d.start().branches().stream().anyMatch(b -> END.equals(b.target())))
@@ -81,7 +81,9 @@ public final class ApprovalRouting {
             Set<String> used = new HashSet<>();
             for (Condition c : b.conditions()) {
                 Field f = c == null ? null : fields.get(c.field());
-                if (f == null || !"routing".equals(f.kind()) || !used.add(c.field())) fail("分支只能引用已定义且不重复的判断字段");
+                if (f == null || (!"routing".equals(f.kind()) && !"number".equals(f.type())) || !used.add(c.field() + ":" + c.comparison())) fail("分支只能引用已定义且不重复的判断字段");
+                if (!Set.of("eq","gt","ge","lt","le").contains(c.comparison()) ||
+                        (!"eq".equals(c.comparison()) && !"number".equals(f.type()))) fail("请选择有效的比较方式");
                 value(f, c.value(), true);
             }
         }
@@ -114,7 +116,7 @@ public final class ApprovalRouting {
         while (true) {
             String next = exit.fallback();
             for (Branch b : exit.branches()) {
-                if (b.conditions().stream().allMatch(c -> equal(fields.get(c.field()), values.get(c.field()), c.value()))) {
+                if (matches(b,fields,values)) {
                     next = b.target();
                     break;
                 }
@@ -129,8 +131,22 @@ public final class ApprovalRouting {
         }
     }
 
-    private static boolean equal(Field f, String a, String b) {
-        return "number".equals(f.type()) ? new BigDecimal(a).compareTo(new BigDecimal(b)) == 0 : a.equals(b);
+    static boolean matches(Branch branch, Map<String,Field> fields, Map<String,String> values) {
+        return branch.conditions().stream().allMatch(c -> matches(fields.get(c.field()),values.get(c.field()),c));
+    }
+
+    private static boolean matches(Field f, String actual, Condition condition) {
+        if (actual == null || actual.isBlank()) return false;
+        if (!"number".equals(f.type())) return actual.equals(condition.value());
+        int cmp = new BigDecimal(actual).compareTo(new BigDecimal(condition.value()));
+        return switch (condition.comparison()) {
+            case "eq" -> cmp == 0;
+            case "gt" -> cmp > 0;
+            case "ge" -> cmp >= 0;
+            case "lt" -> cmp < 0;
+            case "le" -> cmp <= 0;
+            default -> throw new IceeBootException("未知金额比较方式");
+        };
     }
 
     private static void value(Field f, String raw, boolean required) {

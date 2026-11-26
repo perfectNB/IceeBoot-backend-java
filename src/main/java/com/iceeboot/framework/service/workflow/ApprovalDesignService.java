@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class ApprovalDesignService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
+    private final ApprovalEngine engine;
 
     public List<Role> roles() {
         return jdbc.query("SELECT code,name FROM t_role WHERE status='active' AND del_flag=0 ORDER BY sort,id",
@@ -54,6 +55,8 @@ public class ApprovalDesignService {
                 (r,i) -> read(r.getString(1)), code, revision);
         if (d.isEmpty()) throw new IceeBootException("草稿已更新，请刷新后再发布");
         ApprovalRouting.validate(d.get(0), roles().stream().map(Role::code).collect(Collectors.toSet()));
+        int version = jdbc.queryForObject("SELECT version FROM t_workflow_blueprint WHERE code=?",Integer.class,code) + 1;
+        engine.definition(d.getFirst(),version);
         jdbc.update("UPDATE t_workflow_blueprint SET published=draft,version=version+1,revision=revision+1 WHERE code=?", code);
     }
 
