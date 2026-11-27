@@ -61,12 +61,26 @@ public class ApprovalDesignService {
 
     @Transactional(readOnly = true)
     public PageResult<TemplateRow> page(boolean publishedOnly, int page, int size, String keyword) {
+        return page(publishedOnly, page, size, keyword, null);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<TemplateRow> page(boolean publishedOnly, int page, int size, String keyword, String status) {
         if (page < 1 || size < 1 || size > 100) throw new IceeBootException("分页参数无效");
-        String from = " FROM t_workflow_blueprint" + (publishedOnly ? " WHERE version>0" + VISIBLE : "");
+        String from = " FROM t_workflow_blueprint WHERE " + (publishedOnly ? "version>0" + VISIBLE : "1=1");
         var params = publishedOnly ? audience() : new MapSqlParameterSource();
-        if (publishedOnly && keyword != null) {
-            from += " AND stopped=FALSE AND LOCATE(LOWER(:keyword),LOWER(published_name))>0";
-            params.addValue("keyword",keyword.strip());
+        // The launch picker requests published templates with a keyword (including the empty string).
+        String filter = status == null ? (publishedOnly && keyword != null ? "published" : "all") : status;
+        from += switch (filter) {
+            case "all" -> "";
+            case "draft" -> " AND version=0";
+            case "published" -> " AND version>0 AND stopped=FALSE";
+            case "stopped" -> " AND stopped=TRUE";
+            default -> throw new IceeBootException("未知的流程状态");
+        };
+        if (keyword != null && !keyword.isBlank()) {
+            from += " AND LOCATE(LOWER(:keyword), LOWER(CASE WHEN version=0 THEN draft_name ELSE published_name END))>0";
+            params.addValue("keyword", keyword.strip());
         }
         var query = catalog();
         long total = query.queryForObject("SELECT COUNT(*)" + from, params, Long.class);
@@ -116,11 +130,11 @@ public class ApprovalDesignService {
         if (body.length() > 250000) throw new IceeBootException("流程设计过大");
         if (request.revision() == 0) {
             try {
-                jdbc.update("INSERT INTO t_workflow_blueprint(code,revision,version,draft) VALUES (?,1,0,?)", d.code(), body);
+                jdbc.update("INSERT INTO t_workflow_blueprint(code,revision,version,draft,draft_name) VALUES (?,1,0,?,?)", d.code(), body, d.name());
             } catch (DuplicateKeyException e) { throw new IceeBootException("流程码已存在"); }
         } else {
-            int count = jdbc.update("UPDATE t_workflow_blueprint SET draft=?,revision=revision+1 WHERE code=? AND revision=?",
-                    body, d.code(), request.revision());
+            int count = jdbc.update("UPDATE t_workflow_blueprint SET draft=?,draft_name=?,revision=revision+1 WHERE code=? AND revision=?",
+                    body, d.name(), d.code(), request.revision());
             checkUpdated(count);
         }
     }

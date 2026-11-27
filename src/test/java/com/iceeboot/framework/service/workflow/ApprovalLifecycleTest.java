@@ -40,7 +40,7 @@ class ApprovalLifecycleTest {
         var ds = new DriverManagerDataSource("jdbc:h2:mem:"+UUID.randomUUID()+";MODE=MySQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1","sa","");
         new ResourceDatabasePopulator(new ClassPathResource("db/agent/V025__approval_workflow.sql"),new ClassPathResource("db/agent/V027__approval_engine.sql"),
                 new ClassPathResource("db/agent/V029__approval_intake.sql"),new ClassPathResource("db/agent/V031__approval_audience.sql"),
-                new ClassPathResource("db/agent/V033__approval_launch_roles.sql")).execute(ds);
+                new ClassPathResource("db/agent/V033__approval_launch_roles.sql"),new ClassPathResource("db/agent/V035__approval_draft_name.sql")).execute(ds);
         // Activiti 7 ships legacy H2 DDL, while application migrations use MySQL syntax.
         ds.setUrl(ds.getUrl().replace("MODE=MySQL","MODE=LEGACY"));
         transactions = new org.springframework.transaction.support.TransactionTemplate(
@@ -178,6 +178,27 @@ class ApprovalLifecycleTest {
             assertThat(cases.page("rejected", 1, 10, "研发").getTotal()).isOne();
             assertThat(cases.page("rejected", 1, 10, "采购").getTotal()).isZero();
         }
+    }
+
+    @Test void definitionCatalogFiltersTheDisplayedNameAndCurrentPublicationStatusBeforePaging() {
+        var travel = new ApprovalDesign("travel", "差旅报销", fields, design.start(), nodes);
+        designs.save(new Draft(0, travel));
+        designs.publish(travel.code(), 1);
+        designs.setStopped(travel.code(), 2, true);
+        designs.publish(design.code(), 1);
+        designs.save(new Draft(2, new ApprovalDesign(design.code(), "改名草稿", fields, design.start(), nodes)));
+        designs.save(new Draft(0, new ApprovalDesign("budget", "AI采购预算", fields, design.start(), nodes)));
+        var combined = designs.page(false, 2, 1, "采购", "all");
+        assertThat(combined.getTotal()).isEqualTo(2);
+        assertThat(combined.getRecords().getFirst().code()).isEqualTo(design.code());
+        assertThat(designs.page(false, 1, 10, " ai采购 ", "draft").getTotal()).isOne();
+        assertThat(designs.page(false, 1, 10, "采购", "published").getRecords().getFirst().changed()).isTrue();
+        assertThat(designs.page(false, 1, 10, "改名草稿", "all").getTotal()).isZero();
+        assertThat(designs.page(false, 1, 10, "差旅", "stopped").getTotal()).isOne();
+        assertThat(designs.page(false, 1, 10, "采购", "stopped").getTotal()).isZero();
+        assertThat(designs.page(true, 1, 10, "差旅", "stopped").getTotal()).isOne();
+        assertThat(designs.page(true, 1, 10, "差旅").getTotal()).isZero();
+        assertThat(designs.page(true, 1, 10, "", "draft").getTotal()).isZero();
     }
 
     @Test void launchAudienceIsIndependentOfTheReviewerRole() {

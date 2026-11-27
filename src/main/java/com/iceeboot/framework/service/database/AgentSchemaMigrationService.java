@@ -31,7 +31,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
             List.of(
                     "V001__agent_baseline.sql",
                     "V002__agent_operations.sql",
-                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql", "V009__agent_progress.sql", "V012__agent_files.sql", "V014__agent_schedules.sql", "V016__agent_memory.sql", "V020__agent_cached_tokens.sql", "V021__model_usage_overview.sql", "V023__payment_entitlements.sql", "V025__approval_workflow.sql", "V027__approval_engine.sql", "V029__approval_intake.sql", "V031__approval_audience.sql", "V033__approval_launch_roles.sql");
+                    "V003__active_code_indexes.sql", "V006__agent_sessions.sql", "V009__agent_progress.sql", "V012__agent_files.sql", "V014__agent_schedules.sql", "V016__agent_memory.sql", "V020__agent_cached_tokens.sql", "V021__model_usage_overview.sql", "V023__payment_entitlements.sql", "V025__approval_workflow.sql", "V027__approval_engine.sql", "V029__approval_intake.sql", "V031__approval_audience.sql", "V033__approval_launch_roles.sql", "V035__approval_draft_name.sql");
 
     @Override
     public void run(ApplicationArguments args) {
@@ -123,7 +123,8 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
                 ScriptUtils.executeSqlScript(
                         c, new ByteArrayResource((ddl + ";").getBytes(StandardCharsets.UTF_8)));
             }
-            if (version == 31) backfillApprovalNames(c);
+            if (version == 31) backfillApprovalNames(c, "published");
+            if (version == 35) backfillApprovalNames(c, "draft");
             try (var statement =
                     c.prepareStatement(
                             "INSERT INTO t_agent_schema_history(version,description,checksum)"
@@ -142,13 +143,15 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
         }
     }
 
-    private void backfillApprovalNames(Connection c) throws Exception {
+    private void backfillApprovalNames(Connection c, String snapshot) throws Exception {
         var json = new com.fasterxml.jackson.databind.ObjectMapper();
-        try (var select = c.prepareStatement("SELECT code,published FROM t_workflow_blueprint WHERE version>0 AND published_name=''");
+        String column = snapshot + "_name";
+        try (var select = c.prepareStatement("SELECT code," + snapshot + " FROM t_workflow_blueprint WHERE "
+                + snapshot + " IS NOT NULL AND " + column + "=''");
              var rows = select.executeQuery();
-             var update = c.prepareStatement("UPDATE t_workflow_blueprint SET published_name=? WHERE code=? AND published_name=''")) {
+             var update = c.prepareStatement("UPDATE t_workflow_blueprint SET " + column + "=? WHERE code=? AND " + column + "=''")) {
             while (rows.next()) {
-                update.setString(1, json.readTree(rows.getString("published")).required("name").asText());
+                update.setString(1, json.readTree(rows.getString(snapshot)).required("name").asText());
                 update.setString(2, rows.getString("code"));
                 update.executeUpdate();
             }

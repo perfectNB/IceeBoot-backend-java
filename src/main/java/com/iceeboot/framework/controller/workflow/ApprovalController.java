@@ -27,8 +27,8 @@ public class ApprovalController {
     @GetMapping(value = "/published", params = "page")
     @RequirePermission(dynamic = true)
     public R<PageResult<TemplateRow>> publishedPage(@RequestParam int page, @RequestParam int size,
-            @RequestParam(required = false) String keyword) {
-        return R.ok(designs.page(true, page, size, keyword));
+            @RequestParam(required = false) String keyword, @RequestParam(required = false) String status) {
+        return R.ok(designs.page(true, page, size, keyword, status));
     }
 
     @GetMapping(value = "/published", params = {"code", "!page"})
@@ -39,8 +39,9 @@ public class ApprovalController {
 
     @GetMapping(value = "/drafts", params = "page")
     @RequirePermission(dynamic = true)
-    public R<PageResult<TemplateRow>> draftsPage(@RequestParam int page, @RequestParam int size) {
-        return R.ok(designs.page(false, page, size));
+    public R<PageResult<TemplateRow>> draftsPage(@RequestParam int page, @RequestParam int size,
+            @RequestParam(required = false) String keyword, @RequestParam(required = false) String status) {
+        return R.ok(designs.page(false, page, size, keyword, status));
     }
 
     @GetMapping(value = "/drafts", params = {"code", "!page"})
