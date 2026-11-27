@@ -7,13 +7,14 @@ import java.util.Map;
 
 public final class ApprovalViews {
     private ApprovalViews() {}
-    public record Blueprint(int revision, int version, ApprovalDesign design) {}
+    public record Blueprint(int revision, int version, ApprovalDesign design, boolean stopped) {}
+    public record TemplateRow(String code, String name, int revision, int version, boolean stopped, boolean changed) {}
     public record Role(String code, String name) {}
     public record Item(String id, String title, String status, int round, int revision, String node,
                        LocalDateTime updatedAt) {}
     public record Event(int round, String action, String node, long actorId, String actor, String reason,
-                        LocalDateTime time, Map<String, String> values, String role) {}
+                        LocalDateTime time, Map<String, String> values, String role, String nodeId) {}
     public record PendingTask(String id, String node, String role, boolean actionable) {}
     public record Detail(Item item, int version, ApprovalDesign design, Map<String, String> values,
-                         List<Event> history, List<String> route, boolean mine, boolean canReview, List<PendingTask> tasks, Map<String,String> roleNames) {}
+                         List<Event> history, List<String> route, boolean mine, boolean canReview, List<PendingTask> tasks, Map<String,String> roleNames, Map<String,List<String>> candidates) {}
 }

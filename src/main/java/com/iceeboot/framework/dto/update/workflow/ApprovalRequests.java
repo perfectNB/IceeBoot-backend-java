@@ -5,8 +5,9 @@ import java.util.Map;
 
 public final class ApprovalRequests {
     private ApprovalRequests() {}
-    public record Draft(int revision, ApprovalDesign design) {}
+    public record Draft(int revision, @com.fasterxml.jackson.annotation.JsonAlias({"scopedDesign", "multiRoleDesign"}) ApprovalDesign design) {}
     public record Version(int revision) {}
+    public record Intake(int revision, @jakarta.validation.constraints.NotNull Boolean stopped) {}
     public record Submit(String code, int version, Map<String, String> values) {}
     public record Change(int revision, String reason, Map<String, String> values, String taskId) {
         public Change(int revision, String reason, Map<String,String> values) { this(revision,reason,values,null); }

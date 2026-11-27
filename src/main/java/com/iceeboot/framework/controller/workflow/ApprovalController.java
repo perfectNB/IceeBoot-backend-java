@@ -2,6 +2,7 @@ package com.iceeboot.framework.controller.workflow;
 
 import com.iceeboot.common.annotation.RequirePermission;
 import com.iceeboot.common.core.domain.R;
+import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.framework.dto.update.workflow.ApprovalRequests.*;
 import com.iceeboot.framework.service.workflow.ApprovalCaseService;
 import com.iceeboot.framework.service.workflow.ApprovalDesignService;
@@ -17,10 +18,35 @@ public class ApprovalController {
     private final ApprovalDesignService designs;
     private final ApprovalCaseService cases;
 
-    @GetMapping("/drafts")
+    @GetMapping(value = "/drafts", params = {"!page", "!code"})
     @RequirePermission(dynamic = true)
     public R<List<Blueprint>> drafts() {
         return R.ok(designs.designs(false));
+    }
+
+    @GetMapping(value = "/published", params = "page")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<TemplateRow>> publishedPage(@RequestParam int page, @RequestParam int size,
+            @RequestParam(required = false) String keyword) {
+        return R.ok(designs.page(true, page, size, keyword));
+    }
+
+    @GetMapping(value = "/published", params = {"code", "!page"})
+    @RequirePermission(dynamic = true)
+    public R<Blueprint> publishedDetail(@RequestParam String code) {
+        return R.ok(designs.detail(code, true));
+    }
+
+    @GetMapping(value = "/drafts", params = "page")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<TemplateRow>> draftsPage(@RequestParam int page, @RequestParam int size) {
+        return R.ok(designs.page(false, page, size));
+    }
+
+    @GetMapping(value = "/drafts", params = {"code", "!page"})
+    @RequirePermission(dynamic = true)
+    public R<Blueprint> draftsDetail(@RequestParam String code, @RequestParam(defaultValue="false") boolean released) {
+        return R.ok(designs.managementDetail(code, released));
     }
 
     @GetMapping("/roles")
@@ -43,7 +69,14 @@ public class ApprovalController {
         return R.ok();
     }
 
-    @GetMapping("/published")
+    @PutMapping("/drafts/{code}/intake")
+    @RequirePermission(dynamic = true)
+    public R<Void> intake(@PathVariable String code, @jakarta.validation.Valid @RequestBody Intake request) {
+        designs.setStopped(code, request.revision(), request.stopped());
+        return R.ok();
+    }
+
+    @GetMapping(value = "/published", params = {"!page", "!code"})
     @RequirePermission(dynamic = true)
     public R<List<Blueprint>> published() {
         return R.ok(designs.designs(true));

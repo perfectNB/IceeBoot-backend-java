@@ -78,16 +78,34 @@ public class ApprovalCaseService {
                 pending.stream().anyMatch(PendingTask::actionable));
         if (!mine && !review && jdbc.queryForObject("SELECT COUNT(*) FROM t_workflow_review_event WHERE application_id=? AND actor_id=? AND action IN ('APPROVE','REJECT')",
                 Long.class, id, user) == 0L) throw new IceeBootException("无权查看该申请");
-        var events = jdbc.query("SELECT * FROM t_workflow_review_event WHERE application_id=? ORDER BY id", (r,i) ->
+        var events = jdbc.query("SELECT e.*, CASE WHEN e.actor_name=u.username THEN COALESCE(NULLIF(TRIM(u.nickname),''),e.actor_name) " +
+                "ELSE e.actor_name END AS display_name FROM t_workflow_review_event e LEFT JOIN t_user u ON u.id=e.actor_id " +
+                "WHERE e.application_id=? ORDER BY e.id", (r,i) ->
                 new Event(r.getInt("round_no"), r.getString("action"), r.getString("node_name"), r.getLong("actor_id"),
-                        r.getString("actor_name"), r.getString("reason"), r.getTimestamp("created_at").toLocalDateTime(),
-                        values(r.getString("submitted_form")),r.getString("review_role")), id);
+                        r.getString("display_name"), r.getString("reason"), r.getTimestamp("created_at").toLocalDateTime(),
+                        values(r.getString("submitted_form")),r.getString("review_role"),r.getString("node_id")), id);
         var visibleRoles = new HashSet<String>();
         a.design.nodes().forEach(n -> visibleRoles.addAll(n.reviewers()));
         var roleNames = new HashMap<String,String>();
         designs.roles().stream().filter(r -> visibleRoles.contains(r.code())).forEach(r -> roleNames.put(r.code(),r.name()));
         return new Detail(a.item, a.version, a.design, a.values, events,
-                ApprovalRouting.plan(a.design,a.values).stream().map(Node::id).toList(), mine, review,pending,roleNames);
+                ApprovalRouting.plan(a.design,a.values).stream().map(Node::id).toList(), mine, review,pending,roleNames,
+                candidateNames(instance == null && PENDING.equals(a.item.status()) ? List.of(a.role) :
+                        pending.stream().map(PendingTask::role).distinct().toList()));
+    }
+
+    private Map<String,List<String>> candidateNames(List<String> roles) {
+        var names = new HashMap<String,List<String>>();
+        if (roles.isEmpty()) return names;
+        String placeholders = String.join(",", Collections.nCopies(roles.size(), "?"));
+        jdbc.query("SELECT DISTINCT r.code,u.id,COALESCE(NULLIF(TRIM(u.nickname),''),u.username) AS name " +
+                        "FROM t_role r JOIN t_user_role ur ON ur.role_id=r.id JOIN t_user u ON u.id=ur.user_id " +
+                        "WHERE u.status='active' AND r.status='active' AND u.del_flag=0 AND r.del_flag=0 AND ur.del_flag=0 " +
+                        "AND r.code IN (" + placeholders + ") ORDER BY r.code,name,u.id",
+                (org.springframework.jdbc.core.RowCallbackHandler) row ->
+                        names.computeIfAbsent(row.getString("code"), key -> new ArrayList<>()).add(row.getString("name")),
+                roles.toArray());
+        return names;
     }
 
     @Transactional
@@ -127,7 +145,7 @@ public class ApprovalCaseService {
             var status = reject ? REJECTED : remaining.isEmpty() ? APPROVED : PENDING;
             moveEngine(a,status,remaining,a.item.round(),a.values);
             var node = a.design.nodes().stream().filter(n -> n.id().equals(task.node())).findFirst().orElseThrow();
-            event(id,a.item.round(),action.toUpperCase(Locale.ROOT),node.name(),user,reason,null,task.role());
+            event(id,a.item.round(),action.toUpperCase(Locale.ROOT),node.name(),user,reason,null,task.role(),node.id());
             return;
         }
         // Only instances already in flight before the engine migration take this path.
@@ -143,7 +161,7 @@ public class ApprovalCaseService {
         } else if ("reject".equals(action)) status = REJECTED;
         else throw new IceeBootException("未知的审批操作");
         move(a,status,next,a.item.round(),a.values);
-        event(id,a.item.round(),action.toUpperCase(Locale.ROOT),path.get(index).name(),user,reason,null);
+        event(id,a.item.round(),action.toUpperCase(Locale.ROOT),path.get(index).name(),user,reason,null,a.role,path.get(index).id());
     }
 
     @Transactional
@@ -197,12 +215,12 @@ public class ApprovalCaseService {
         catch (JsonProcessingException e) { throw new IllegalStateException("无法读取申请表单",e); }
     }
     private void event(String id,int round,String action,String node,long user,String reason,String form) {
-        event(id,round,action,node,user,reason,form,"");
+        event(id,round,action,node,user,reason,form,"","");
     }
-    private void event(String id,int round,String action,String node,long user,String reason,String form,String role) {
+    private void event(String id,int round,String action,String node,long user,String reason,String form,String role,String nodeId) {
         var account = users.getById(user);
-        String name = account == null ? Long.toString(user) : account.getUsername();
-        jdbc.update("INSERT INTO t_workflow_review_event(application_id,round_no,action,node_name,actor_id,actor_name,reason,submitted_form,review_role) VALUES(?,?,?,?,?,?,?,?,?)",
-                id,round,action,node,user,name,reason,form,role);
+        String name = account == null ? Long.toString(user) : org.springframework.util.StringUtils.hasText(account.getNickname()) ? account.getNickname() : account.getUsername();
+        jdbc.update("INSERT INTO t_workflow_review_event(application_id,round_no,action,node_name,actor_id,actor_name,reason,submitted_form,review_role,node_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                id,round,action,node,user,name,reason,form,role,nodeId);
     }
 }

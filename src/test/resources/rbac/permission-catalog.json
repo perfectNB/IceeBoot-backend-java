@@ -1,5 +1,12 @@
 [
   {
+    "method": "PUT",
+    "path": "/v1/workflow/approvals/drafts/{code}/intake",
+    "name": "停用或启用审批模板",
+    "code": "workflow:approval:intake:api",
+    "parentCode": "workflow:definition"
+  },
+  {
     "method": "GET",
     "path": "/v1/workflow/approvals/drafts",
     "name": "审批草稿列表",

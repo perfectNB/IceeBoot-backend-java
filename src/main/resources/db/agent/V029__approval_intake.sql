@@ -1,0 +1,1 @@
+ALTER TABLE t_workflow_blueprint ADD COLUMN stopped BOOLEAN NOT NULL DEFAULT FALSE;

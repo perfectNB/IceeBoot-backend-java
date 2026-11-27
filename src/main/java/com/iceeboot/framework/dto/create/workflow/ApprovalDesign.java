@@ -3,7 +3,25 @@ package com.iceeboot.framework.dto.create.workflow;
 import java.util.List;
 
 /** Every exit has ordered conditional branches and an optional fallback. */
-public record ApprovalDesign(String code, String name, List<Field> fields, Exit start, List<Node> nodes) {
+public record ApprovalDesign(String code, String name, List<Field> fields, Exit start, List<Node> nodes,
+                             String launchRole, List<String> additionalLaunchRoles) {
+    public ApprovalDesign(String code, String name, List<Field> fields, Exit start, List<Node> nodes, String launchRole) {
+        this(code, name, fields, start, nodes, launchRole, List.of());
+    }
+
+    public ApprovalDesign(String code, String name, List<Field> fields, Exit start, List<Node> nodes) {
+        this(code, name, fields, start, nodes, "");
+    }
+    public ApprovalDesign {
+        launchRole = launchRole == null ? "" : launchRole.strip();
+        additionalLaunchRoles = additionalLaunchRoles == null ? List.of() : List.copyOf(additionalLaunchRoles);
+    }
+
+    public boolean canLaunch(List<String> userRoles) {
+        return launchRole.isEmpty() && additionalLaunchRoles.isEmpty()
+                || userRoles.contains(launchRole) || !java.util.Collections.disjoint(userRoles, additionalLaunchRoles);
+    }
+
     public record Field(String key, String label, String kind, String type, boolean required) {}
     public record Node(String id, String name, String role, Exit exit, List<String> coRoles) {
         public Node(String id, String name, String role, Exit exit) { this(id,name,role,exit,List.of()); }

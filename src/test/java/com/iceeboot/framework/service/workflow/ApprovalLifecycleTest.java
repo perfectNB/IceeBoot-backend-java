@@ -38,7 +38,9 @@ class ApprovalLifecycleTest {
 
     @BeforeEach void setup() {
         var ds = new DriverManagerDataSource("jdbc:h2:mem:"+UUID.randomUUID()+";MODE=MySQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1","sa","");
-        new ResourceDatabasePopulator(new ClassPathResource("db/agent/V025__approval_workflow.sql"),new ClassPathResource("db/agent/V027__approval_engine.sql")).execute(ds);
+        new ResourceDatabasePopulator(new ClassPathResource("db/agent/V025__approval_workflow.sql"),new ClassPathResource("db/agent/V027__approval_engine.sql"),
+                new ClassPathResource("db/agent/V029__approval_intake.sql"),new ClassPathResource("db/agent/V031__approval_audience.sql"),
+                new ClassPathResource("db/agent/V033__approval_launch_roles.sql")).execute(ds);
         // Activiti 7 ships legacy H2 DDL, while application migrations use MySQL syntax.
         ds.setUrl(ds.getUrl().replace("MODE=MySQL","MODE=LEGACY"));
         transactions = new org.springframework.transaction.support.TransactionTemplate(
@@ -46,11 +48,15 @@ class ApprovalLifecycleTest {
         jdbc = new JdbcTemplate(ds);
         jdbc.execute("CREATE TABLE t_role(id INT, code VARCHAR(20), name VARCHAR(20),status VARCHAR(10),sort INT,del_flag INT)");
         jdbc.update("INSERT INTO t_role VALUES(1,'finance','财务','active',0,0),(2,'manager','经理','active',0,0)");
+        jdbc.execute("CREATE TABLE t_user(id BIGINT,username VARCHAR(64),nickname VARCHAR(128),status VARCHAR(10),del_flag INT)");
+        jdbc.execute("CREATE TABLE t_user_role(user_id BIGINT,role_id BIGINT,del_flag INT)");
+        jdbc.update("INSERT INTO t_user VALUES(2,'finance_user','林宁','active',0)");
+        jdbc.update("INSERT INTO t_user_role VALUES(2,1,0)");
         var json = new ObjectMapper();
         var config = new com.iceeboot.config.activity.ActivitiConfig(ds,transactions.getTransactionManager());
         processEngine = config.processEngineConfiguration().buildProcessEngine();
         var engine = new ApprovalEngine(jdbc,processEngine.getRepositoryService(),processEngine.getRuntimeService(),processEngine.getTaskService());
-        designs = new ApprovalDesignService(jdbc,json,engine);
+        designs = new ApprovalDesignService(jdbc,json,engine,users);
         cases = new ApprovalCaseService(jdbc,designs,users,json,engine);
         when(users.getUserRoles(2L)).thenReturn(List.of("finance"));
         when(users.getUserRoles(3L)).thenReturn(List.of("manager"));
@@ -114,6 +120,105 @@ class ApprovalLifecycleTest {
             assertThat(detail.history().get(4).time()).isNotNull();
             assertThatThrownBy(() -> cases.revise(id,"resubmit",new Change(5,"",form("2","1","丙")))).isInstanceOf(IceeBootException.class);
         }
+    }
+
+    @Test void launchAudienceIsIndependentOfTheReviewerRole() {
+        designs.save(new Draft(1, new ApprovalDesign(design.code(),design.name(),fields,design.start(),nodes,"manager")));
+        designs.publish(design.code(),2);
+        try (var identity = mockStatic(TokenUtils.class)) {
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            assertThat(designs.designs(true)).isEmpty();
+            assertThat(designs.page(true,1,10,"采购").getTotal()).isZero();
+            assertThatThrownBy(() -> designs.detail(design.code(),true)).isInstanceOf(IceeBootException.class);
+            var request = new Submit(design.code(),1,form("1","2","甲"));
+            assertThatThrownBy(() -> cases.submit(request)).hasMessageContaining("无权");
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(3L);
+            assertThat(designs.page(true,1,10,"采购").getTotal()).isOne();
+            assertThat(designs.page(true,1,10,"合同").getTotal()).isZero();
+            var id = cases.submit(request);
+            var detail = cases.detail(id);
+            assertThat(detail.candidates().get("finance")).containsExactly("林宁");
+            var task = detail.tasks().getFirst().id();
+            assertThatThrownBy(() -> cases.review(id,"approve",new Change(1,"确认",null,task))).isInstanceOf(IceeBootException.class);
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            var account = new com.iceeboot.framework.entity.system.UserDO().setNickname("林宁").setUsername("finance_user");
+            when(users.getById(2L)).thenReturn(account);
+            cases.review(id,"approve",new Change(1,"确认",null,task));
+            assertThat(cases.detail(id).history().getLast().actor()).isEqualTo("林宁");
+        }
+    }
+
+    @Test void researchersCanFindAndStartThePublishedResearchBudget() {
+        jdbc.update("INSERT INTO t_role VALUES(4,'ai_researcher','AI研究员','active',0,0)");
+        when(users.getUserRoles(4L)).thenReturn(List.of("ai_researcher"));
+        var budget = new ApprovalDesign("research_budget","研发经费审批",fields,design.start(),nodes,"ai_researcher");
+        designs.save(new Draft(0,budget));
+        designs.publish(budget.code(),1);
+        var request = new Submit(budget.code(),1,form("1","2","研发部"));
+        try (var identity = mockStatic(TokenUtils.class)) {
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(4L);
+            assertThat(designs.page(true,1,10,"研发经费").getTotal()).isOne();
+            assertThat(cases.submit(request)).isNotBlank();
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(3L);
+            assertThat(designs.page(true,1,10,"研发经费").getTotal()).isZero();
+            assertThatThrownBy(() -> cases.submit(request)).hasMessageContaining("无权");
+            var shared = new ApprovalDesign(budget.code(),budget.name(),fields,design.start(),nodes,"ai_researcher",List.of("manager"));
+            designs.save(new Draft(2,shared));
+            assertThat(designs.designs(true)).isEmpty();
+            designs.publish(budget.code(),3);
+            assertThat(designs.page(true,1,10,"研发经费").getTotal()).isOne();
+            assertThat(cases.submit(new Submit(budget.code(),2,request.values()))).isNotBlank();
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            assertThatThrownBy(() -> designs.detail(budget.code(),true)).isInstanceOf(IceeBootException.class);
+            assertThatThrownBy(() -> cases.submit(new Submit(budget.code(),2,request.values()))).hasMessageContaining("无权");
+            designs.save(new Draft(4,budget));
+            designs.publish(budget.code(),5);
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(3L);
+            assertThat(designs.page(true,1,10,"研发经费").getTotal()).isZero();
+        }
+    }
+
+    @Test void stoppingIntakeAndPublishingDoNotRerouteOpenCases() {
+        designs.publish("purchase", 1);
+        try (var identity = mockStatic(TokenUtils.class)) {
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(1L);
+            var values = form("1", "2", "甲");
+            String oldCase = cases.submit(new Submit("purchase", 1, values));
+            designs.setStopped("purchase", 2, true);
+            assertThat(designs.designs(true)).isEmpty();
+            assertThatThrownBy(() -> cases.submit(new Submit("purchase", 1, values))).hasMessageContaining("停用");
+            var v2 = new ApprovalDesign("purchase", "新版采购", fields, new Exit(List.of(), "B"), List.of(nodes.get(1)));
+            designs.save(new Draft(3, v2));
+            designs.publish("purchase", 4);
+            assertThat(designs.page(true, 1, 10).getRecords().getFirst().stopped()).isTrue();
+            assertThatThrownBy(() -> cases.submit(new Submit("purchase", 2, values))).hasMessageContaining("停用");
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            cases.review(oldCase, "approve", new Change(1, "按旧版办理", null));
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(3L);
+            assertThat(cases.detail(oldCase).item().node()).isEqualTo("C");
+            cases.review(oldCase, "approve", new Change(2, "通过", null));
+            assertThat(cases.detail(oldCase).version()).isEqualTo(1);
+            assertThat(cases.detail(oldCase).item().status()).isEqualTo("APPROVED");
+            assertThatThrownBy(() -> designs.setStopped("purchase", 2, false)).hasMessageContaining("刷新");
+            designs.setStopped("purchase", 5, false);
+            assertThatThrownBy(() -> cases.submit(new Submit("purchase", 1, values))).hasMessageContaining("版本");
+            String newCase = cases.submit(new Submit("purchase", 2, values));
+            assertThat(cases.detail(newCase).item().node()).isEqualTo("B");
+            assertThat(cases.detail(newCase).version()).isEqualTo(2);
+        }
+    }
+
+    @Test void templatePagesCountOnlyVisibleVersionsAndKeepDraftChangesPrivate() {
+        designs.publish("purchase", 1);
+        designs.save(new Draft(2, new ApprovalDesign("purchase", "新版草稿", fields, design.start(), nodes)));
+        designs.save(new Draft(0, countersignDesign()));
+        var page = designs.page(false, 2, 1);
+        assertThat(page.getTotal()).isEqualTo(2);
+        assertThat(page.getRecords().getFirst().changed()).isTrue();
+        assertThat(designs.page(true, 2, 1).getCurrent()).isEqualTo(1);
+        assertThat(designs.detail("purchase", true).design().name()).isEqualTo("采购审批");
+        assertThatThrownBy(() -> designs.detail("budget", true)).isInstanceOf(IceeBootException.class);
+        assertThatThrownBy(() -> designs.page(false, 0, 10)).isInstanceOf(IceeBootException.class);
     }
 
     @Test void simultaneousReviewersCanRecordOnlyOneDecision() throws Exception {

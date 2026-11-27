@@ -19,6 +19,8 @@ public final class ApprovalRouting {
     /** A draft can contain unfinished connections, but must remain editable. */
     public static void checkDraft(ApprovalDesign design) {
         checkIdentity(design);
+        if (!design.additionalLaunchRoles().isEmpty() && design.launchRole().isEmpty())
+            fail("请选择可见与发起角色");
         if (design.nodes() == null || design.fields() == null || design.nodes().size() > 100 || design.fields().size() > 100)
             fail("请检查节点或字段数量");
         for (Field f : design.fields()) {
@@ -46,6 +48,8 @@ public final class ApprovalRouting {
 
     public static void validate(ApprovalDesign d, Set<String> roles) {
         checkIdentity(d);
+        if ((!d.launchRole().isEmpty() && !roles.contains(d.launchRole())) || !roles.containsAll(d.additionalLaunchRoles())
+                || (d.launchRole().isEmpty() && !d.additionalLaunchRoles().isEmpty())) fail("请选择有效的流程可见角色");
         if (d.fields() == null || d.fields().size() > 100 || d.nodes() == null || d.nodes().isEmpty()
                 || d.nodes().size() > 100) fail("最多配置 100 个字段和 100 个审批节点，至少需要一个审批节点");
         Map<String, Field> fields = new HashMap<>();

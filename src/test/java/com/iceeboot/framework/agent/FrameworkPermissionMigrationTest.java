@@ -68,10 +68,10 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(28);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(33);
 
         List<Endpoint> expected = catalog();
-        assertThat(expected).hasSize(276);
+        assertThat(expected).hasSize(277);
         assertThat(expected.stream().map(Endpoint::key)).doesNotHaveDuplicates();
         assertThat(expected.stream().map(Endpoint::code)).doesNotHaveDuplicates();
         assertThat(dynamicControllerEndpoints()).containsExactlyInAnyOrderElementsOf(
@@ -332,6 +332,7 @@ class FrameworkPermissionMigrationTest {
     private static Set<String> dynamicControllerEndpoints() throws Exception {
         var reader = new CachingMetadataReaderFactory();
         Set<String> keys = new HashSet<>();
+        Set<String> mappings = new HashSet<>();
         for (var resource : new PathMatchingResourcePatternResolver().getResources(
                 "classpath*:com/iceeboot/framework/controller/**/*Controller.class")) {
             Class<?> controller = Class.forName(
@@ -343,9 +344,11 @@ class FrameworkPermissionMigrationTest {
                 if (permission == null) continue;
                 assertThat(permission.dynamic()).as(method.toString()).isTrue();
                 String verb;
+                String[] params = {};
                 String[] paths;
                 if (method.isAnnotationPresent(GetMapping.class)) {
                     verb = "GET";
+                    params = method.getAnnotation(GetMapping.class).params();
                     paths = method.getAnnotation(GetMapping.class).value();
                 } else if (method.isAnnotationPresent(PostMapping.class)) {
                     verb = "POST";
@@ -358,7 +361,10 @@ class FrameworkPermissionMigrationTest {
                     paths = method.getAnnotation(DeleteMapping.class).value();
                 } else throw new AssertionError("缺少已支持的请求方法：" + method);
                 for (String path : paths.length == 0 ? new String[] {""} : paths) {
-                    assertThat(keys.add(verb + " " + root.value()[0] + path)).isTrue();
+                    String key = verb + " " + root.value()[0] + path;
+                    Arrays.sort(params);
+                    assertThat(mappings.add(key + Arrays.toString(params))).as(method.toString()).isTrue();
+                    keys.add(key); // Permission lookup uses method and path across paged/detail variants.
                 }
             }
         }
