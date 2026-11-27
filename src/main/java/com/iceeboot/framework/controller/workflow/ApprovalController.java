@@ -96,8 +96,9 @@ public class ApprovalController {
 
     @GetMapping(value = "/cases", params = "page")
     @RequirePermission(dynamic = true)
-    public R<PageResult<Item>> casePage(@RequestParam String scope, @RequestParam int page, @RequestParam int size) {
-        return R.ok(cases.page(scope, page, size));
+    public R<PageResult<Item>> casePage(@RequestParam String scope, @RequestParam int page, @RequestParam int size,
+            @RequestParam(required = false) String keyword) {
+        return R.ok(cases.page(scope, page, size, keyword));
     }
 
     @GetMapping("/cases/{id}")

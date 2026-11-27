@@ -46,9 +46,18 @@ public class ApprovalCaseService {
 
     @Transactional(readOnly = true)
     public PageResult<Item> page(String scope, int page, int size) {
+        return page(scope, page, size, null);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<Item> page(String scope, int page, int size, String keyword) {
         if (page < 1 || size < 1 || size > 100) throw new IceeBootException("分页参数无效");
         List<Object> args = new ArrayList<>();
         String from = caseFilter(scope, args);
+        if (keyword != null && !keyword.isBlank()) {
+            from += " AND LOCATE(LOWER(?), LOWER(a.title)) > 0";
+            args.add(keyword.strip());
+        }
         long total = jdbc.queryForObject("SELECT COUNT(*)" + from, Long.class, args.toArray());
         long current = Math.min(page, Math.max(1L, (total + size - 1) / size));
         args.add(size);

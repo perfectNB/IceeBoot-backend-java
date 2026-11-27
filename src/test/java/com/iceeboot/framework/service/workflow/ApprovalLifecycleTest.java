@@ -151,6 +151,35 @@ class ApprovalLifecycleTest {
         }
     }
 
+    @Test void caseNameSearchFiltersBeforeCountingAndPagingWithinEachScope() {
+        var budget = new ApprovalDesign("research", "AI研发_经费", fields, design.start(), nodes);
+        designs.save(new Draft(0, budget));
+        designs.publish(budget.code(), 1);
+        designs.publish(design.code(), 1);
+        try (var identity = mockStatic(TokenUtils.class)) {
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(1L);
+            var values = form("1", "2", "甲");
+            cases.submit(new Submit(design.code(), 1, values));
+            var request = new Submit(budget.code(), 1, values);
+            var first = cases.submit(request);
+            cases.submit(request);
+            var page = cases.page("mine", 2, 1, " ai研发_ ");
+            assertThat(page.getTotal()).isEqualTo(2);
+            assertThat(page.getRecords()).singleElement().satisfies(item -> assertThat(item.title()).isEqualTo(budget.name()));
+            assertThat(cases.page("mine", 1, 10, "%").getTotal()).isZero();
+            assertThat(cases.page("mine", 1, 10, "  ").getTotal()).isEqualTo(3);
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            assertThat(cases.page("mine", 1, 10, "经费").getTotal()).isZero();
+            assertThat(cases.page("inbox", 1, 10, "经费").getTotal()).isEqualTo(2);
+            cases.review(first, "reject", new Change(1, "请补充", null));
+            assertThat(cases.page("handled", 1, 10, "经费").getTotal()).isOne();
+            assertThat(cases.page("handled", 1, 10, "采购").getTotal()).isZero();
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(1L);
+            assertThat(cases.page("rejected", 1, 10, "研发").getTotal()).isOne();
+            assertThat(cases.page("rejected", 1, 10, "采购").getTotal()).isZero();
+        }
+    }
+
     @Test void launchAudienceIsIndependentOfTheReviewerRole() {
         designs.save(new Draft(1, new ApprovalDesign(design.code(),design.name(),fields,design.start(),nodes,"manager")));
         designs.publish(design.code(),2);
