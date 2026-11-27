@@ -68,7 +68,7 @@ class FrameworkPermissionMigrationTest {
         List<Map<String, Object>> before = rbacSnapshot(jdbc);
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
-        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(33);
+        assertThat(count(jdbc, "SELECT COUNT(*) FROM t_agent_schema_history")).isEqualTo(34);
 
         List<Endpoint> expected = catalog();
         assertThat(expected).hasSize(277);
@@ -113,6 +113,8 @@ class FrameworkPermissionMigrationTest {
             for (int repeat = 0; repeat < 2; repeat++) {
                 ScriptUtils.executeSqlScript(connection,
                         new ClassPathResource("db/agent/V005__framework_permissions.sql"));
+                ScriptUtils.executeSqlScript(connection,
+                        new ClassPathResource("db/agent/V034__personal_approval_menus.sql"));
             }
         }
         assertSameSnapshot(before, rbacSnapshot(jdbc));
@@ -231,6 +233,25 @@ class FrameworkPermissionMigrationTest {
         migrations.migratePermissions();
         assertSameSnapshot(before, rbacSnapshot(jdbc));
         assertThat(count(jdbc, "SELECT COUNT(*) FROM t_role_menu rm JOIN t_menu m ON m.id=rm.menu_id JOIN t_role r ON r.id=rm.role_id WHERE m.name='AgentMemory' AND r.code='superAdmin' AND rm.del_flag=0")).isEqualTo(1);
+    }
+
+    @Test
+    void renamesPersonalApprovalMenusAndPreservesExistingLinksAndRoleAssignments() throws Exception {
+        var source = source();
+        var jdbc = new JdbcTemplate(source);
+        seedHistoricalState(source, jdbc);
+        jdbc.update("INSERT INTO t_menu(id,name,component,path,del_flag) VALUES"
+                + "(910,'WorkflowInstances','WorkflowInstances','/admin/workflow/instance',0),"
+                + "(911,'WorkflowTasks','WorkflowTasks','/admin/workflow/task',0)");
+        jdbc.update("INSERT INTO t_role_menu(role_id,menu_id,del_flag) VALUES(3,910,0),(3,911,0)");
+        var migrations = new AgentSchemaMigrationService(source);
+        migrations.migrateSchema();
+        migrations.migratePermissions();
+        assertThat(jdbc.queryForList("SELECT CONCAT(m.title,' ',m.name,' ',m.component,' ',m.path)"
+                + " FROM t_menu m JOIN t_role_menu rm ON rm.menu_id=m.id"
+                + " WHERE rm.role_id=3 AND m.id IN (910,911) AND rm.del_flag=0 ORDER BY m.id", String.class))
+                .containsExactly("我的申请 MyApplications MyApplications /admin/workflow/instance",
+                        "我的审批 MyApprovals MyApprovals /admin/workflow/task");
     }
 
     private static DriverManagerDataSource source() {

@@ -44,7 +44,7 @@ public class AgentSchemaMigrationService implements ApplicationRunner {
 
     public void migratePermissions() {
         migrate(List.of("V004__operations_permissions.sql", "V005__framework_permissions.sql", "V007__session_permissions.sql", "V008__skill_import_permissions.sql", "V010__agent_stream_permissions.sql",
-                "V011__authorization_indexes.sql", "V013__agent_workbench_permissions.sql", "V015__agent_schedule_permissions.sql", "V017__agent_memory_permissions.sql", "V018__embed_agent_memory_menu.sql", "V019__general_user_profiles.sql", "V022__model_usage_permission.sql", "V024__payment_detail_permission.sql", "V026__approval_permissions.sql", "V028__approval_design_menu.sql", "V030__approval_intake_permission.sql", "V032__approval_launch_menu.sql"));
+                "V011__authorization_indexes.sql", "V013__agent_workbench_permissions.sql", "V015__agent_schedule_permissions.sql", "V017__agent_memory_permissions.sql", "V018__embed_agent_memory_menu.sql", "V019__general_user_profiles.sql", "V022__model_usage_permission.sql", "V024__payment_detail_permission.sql", "V026__approval_permissions.sql", "V028__approval_design_menu.sql", "V030__approval_intake_permission.sql", "V032__approval_launch_menu.sql", "V034__personal_approval_menus.sql"));
     }
 
     private synchronized void migrate(List<String> migrations) {
