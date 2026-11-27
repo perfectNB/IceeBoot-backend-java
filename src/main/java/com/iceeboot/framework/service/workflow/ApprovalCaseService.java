@@ -3,6 +3,7 @@ package com.iceeboot.framework.service.workflow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iceeboot.common.core.domain.PageResult;
 import com.iceeboot.common.exception.IceeBootException;
 import com.iceeboot.common.utils.TokenUtils;
 import com.iceeboot.framework.dto.create.workflow.ApprovalDesign;
@@ -23,6 +24,7 @@ import java.util.*;
 public class ApprovalCaseService {
     private static final String PENDING = "PENDING", REJECTED = "REJECTED", APPROVED = "APPROVED", VOID = "VOID";
     private static final String COLUMNS = "id,title,status,round_no,revision,node_id,updated_at";
+    private static final String CASE_ORDER = " ORDER BY updated_at DESC,id";
     private final JdbcTemplate jdbc;
     private final ApprovalDesignService designs;
     private final ISysUserService users;
@@ -37,13 +39,32 @@ public class ApprovalCaseService {
     }
 
     public List<Item> list(String scope) {
-        long user = actor();
         List<Object> args = new ArrayList<>();
+        String from = caseFilter(scope, args);
+        return jdbc.query("SELECT " + COLUMNS + from + CASE_ORDER, (r, i) -> item(r), args.toArray());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<Item> page(String scope, int page, int size) {
+        if (page < 1 || size < 1 || size > 100) throw new IceeBootException("分页参数无效");
+        List<Object> args = new ArrayList<>();
+        String from = caseFilter(scope, args);
+        long total = jdbc.queryForObject("SELECT COUNT(*)" + from, Long.class, args.toArray());
+        long current = Math.min(page, Math.max(1L, (total + size - 1) / size));
+        args.add(size);
+        args.add((current - 1) * size);
+        var records = jdbc.query("SELECT " + COLUMNS + from + CASE_ORDER + " LIMIT ? OFFSET ?",
+                (r, i) -> item(r), args.toArray());
+        return PageResult.of(records, total, current, (long) size);
+    }
+
+    private String caseFilter(String scope, List<Object> args) {
+        long user = actor();
         String filter;
         switch (scope) {
             case "inbox" -> {
                 List<String> roles = users.getUserRoles(user);
-                if (roles.isEmpty()) return List.of();
+                if (roles.isEmpty()) return " FROM t_workflow_application a WHERE 1=0";
                 String placeholders = String.join(",",Collections.nCopies(roles.size(),"?"));
                 filter = "status='PENDING' AND (role_code IN ("+placeholders+") OR EXISTS ("+
                         "SELECT 1 FROM t_workflow_engine_round er JOIN ACT_RU_TASK t ON t.PROC_INST_ID_=er.instance_id "+
@@ -62,8 +83,7 @@ public class ApprovalCaseService {
             }
             default -> throw new IceeBootException("未知的审批列表");
         }
-        return jdbc.query("SELECT " + COLUMNS + " FROM t_workflow_application a WHERE " + filter + " ORDER BY updated_at DESC,id",
-                (r,i) -> item(r), args.toArray());
+        return " FROM t_workflow_application a WHERE " + filter;
     }
 
     @Transactional(readOnly = true)

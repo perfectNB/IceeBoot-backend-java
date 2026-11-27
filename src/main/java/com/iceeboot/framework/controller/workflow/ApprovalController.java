@@ -88,10 +88,16 @@ public class ApprovalController {
         return R.ok("申请已提交", cases.submit(request));
     }
 
-    @GetMapping("/cases")
+    @GetMapping(value = "/cases", params = {"!page", "!size"})
     @RequirePermission(dynamic = true)
     public R<List<Item>> list(@RequestParam String scope) {
         return R.ok(cases.list(scope));
+    }
+
+    @GetMapping(value = "/cases", params = "page")
+    @RequirePermission(dynamic = true)
+    public R<PageResult<Item>> casePage(@RequestParam String scope, @RequestParam int page, @RequestParam int size) {
+        return R.ok(cases.page(scope, page, size));
     }
 
     @GetMapping("/cases/{id}")

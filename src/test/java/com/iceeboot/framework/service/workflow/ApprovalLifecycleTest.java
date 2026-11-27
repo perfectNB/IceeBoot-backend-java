@@ -122,6 +122,35 @@ class ApprovalLifecycleTest {
         }
     }
 
+    @Test void pagesCountOnlyTheCurrentUsersMatchingCasesAndClampAfterReview() {
+        designs.publish(design.code(), 1);
+        var request = new Submit("purchase", 1, form("1", "2", "甲"));
+        try (var identity = mockStatic(TokenUtils.class)) {
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(1L);
+            cases.submit(request);
+            cases.submit(request);
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(3L);
+            cases.submit(request);
+            assertThat(cases.page("mine", 1, 1).getTotal()).isOne();
+            assertThat(cases.page("inbox", 1, 1).getRecords()).isEmpty();
+
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            var first = cases.page("inbox", 1, 2);
+            var last = cases.page("inbox", 2, 2);
+            assertThat(first.getTotal()).isEqualTo(3);
+            assertThat(first.getRecords()).hasSize(2).doesNotContainAnyElementsOf(last.getRecords());
+            assertThat(last.getRecords()).hasSize(1);
+            var id = last.getRecords().getFirst().id();
+            cases.review(id, "reject", new Change(1, "补充信息", null));
+            var remaining = cases.page("inbox", 2, 2);
+            assertThat(remaining.getCurrent()).isOne();
+            assertThat(remaining.getTotal()).isEqualTo(2);
+            assertThat(cases.page("handled", 1, 10).getRecords()).extracting(item -> item.id()).containsExactly(id);
+            assertThat(cases.page("rejected", 1, 10).getTotal()).isZero();
+            assertThatThrownBy(() -> cases.page("mine", 1, 101)).hasMessageContaining("分页参数");
+        }
+    }
+
     @Test void launchAudienceIsIndependentOfTheReviewerRole() {
         designs.save(new Draft(1, new ApprovalDesign(design.code(),design.name(),fields,design.start(),nodes,"manager")));
         designs.publish(design.code(),2);
