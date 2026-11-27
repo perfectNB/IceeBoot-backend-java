@@ -235,7 +235,14 @@ class ApprovalLifecycleTest {
             var account = new com.iceeboot.framework.entity.system.UserDO().setNickname("林宁").setUsername("finance_user");
             when(users.getById(2L)).thenReturn(account);
             cases.review(id,"approve",new Change(1,"确认",null,task));
+            jdbc.update("UPDATE t_user SET nickname='新昵称' WHERE id=2");
             assertThat(cases.detail(id).history().getLast().actor()).isEqualTo("林宁");
+            jdbc.update("UPDATE t_workflow_review_event SET actor_name='finance_user' WHERE application_id=? AND actor_id=2", id);
+            assertThat(cases.detail(id).history().getLast().actor()).isEqualTo("新昵称");
+            jdbc.update("UPDATE t_user SET nickname='  ' WHERE id=2");
+            assertThat(cases.detail(id).history().getLast().actor()).isEqualTo("finance_user");
+            jdbc.update("DELETE FROM t_user WHERE id=2");
+            assertThat(cases.detail(id).history().getLast().actor()).isEqualTo("finance_user");
         }
     }
 

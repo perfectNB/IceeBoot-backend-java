@@ -118,11 +118,10 @@ public class ApprovalCaseService {
                 pending.stream().anyMatch(PendingTask::actionable));
         if (!mine && !review && jdbc.queryForObject("SELECT COUNT(*) FROM t_workflow_review_event WHERE application_id=? AND actor_id=? AND action IN ('APPROVE','REJECT')",
                 Long.class, id, user) == 0L) throw new IceeBootException("无权查看该申请");
-        var events = jdbc.query("SELECT e.*, CASE WHEN e.actor_name=u.username THEN COALESCE(NULLIF(TRIM(u.nickname),''),e.actor_name) " +
-                "ELSE e.actor_name END AS display_name FROM t_workflow_review_event e LEFT JOIN t_user u ON u.id=e.actor_id " +
+        var events = jdbc.query("SELECT e.*, u.username, u.nickname FROM t_workflow_review_event e LEFT JOIN t_user u ON u.id=e.actor_id " +
                 "WHERE e.application_id=? ORDER BY e.id", (r,i) ->
                 new Event(r.getInt("round_no"), r.getString("action"), r.getString("node_name"), r.getLong("actor_id"),
-                        r.getString("display_name"), r.getString("reason"), r.getTimestamp("created_at").toLocalDateTime(),
+                        eventActor(r), r.getString("reason"), r.getTimestamp("created_at").toLocalDateTime(),
                         values(r.getString("submitted_form")),r.getString("review_role"),r.getString("node_id")), id);
         var visibleRoles = new HashSet<String>();
         a.design.nodes().forEach(n -> visibleRoles.addAll(n.reviewers()));
@@ -132,6 +131,16 @@ public class ApprovalCaseService {
                 ApprovalRouting.plan(a.design,a.values).stream().map(Node::id).toList(), mine, review,pending,roleNames,
                 candidateNames(instance == null && PENDING.equals(a.item.status()) ? List.of(a.role) :
                         pending.stream().map(PendingTask::role).distinct().toList()));
+    }
+
+    private static String eventActor(ResultSet row) throws SQLException {
+        String recorded = row.getString("actor_name");
+        String nickname = row.getString("nickname");
+        // Older events recorded the account name instead of a display name.
+        if (nickname != null && !nickname.isBlank() && recorded.equalsIgnoreCase(row.getString("username"))) {
+            return nickname.strip();
+        }
+        return recorded;
     }
 
     private Map<String,List<String>> candidateNames(List<String> roles) {
