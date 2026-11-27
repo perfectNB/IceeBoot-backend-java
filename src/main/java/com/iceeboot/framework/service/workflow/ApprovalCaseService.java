@@ -23,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ApprovalCaseService {
     private static final String PENDING = "PENDING", REJECTED = "REJECTED", APPROVED = "APPROVED", VOID = "VOID";
+    private static final Set<String> CASE_STATUSES = Set.of(PENDING, APPROVED, REJECTED, VOID);
     private static final String COLUMNS = "id,title,status,round_no,revision,node_id,updated_at";
     private static final String CASE_ORDER = " ORDER BY updated_at DESC,id";
     private final JdbcTemplate jdbc;
@@ -51,12 +52,22 @@ public class ApprovalCaseService {
 
     @Transactional(readOnly = true)
     public PageResult<Item> page(String scope, int page, int size, String keyword) {
+        return page(scope, page, size, keyword, null);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<Item> page(String scope, int page, int size, String keyword, String status) {
         if (page < 1 || size < 1 || size > 100) throw new IceeBootException("分页参数无效");
         List<Object> args = new ArrayList<>();
         String from = caseFilter(scope, args);
         if (keyword != null && !keyword.isBlank()) {
             from += " AND LOCATE(LOWER(?), LOWER(a.title)) > 0";
             args.add(keyword.strip());
+        }
+        if (status != null && !status.isEmpty()) {
+            if (!CASE_STATUSES.contains(status)) throw new IceeBootException("未知的审批状态");
+            from += " AND a.status=?";
+            args.add(status);
         }
         long total = jdbc.queryForObject("SELECT COUNT(*)" + from, Long.class, args.toArray());
         long current = Math.min(page, Math.max(1L, (total + size - 1) / size));

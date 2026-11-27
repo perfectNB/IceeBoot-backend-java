@@ -177,6 +177,18 @@ class ApprovalLifecycleTest {
             identity.when(TokenUtils::getCurrentUserId).thenReturn(1L);
             assertThat(cases.page("rejected", 1, 10, "研发").getTotal()).isOne();
             assertThat(cases.page("rejected", 1, 10, "采购").getTotal()).isZero();
+            var filtered = cases.page("mine", 2, 1, "研发", "REJECTED");
+            assertThat(filtered.getCurrent()).isOne();
+            assertThat(filtered.getTotal()).isOne();
+            assertThat(filtered.getRecords()).extracting(item -> item.id()).containsExactly(first);
+            assertThat(cases.page("mine", 1, 10, "研发", "PENDING").getTotal()).isOne();
+            assertThat(cases.page("rejected", 1, 10, "", "PENDING").getTotal()).isZero();
+            cases.revise(first, "void", new Change(2, "", null));
+            assertThat(cases.page("mine", 1, 10, "", "VOID").getTotal()).isOne();
+            assertThat(cases.page("rejected", 1, 10, "", "REJECTED").getTotal()).isZero();
+            assertThatThrownBy(() -> cases.page("mine", 1, 10, "", "UNKNOWN")).hasMessageContaining("审批状态");
+            identity.when(TokenUtils::getCurrentUserId).thenReturn(2L);
+            assertThat(cases.page("mine", 1, 10, "", "VOID").getTotal()).isZero();
         }
     }
 
